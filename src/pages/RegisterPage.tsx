@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import AuthLayout from "../features/auth/components/AuthLayout";
 import RegisterForm from "../features/auth/components/RegisterForm";
 import OtpModal from "../features/auth/components/OtpModal";
+import ErrorDialog from "../features/auth/components/ErrorDialog";
 import { authService } from "../features/auth/services/authService";
 import { useAuthStore } from "@/store/useAuthStore";
 
@@ -10,6 +11,11 @@ export default function RegisterPage() {
   const [showOtp, setShowOtp] = useState(false);
   const [tempFormData, setTempFormData] = useState<any>(null); // Lưu tạm data form để đợi OTP
   const [isLoading, setIsLoading] = useState(false);
+  const [errorDialog, setErrorDialog] = useState({
+    isOpen: false,
+    message: "",
+    code: undefined as number | undefined
+  });
 
   const navigate = useNavigate();
   const login = useAuthStore((state) => state.login);
@@ -28,10 +34,18 @@ export default function RegisterPage() {
         setShowOtp(true);
         console.log("OTP sent successfully");
       } else {
-        console.error("Failed to send OTP:", res.message || "Unknown error");
+        setErrorDialog({
+          isOpen: true,
+          message: res.message || "Không thể gửi mã OTP",
+          code: res.code
+        });
       }
     } catch (error: any) {
-      console.error("Server connection error:", error.response?.data?.message || error.message);
+      setErrorDialog({
+        isOpen: true,
+        message: error.response?.data?.message || "Lỗi kết nối máy chủ. Vui lòng thử lại.",
+        code: error.response?.status || 500
+      });
     } finally {
       setIsLoading(false);
     }
@@ -51,14 +65,37 @@ export default function RegisterPage() {
         const { accessToken, ...userData } = res.data;
         login(accessToken, userData as any);
 
+        // Lưu thông tin user vào localStorage để kiểm tra trùng lặp
+        try {
+          const storedUsers = localStorage.getItem('registered_users');
+          const users = storedUsers ? JSON.parse(storedUsers) : [];
+          users.push({
+            fullName: tempFormData.fullName,
+            phone: tempFormData.phone,
+            email: tempFormData.email,
+            registeredAt: new Date().toISOString()
+          });
+          localStorage.setItem('registered_users', JSON.stringify(users));
+        } catch (error) {
+          console.warn("Could not save user data to localStorage:", error);
+        }
+
         console.log("Registration successful");
         setShowOtp(false);
         navigate("/"); // Chuyển hướng về trang chủ
       } else {
-        console.error("Registration failed:", res.message || "Unknown error");
+        setErrorDialog({
+          isOpen: true,
+          message: res.message || "Đăng ký thất bại",
+          code: res.code
+        });
       }
     } catch (error: any) {
-      console.error("OTP verification/registration error:", error.response?.data?.message || error.message);
+      setErrorDialog({
+        isOpen: true,
+        message: error.response?.data?.message || "Mã OTP không đúng hoặc đã hết hạn",
+        code: error.response?.status || 400
+      });
     }
   };
 
@@ -78,6 +115,13 @@ export default function RegisterPage() {
         onClose={() => setShowOtp(false)}
         onVerify={handleVerifyOtp}
         email={tempFormData?.email || ""}
+      />
+
+      <ErrorDialog
+        isOpen={errorDialog.isOpen}
+        onClose={() => setErrorDialog({ isOpen: false, message: "", code: undefined })}
+        message={errorDialog.message}
+        code={errorDialog.code}
       />
     </>
   );

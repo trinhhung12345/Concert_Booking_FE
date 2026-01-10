@@ -1,0 +1,210 @@
+import { useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import {
+  faTicket,
+  faSearch,
+  faHistory,
+  faBars,
+  faRightFromBracket,
+  faUser,
+  faSignInAlt
+} from "@fortawesome/free-solid-svg-icons";
+
+// Shadcn UI Components
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import {
+  Sheet,
+  SheetContent,
+  SheetTrigger,
+} from "@/components/ui/sheet";
+
+// Store & Utils
+import { useAuthStore } from "@/store/useAuthStore";
+
+export default function Header() {
+  const navigate = useNavigate();
+  const { user, isAuthenticated, logout } = useAuthStore();
+  const [searchQuery, setSearchQuery] = useState("");
+
+  const handleLogout = () => {
+    logout();
+    navigate("/login");
+  };
+
+  // Component Logo dùng chung
+  const Logo = () => (
+    <Link to="/" className="flex items-center gap-2 group">
+      <div className="w-10 h-10 bg-primary rounded-xl flex items-center justify-center text-white transform group-hover:rotate-12 transition-all duration-300">
+        <FontAwesomeIcon icon={faTicket} className="text-xl" />
+      </div>
+      <span className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-primary to-pink-600 font-sans tracking-tight">
+        TixCon
+      </span>
+    </Link>
+  );
+
+  return (
+    <header className="sticky top-0 z-50 w-full border-b bg-white/80 backdrop-blur-md supports-[backdrop-filter]:bg-white/60">
+      <div className="container mx-auto flex h-16 items-center justify-between px-4">
+
+        {/* 1. LOGO (Trái) */}
+        <Logo />
+
+        {/* 2. SEARCH BAR (Giữa - Chỉ hiện trên Desktop/Tablet) */}
+        <div className="hidden md:flex flex-1 max-w-md mx-8 relative">
+          <FontAwesomeIcon
+            icon={faSearch}
+            className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
+          />
+          <Input
+            type="text"
+            placeholder="Search for concerts, artists..."
+            className="pl-10 rounded-full bg-gray-100 border-transparent focus:bg-white focus:border-primary transition-all duration-300"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+          />
+        </div>
+
+        {/* 3. ACTIONS (Phải) */}
+        <div className="flex items-center gap-4">
+
+          {/* Desktop Actions */}
+          <div className="hidden md:flex items-center gap-4">
+            {isAuthenticated ? (
+              <>
+                {/* Nút Lịch sử vé */}
+                <Link to="/tickets">
+                    <Button variant="ghost" className="text-gray-600 hover:text-primary hover:bg-pink-50 gap-2">
+                    <FontAwesomeIcon icon={faHistory} />
+                    <span>My Tickets</span>
+                    </Button>
+                </Link>
+
+                {/* User Dropdown */}
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" className="relative h-10 w-10 rounded-full">
+                      <Avatar className="h-10 w-10 border-2 border-primary/20 hover:border-primary transition-colors">
+                        <AvatarImage src="" alt={user?.name} />
+                        <AvatarFallback className="bg-primary/10 text-primary font-bold">
+                          {user?.name ? user.name.charAt(0).toUpperCase() : "U"}
+                        </AvatarFallback>
+                      </Avatar>
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent className="w-56" align="end" forceMount>
+                    <DropdownMenuLabel className="font-normal">
+                      <div className="flex flex-col space-y-1">
+                        <p className="text-sm font-medium leading-none">{user?.name}</p>
+                        <p className="text-xs leading-none text-muted-foreground">
+                          {user?.email}
+                        </p>
+                      </div>
+                    </DropdownMenuLabel>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem className="cursor-pointer">
+                      <FontAwesomeIcon icon={faUser} className="mr-2 h-4 w-4" />
+                      <span>Profile</span>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem className="cursor-pointer md:hidden">
+                      {/* Trên mobile thì hiện ticket trong menu này luôn */}
+                      <FontAwesomeIcon icon={faHistory} className="mr-2 h-4 w-4" />
+                      <span>My Tickets</span>
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem className="cursor-pointer text-red-600 focus:text-red-600" onClick={handleLogout}>
+                      <FontAwesomeIcon icon={faRightFromBracket} className="mr-2 h-4 w-4" />
+                      <span>Log out</span>
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </>
+            ) : (
+              <Link to="/login">
+                <Button variant="secondary" className="gap-2">
+                  <FontAwesomeIcon icon={faSignInAlt} />
+                  <span>Login</span>
+                </Button>
+              </Link>
+            )}
+          </div>
+
+          {/* MOBILE MENU (Hamburger) - Chỉ hiện trên Mobile */}
+          <div className="md:hidden flex items-center gap-2">
+             {/* Icon search nhỏ cho mobile */}
+             <Button variant="ghost" size="icon" className="text-gray-600">
+                <FontAwesomeIcon icon={faSearch} className="h-5 w-5" />
+             </Button>
+
+             <Sheet>
+                <SheetTrigger asChild>
+                    <Button variant="ghost" size="icon">
+                        <FontAwesomeIcon icon={faBars} className="h-6 w-6 text-gray-700" />
+                    </Button>
+                </SheetTrigger>
+                <SheetContent side="right" className="w-[300px] sm:w-[400px]">
+                    <div className="flex flex-col gap-6 mt-6">
+                        <Logo />
+
+                        {isAuthenticated ? (
+                            <div className="flex flex-col gap-4">
+                                <div className="flex items-center gap-4 p-4 bg-gray-50 rounded-xl">
+                                    <Avatar>
+                                        <AvatarFallback className="bg-primary text-white">
+                                            {user?.name?.charAt(0)}
+                                        </AvatarFallback>
+                                    </Avatar>
+                                    <div>
+                                        <p className="font-semibold">{user?.name}</p>
+                                        <p className="text-xs text-gray-500">{user?.email}</p>
+                                    </div>
+                                </div>
+                                <nav className="flex flex-col gap-2">
+                                    <Link to="/profile">
+                                        <Button variant="ghost" className="w-full justify-start gap-3">
+                                            <FontAwesomeIcon icon={faUser} /> Profile
+                                        </Button>
+                                    </Link>
+                                    <Link to="/tickets">
+                                        <Button variant="ghost" className="w-full justify-start gap-3">
+                                            <FontAwesomeIcon icon={faHistory} /> My Tickets
+                                        </Button>
+                                    </Link>
+                                    <Button
+                                        variant="ghost"
+                                        className="w-full justify-start gap-3 text-red-600 hover:text-red-600 hover:bg-red-50"
+                                        onClick={handleLogout}
+                                    >
+                                        <FontAwesomeIcon icon={faRightFromBracket} /> Log out
+                                    </Button>
+                                </nav>
+                            </div>
+                        ) : (
+                            <Link to="/login" className="w-full">
+                                <Button variant="secondary" className="w-full gap-2">
+                                    <FontAwesomeIcon icon={faSignInAlt} />
+                                    <span>Login</span>
+                                </Button>
+                            </Link>
+                        )}
+                    </div>
+                </SheetContent>
+             </Sheet>
+          </div>
+
+        </div>
+      </div>
+    </header>
+  );
+}
