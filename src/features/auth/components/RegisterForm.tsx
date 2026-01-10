@@ -52,7 +52,7 @@ export default function RegisterForm({ onSubmitAPI, isSubmittingAPI }: RegisterF
         <Label htmlFor="fullName" className="text-gray-700 font-medium ml-1">Full Name</Label>
         <Input
           id="fullName"
-          placeholder="Nguyen Van A"
+          placeholder=""
           {...register("fullName")}
           className={`h-11 rounded-2xl bg-gray-50 border-gray-200 focus-visible:ring-primary focus-visible:border-primary ${errors.fullName ? "border-red-500 bg-red-50" : ""}`}
         />
@@ -64,7 +64,7 @@ export default function RegisterForm({ onSubmitAPI, isSubmittingAPI }: RegisterF
         <Label htmlFor="phone" className="text-gray-700 font-medium ml-1">Phone Number</Label>
         <Input
           id="phone"
-          placeholder="0912345678"
+          placeholder=""
           {...register("phone")}
           className={`h-11 rounded-2xl bg-gray-50 border-gray-200 focus-visible:ring-primary focus-visible:border-primary ${errors.phone ? "border-red-500 bg-red-50" : ""}`}
         />
@@ -76,7 +76,7 @@ export default function RegisterForm({ onSubmitAPI, isSubmittingAPI }: RegisterF
         <Input
           id="email"
           type="email"
-          placeholder="email@example.com"
+          placeholder=""
           {...register("email")}
           className={`h-11 rounded-2xl bg-gray-50 border-gray-200 focus-visible:ring-primary focus-visible:border-primary ${errors.email ? "border-red-500 bg-red-50" : ""}`}
         />
@@ -90,7 +90,7 @@ export default function RegisterForm({ onSubmitAPI, isSubmittingAPI }: RegisterF
           <Input
             id="password"
             type={showPassword ? "text" : "password"}
-            placeholder="Create a password"
+            placeholder=""
             {...register("password")}
             className={`h-11 rounded-2xl bg-gray-50 border-gray-200 focus-visible:ring-primary focus-visible:border-primary pr-10 ${errors.password ? "border-red-500 bg-red-50" : ""}`}
           />
@@ -112,7 +112,7 @@ export default function RegisterForm({ onSubmitAPI, isSubmittingAPI }: RegisterF
           <Input
             id="confirmPassword"
             type={showConfirmPassword ? "text" : "password"}
-            placeholder="Confirm your password"
+            placeholder=""
             {...register("confirmPassword")}
             className={`h-11 rounded-2xl bg-gray-50 border-gray-200 focus-visible:ring-primary focus-visible:border-primary pr-10 ${errors.confirmPassword ? "border-red-500 bg-red-50" : ""}`}
           />

@@ -10,56 +10,107 @@ interface AuthLayoutProps {
 
 export default function AuthLayout({ children, title, subtitle, isLogin = true }: AuthLayoutProps) {
   return (
-    <div className="min-h-screen w-full flex font-sans">
+    <>
+      {/* ===== MOBILE LAYOUT (< lg) ===== */}
+      <div className="lg:hidden min-h-screen w-full font-sans relative overflow-auto">
+        {/* Background Image - Full screen fixed */}
+        <div className="fixed inset-0 bg-neutral-900">
+          <div
+            className="absolute inset-0 bg-[url('@/assets/images/concert-bg.jfif')]
+            bg-cover bg-center opacity-50"
+          />
+          <div className="absolute inset-0 bg-gradient-to-b from-black/70 via-black/50 to-black/80"></div>
+        </div>
 
-      {/* LEFT SIDE (Image & Welcome Text) */}
-      {/* Mobile: Hidden / Desktop: Static 1/2 screen */}
-      <div className="hidden lg:flex absolute inset-0 lg:static lg:w-1/2 bg-neutral-900 flex-col justify-center px-8 lg:px-20 z-0">
+        {/* Content Container - Scrollable */}
+        <div className="relative z-10 min-h-screen flex flex-col px-5 py-8">
+          {/* Hero Text - Top */}
+          <div className="mb-6">
+            <h1 className="text-2xl sm:text-3xl font-bold text-primary mb-2">
+              {title}
+            </h1>
+            <p className="text-sm sm:text-base text-gray-200 leading-relaxed">
+              {subtitle}
+            </p>
+            {/* Pink underline */}
+            <div className="h-1 w-40 bg-primary mt-3 rounded-full"></div>
+          </div>
 
-        {/* Background Image Overlay */}
-        <div
-          className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1459749411177-334811adbced?q=80&w=2070&auto=format&fit=crop')]
-          bg-cover bg-center opacity-60"
-        />
+          {/* Form Card - Floating on hero */}
+          <div className="flex-1 flex items-start">
+            <div className="w-full bg-white rounded-2xl px-5 py-5 shadow-2xl animate-in fade-in slide-in-from-bottom-5 duration-500">
+              <div className="mb-3">
+                <h2 className="text-xl font-bold text-gray-900">
+                  {isLogin ? "Login" : "Register"}
+                </h2>
+              </div>
 
-        {/* Content trên nền ảnh */}
-        <div className="relative z-10 text-white max-w-lg">
-          <h1 className="text-4xl lg:text-5xl font-bold mb-2">
-            {title}
-          </h1>
-          {/* Dấu gạch chân màu hồng */}
-          <div className="h-1.5 w-24 bg-primary mb-6 rounded-full"></div>
+              {/* Form content - compact */}
+              {children}
 
-          <p className="text-lg text-gray-200 leading-relaxed">
-            {subtitle}
-          </p>
+              {/* Link switch trang - Bottom */}
+              <p className="text-sm text-gray-500 text-center mt-5">
+                {isLogin ? "Don't have an account? " : "Already have an account? "}
+                <Link
+                  to={isLogin ? "/register" : "/login"}
+                  className="font-semibold text-primary hover:underline"
+                >
+                  {isLogin ? "Make an account" : "Login here"}
+                </Link>
+              </p>
+            </div>
+          </div>
         </div>
       </div>
 
-      {/* RIGHT SIDE (Form Container) */}
-      <div className="relative z-10 w-full lg:w-1/2 flex flex-col items-center justify-center min-h-screen bg-white lg:bg-gray-50 p-6 lg:p-12">
-        {/* Mobile: Full white background / Desktop: Centered on gray background */}
-        <div className="w-full max-w-md bg-white rounded-3xl lg:shadow-xl p-8 lg:p-10 animate-in fade-in slide-in-from-bottom-10 lg:slide-in-from-right-10 duration-500">
+      {/* ===== DESKTOP LAYOUT (>= lg) ===== */}
+      <div className="hidden lg:flex min-h-screen w-full font-sans">
+        {/* LEFT SIDE (Image & Welcome Text) */}
+        <div className="relative w-1/2 bg-neutral-900 flex flex-col justify-center px-20">
+          {/* Background Image Overlay */}
+          <div
+            className="absolute inset-0 bg-[url('@/assets/images/concert-bg.jfif')]
+            bg-cover bg-center opacity-50"
+          />
+          {/* Dark overlay for better text contrast */}
+          <div className="absolute inset-0 bg-black/40"></div>
 
+          {/* Content trên nền ảnh */}
+          <div className="relative z-10 text-white max-w-lg">
+            <h1 className="text-5xl font-bold mb-2">
+              {title}
+            </h1>
+            {/* Dấu gạch chân màu hồng */}
+            <div className="h-1.5 w-24 bg-primary mb-6 rounded-full"></div>
+            <p className="text-lg text-gray-200 leading-relaxed">
+              {subtitle}
+            </p>
+          </div>
+        </div>
+
+        {/* RIGHT SIDE (Form Container) */}
+        <div className="w-1/2 flex flex-col items-center justify-center bg-gray-50 p-12">
+          <div className="w-full max-w-md bg-white rounded-3xl shadow-xl p-10 animate-in fade-in slide-in-from-right-10 duration-500">
             <div className="mb-8">
-                <h2 className="text-3xl font-bold text-gray-900 mb-2">
-                    {isLogin ? "Login" : "Register"}
-                </h2>
-                {/* Link switch trang */}
-                <p className="text-sm text-gray-500">
-                    {isLogin ? "Don't have an account? " : "Already have an account? "}
-                    <Link
-                        to={isLogin ? "/register" : "/login"}
-                        className="font-semibold text-primary hover:underline"
-                    >
-                        {isLogin ? "Make an account" : "Login here"}
-                    </Link>
-                </p>
+              <h2 className="text-3xl font-bold text-gray-900 mb-2">
+                {isLogin ? "Login" : "Register"}
+              </h2>
+              {/* Link switch trang */}
+              <p className="text-sm text-gray-500">
+                {isLogin ? "Don't have an account? " : "Already have an account? "}
+                <Link
+                  to={isLogin ? "/register" : "/login"}
+                  className="font-semibold text-primary hover:underline"
+                >
+                  {isLogin ? "Make an account" : "Login here"}
+                </Link>
+              </p>
             </div>
 
             {children}
+          </div>
         </div>
       </div>
-    </div>
+    </>
   );
 }
