@@ -16,4 +16,9 @@ export default defineConfig({
       "@": path.resolve(__dirname, "./src"),
     },
   },
+
+  server: {
+    host: true, // Cho phép truy cập qua IP mạng (0.0.0.0)
+    port: 5173, // Cố định port (tùy chọn, để link đỡ bị đổi)
+  }
 })
