@@ -41,7 +41,7 @@ export default function EventDetailPage() {
   const [loading, setLoading] = useState(true);
 
   // State lưu trữ media đã lọc
-  const [heroVideo, setHeroVideo] = useState<any>(null);
+  const [heroVideo, setHeroVideo] = useState<EventFile | null>(null);
   const [heroImage, setHeroImage] = useState<string>("");
 
   useEffect(() => {
@@ -76,14 +76,12 @@ export default function EventDetailPage() {
   if (!event) return <div className="text-center py-20">Không tìm thấy sự kiện</div>;
 
   // Lấy dữ liệu hiển thị an toàn
-  const mainImage = event.files?.[0]?.thumbUrl || "https://images.unsplash.com/photo-1501281668745-f7f57925c3b4";
   const showing = event.showings?.[0]; // Lấy suất diễn đầu tiên
   const startTime = showing?.startTime || new Date().toISOString();
 
   // Tính khoảng giá
   const prices = showing?.types?.map(t => t.price) || [0];
   const minPrice = Math.min(...prices);
-  const maxPrice = Math.max(...prices);
 
   return (
     <div className="min-h-screen bg-gray-50 pb-20">
@@ -98,31 +96,17 @@ export default function EventDetailPage() {
 
                 {/* SỬ DỤNG REACT PLAYER */}
                 <ReactPlayer
-                    url={heroVideo.originUrl} // Link YouTube hoặc MP4 đều chạy được
+                    src={heroVideo.originUrl} // Link YouTube hoặc MP4 đều chạy được
                     width="100%"
                     height="100%"
                     playing={true} // Tự động chạy
                     loop={true}    // Lặp lại
                     muted={true}   // Tắt tiếng (Bắt buộc để Autoplay chạy trên Chrome/Safari)
-                    controls={false} // Ẩn thanh điều khiển
                     style={{
                         position: 'absolute',
                         top: 0,
                         left: 0,
-                        objectFit: 'cover' // Lưu ý: ReactPlayer đôi khi cần wrapper để cover đẹp
-                    }}
-                    // Config riêng cho YouTube để ẩn các thứ linh tinh
-                    config={{
-                        youtube: {
-                            playerVars: {
-                                showinfo: 0,
-                                controls: 0,
-                                modestbranding: 1,
-                                rel: 0,
-                                iv_load_policy: 3, // Hide annotations
-                                fs: 0 // Hide fullscreen button
-                            }
-                        }
+                        objectFit: 'cover'
                     }}
                 />
 
