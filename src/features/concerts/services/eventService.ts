@@ -62,4 +62,14 @@ export const eventService = {
   getById: async (id: string | number): Promise<Event> => {
     return apiClient.get(`/events/${id}`);
   },
+
+  // Lấy danh sách lịch diễn theo Event ID
+  getShowingsByEventId: async (eventId: string | number): Promise<Showing[]> => {
+    return apiClient.get(`/showings/event/${eventId}`);
+  },
+
+  // Lấy danh sách loại vé theo Showing ID
+  getTicketTypesByShowingId: async (showingId: string | number): Promise<TicketType[]> => {
+    return apiClient.get(`/ticket-types/showing/${showingId}`);
+  },
 };
