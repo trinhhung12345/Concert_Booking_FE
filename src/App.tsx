@@ -6,6 +6,7 @@ import RegisterPage from "./pages/RegisterPage";
 import EventDetailPage from "./pages/EventDetailPage";
 import ProfilePage from "./pages/ProfilePage";
 import TicketsPage from "./pages/TicketsPage";
+import BookingPage from "./pages/BookingPage";
 import LoginPromptModal from "./features/auth/components/LoginPromptModal";
 import { useModalStore } from "./store/useModalStore";
 
@@ -25,6 +26,7 @@ function App() {
         <Route element={<MainLayout />}>
             <Route path="/" element={<HomePage />} />
             <Route path="/event/:id" element={<EventDetailPage />} />
+            <Route path="/booking/:eventId" element={<BookingPage />} />
             <Route path="/profile" element={<ProfilePage />} />
             <Route path="/tickets" element={<TicketsPage />} />
         </Route>

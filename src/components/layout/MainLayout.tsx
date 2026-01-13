@@ -21,7 +21,7 @@ const MainLayout = () => {
       {/* FOOTER */}
       <footer className="bg-secondary text-white py-8 mt-auto">
         <div className="container mx-auto px-4 text-center">
-          <p>© 2024 ConcertHub. All rights reserved.</p>
+          <p>© Tien go kys. All rights reserved.</p>
         </div>
       </footer>
     </div>
