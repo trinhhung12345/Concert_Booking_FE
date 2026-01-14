@@ -25,6 +25,7 @@ export interface Seat {
   code: string; // "A1-1"
   rowIndex: number;
   colIndex: number;
+  sectionId: number;
   status: "AVAILABLE" | "BOOKED" | "LOCKED";
   price?: number;
   type?: string; // VIP, Standard...

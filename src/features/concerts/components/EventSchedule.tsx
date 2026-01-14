@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { eventService } from "@/features/concerts/services/eventService";
 import type { Showing, TicketType } from "@/features/concerts/services/eventService";
 import { Button } from "@/components/ui/button";
@@ -27,6 +28,7 @@ interface EventScheduleProps {
 }
 
 export default function EventSchedule({ eventId }: EventScheduleProps) {
+  const navigate = useNavigate();
   const [showings, setShowings] = useState<Showing[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -81,6 +83,15 @@ export default function EventSchedule({ eventId }: EventScheduleProps) {
     }
   };
 
+  // 3. Xử lý khi bấm "Mua vé ngay"
+  const handleBookNow = (e: React.MouseEvent, showingId: number) => {
+    e.stopPropagation(); // Ngăn không cho sự kiện click lan ra ngoài (để không bị đóng/mở accordion)
+
+    console.log("🎫 Navigate to booking - eventId:", eventId, "showingId:", showingId);
+    // Chuyển hướng sang trang Booking kèm theo showingId
+    navigate(`/booking/${eventId}?showingId=${showingId}`);
+  };
+
   if (loading) return <Skeleton className="h-32 w-full rounded-xl" />;
   if (showings.length === 0) return <div className="text-gray-500 italic">Chưa có lịch diễn nào.</div>;
 
@@ -125,6 +136,7 @@ export default function EventSchedule({ eventId }: EventScheduleProps) {
                         {isOpen ? "Thu gọn" : "Xem vé"}
                     </span>
                     <Button
+                        onClick={(e) => handleBookNow(e, show.id)}
                         className={cn(
                             "rounded-full px-6 font-bold transition-all",
                             isOpen ? "bg-primary text-white" : "bg-gray-100 text-gray-600 hover:bg-gray-200"
