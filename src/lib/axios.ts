@@ -41,8 +41,12 @@ apiClient.interceptors.response.use(
   (error) => {
     // Xử lý lỗi 401 (Unauthorized) - Token hết hạn hoặc chưa đăng nhập
     if (error.response?.status === 401) {
-      const modalStore = getModalStore();
-      modalStore.openLoginPrompt();
+      // Không hiện modal nếu đang ở trang login hoặc register
+      const currentPath = window.location.pathname;
+      if (currentPath !== '/login' && currentPath !== '/register') {
+        const modalStore = getModalStore();
+        modalStore.openLoginPrompt();
+      }
     }
 
     return Promise.reject(error);
