@@ -278,6 +278,7 @@ Create a `.env.local` file for environment-specific variables:
 VITE_API_URL=https://api.concertbooking.com
 VITE_APP_NAME=Concert Booking
 ```
+The api url is in .env file
 
 ## 📄 License
 
