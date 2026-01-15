@@ -1,12 +1,21 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 
+// Định nghĩa lại Role dựa trên JSON bạn gửi
+interface Role {
+  roleId: number;
+  objectId: number;
+  roleName: string; // "ADMIN", "USER", etc.
+  roleType: number;
+}
+
 interface User {
   id: number;
   email: string;
   name: string;
   phone: string;
-  role: any;
+  code: string;
+  role: Role; // Thêm field này
 }
 
 interface AuthState {

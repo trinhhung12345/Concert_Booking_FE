@@ -7,6 +7,7 @@ import EventDetailPage from "./pages/EventDetailPage";
 import ProfilePage from "./pages/ProfilePage";
 import TicketsPage from "./pages/TicketsPage";
 import BookingPage from "./pages/BookingPage";
+import AdminDashboard from "./pages/admin/AdminDashboard";
 import LoginPromptModal from "./features/auth/components/LoginPromptModal";
 import { useModalStore } from "./store/useModalStore";
 
@@ -34,6 +35,9 @@ function App() {
         {/* Các trang Auth nằm riêng (Không có Header/Footer của MainLayout) */}
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
+
+        {/* Trang Admin nằm riêng (Không có MainLayout) */}
+        <Route path="/admin" element={<AdminDashboard />} />
       </Routes>
     </BrowserRouter>
   );

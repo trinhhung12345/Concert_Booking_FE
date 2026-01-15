@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useLocation } from "react-router-dom"; // Import useLocation
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faTicket,
@@ -8,7 +8,9 @@ import {
   faBars,
   faRightFromBracket,
   faUser,
-  faSignInAlt
+  faSignInAlt,
+  faChartPie, // Icon cho trang quản lý
+  faGlobe // Icon quả địa cầu
 } from "@fortawesome/free-solid-svg-icons";
 
 // Shadcn UI Components
@@ -34,6 +36,7 @@ import { useAuthStore } from "@/store/useAuthStore";
 
 export default function Header() {
   const navigate = useNavigate();
+  const location = useLocation(); // Hook lấy đường dẫn hiện tại
   const { user, isAuthenticated, logout } = useAuthStore();
   const [searchQuery, setSearchQuery] = useState("");
 
@@ -41,6 +44,12 @@ export default function Header() {
     logout();
     navigate("/login");
   };
+
+  // Check xem user có phải admin không
+  const isAdmin = user?.role?.roleName === "ADMIN";
+
+  // Check xem đang ở trang admin hay trang thường
+  const isAdminPage = location.pathname.startsWith("/admin");
 
   // Component Logo dùng chung
   const Logo = () => (
@@ -62,19 +71,21 @@ export default function Header() {
         <Logo />
 
         {/* 2. SEARCH BAR (Giữa - Chỉ hiện trên Desktop/Tablet) */}
-        <div className="hidden md:flex flex-1 max-w-md mx-8 relative">
-          <FontAwesomeIcon
-            icon={faSearch}
-            className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
-          />
-          <Input
-            type="text"
-            placeholder="Search for concerts, artists..."
-            className="pl-10 rounded-full bg-gray-100 border-transparent focus:bg-white focus:border-primary transition-all duration-300"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-          />
-        </div>
+        {!isAdminPage && (
+          <div className="hidden md:flex flex-1 max-w-md mx-8 relative">
+            <FontAwesomeIcon
+              icon={faSearch}
+              className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
+            />
+            <Input
+              type="text"
+              placeholder="Search for concerts, artists..."
+              className="pl-10 rounded-full bg-gray-100 border-transparent focus:bg-white focus:border-primary transition-all duration-300"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
+          </div>
+        )}
 
         {/* 3. ACTIONS (Phải) */}
         <div className="flex items-center gap-4">
@@ -83,13 +94,34 @@ export default function Header() {
           <div className="hidden md:flex items-center gap-4">
             {isAuthenticated ? (
               <>
-                {/* Nút Lịch sử vé */}
-                <Link to="/tickets">
-                    <Button variant="ghost" className="text-gray-600 hover:text-primary hover:bg-pink-50 gap-2">
-                    <FontAwesomeIcon icon={faHistory} />
-                    <span>My Tickets</span>
-                    </Button>
-                </Link>
+                {/* NÚT CHUYỂN ĐỔI TRANG QUẢN LÝ (Chỉ hiện cho Admin) */}
+                {isAdmin && (
+                    isAdminPage ? (
+                        <Link to="/">
+                            <Button variant="outline" className="gap-2 border-primary text-primary hover:bg-primary hover:text-white transition-colors">
+                                <FontAwesomeIcon icon={faGlobe} />
+                                Về Website
+                            </Button>
+                        </Link>
+                    ) : (
+                        <Link to="/admin">
+                            <Button className="gap-2 bg-gray-800 text-white hover:bg-gray-900">
+                                <FontAwesomeIcon icon={faChartPie} />
+                                Trang Quản Lý
+                            </Button>
+                        </Link>
+                    )
+                )}
+
+                {/* Nút Lịch sử vé (Ẩn ở trang admin cho đỡ rối) */}
+                {!isAdminPage && (
+                  <Link to="/tickets">
+                      <Button variant="ghost" className="text-gray-600 hover:text-primary hover:bg-pink-50 gap-2">
+                      <FontAwesomeIcon icon={faHistory} />
+                      <span>My Tickets</span>
+                      </Button>
+                  </Link>
+                )}
 
                 {/* User Dropdown */}
                 <DropdownMenu>
@@ -110,6 +142,8 @@ export default function Header() {
                         <p className="text-xs leading-none text-muted-foreground">
                           {user?.email}
                         </p>
+                        {/* Hiện Role trong menu cho ngầu */}
+                        {isAdmin && <span className="text-[10px] font-bold text-white bg-primary px-2 py-0.5 rounded-full w-fit mt-1">ADMIN</span>}
                       </div>
                     </DropdownMenuLabel>
                     <DropdownMenuSeparator />
@@ -117,6 +151,15 @@ export default function Header() {
                       <FontAwesomeIcon icon={faUser} className="mr-2 h-4 w-4" />
                       <span>Profile</span>
                     </DropdownMenuItem>
+
+                    {/* Mục menu chuyển trang cho Mobile */}
+                    {isAdmin && (
+                         <DropdownMenuItem className="cursor-pointer md:hidden" onClick={() => navigate(isAdminPage ? "/" : "/admin")}>
+                            <FontAwesomeIcon icon={isAdminPage ? faGlobe : faChartPie} className="mr-2 h-4 w-4" />
+                            <span>{isAdminPage ? "Về Website" : "Trang Quản Lý"}</span>
+                         </DropdownMenuItem>
+                    )}
+
                     <DropdownMenuItem className="cursor-pointer md:hidden">
                       {/* Trên mobile thì hiện ticket trong menu này luôn */}
                       <FontAwesomeIcon icon={faHistory} className="mr-2 h-4 w-4" />
@@ -171,16 +214,30 @@ export default function Header() {
                                     </div>
                                 </div>
                                 <nav className="flex flex-col gap-2">
+                                    {/* Link chuyển trang quản lý cho Mobile */}
+                                    {isAdmin && (
+                                        <Button
+                                            variant="outline"
+                                            className="w-full justify-start gap-3 border-gray-300"
+                                            onClick={() => navigate(isAdminPage ? "/" : "/admin")}
+                                        >
+                                            <FontAwesomeIcon icon={isAdminPage ? faGlobe : faChartPie} />
+                                            {isAdminPage ? "Về Website" : "Trang Quản Lý"}
+                                        </Button>
+                                    )}
+
                                     <Link to="/profile">
                                         <Button variant="ghost" className="w-full justify-start gap-3">
                                             <FontAwesomeIcon icon={faUser} /> Profile
                                         </Button>
                                     </Link>
+
                                     <Link to="/tickets">
                                         <Button variant="ghost" className="w-full justify-start gap-3">
                                             <FontAwesomeIcon icon={faHistory} /> My Tickets
                                         </Button>
                                     </Link>
+
                                     <Button
                                         variant="ghost"
                                         className="w-full justify-start gap-3 text-red-600 hover:text-red-600 hover:bg-red-50"
