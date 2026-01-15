@@ -28,7 +28,7 @@ A modern, responsive concert booking application built with React 19, TypeScript
 - **Media**: React Player, React YouTube, React Zoom Pan Pinch
 - **Development**: ESLint, TypeScript compiler
 
-## 🚀 Getting Started
+## 🚀 Quick Start
 
 ### Prerequisites
 
@@ -66,140 +66,75 @@ npm run dev
 
 ```
 src/
-├── assets/                 # Static assets (images, icons)
-│   ├── images/            # Concert images and backgrounds
-│   └── react.svg          # React logo
+├── assets/          # Static assets (images, icons)
 ├── components/
-│   ├── layout/            # Layout components (Header, MainLayout, etc.)
-│   │   ├── Header.tsx     # Main navigation header
-│   │   ├── MainLayout.tsx # Main app layout wrapper
-│   │   └── CategoryNav.tsx # Category navigation
-│   └── ui/                # Reusable UI components (shadcn/ui)
-│       ├── button.tsx     # Button component
-│       ├── card.tsx       # Card component
-│       ├── input.tsx      # Input component
-│       └── ...           # Other UI components
-├── features/              # Feature-based modules (Isolated functionality)
-│   ├── auth/              # Authentication feature
-│   │   ├── components/    # Auth-specific components
-│   │   ├── services/      # Auth API services
-│   │   └── schemas/       # Auth validation schemas
-│   ├── booking/           # Booking feature
-│   │   ├── components/    # SeatMap, booking forms
-│   │   ├── services/      # Booking API services
-│   │   └── types/         # Booking TypeScript types
-│   └── concerts/          # Concerts feature
-│       ├── components/    # EventCard, EventSchedule
-│       ├── services/      # Event and category services
-│       └── ...
-├── lib/                   # Shared utilities and configurations
-│   ├── axios.ts           # Axios instance with interceptors
-│   └── utils.ts           # Utility functions (cn, etc.)
-├── pages/                 # Page components (Route handlers)
-│   ├── HomePage.tsx       # Landing page
-│   ├── BookingPage.tsx    # Seat selection and booking
-│   ├── ProfilePage.tsx    # User profile
-│   ├── TicketsPage.tsx    # User's tickets
-│   ├── EventDetailPage.tsx # Event details
-│   ├── LoginPage.tsx      # Login page
-│   ├── RegisterPage.tsx   # Registration page
-│   └── admin/             # Admin pages
-│       └── AdminDashboard.tsx # Admin dashboard
-├── store/                 # Global state management (Zustand)
-│   ├── useAuthStore.ts    # Authentication state
-│   └── useModalStore.ts   # Modal state management
-├── App.tsx                # Main application component
-├── index.css              # Global styles and Tailwind imports
-└── main.tsx               # Application entry point
+│   ├── layout/      # Layout components (Header, MainLayout)
+│   └── ui/          # Shared UI components (shadcn/ui)
+├── features/        # Feature-based modules (auth, booking, concerts)
+│                   # └── Isolated business logic per feature
+├── lib/             # Shared utilities and configurations
+├── pages/           # 📍 Page components - Route handlers for URLs
+│   ├── HomePage.tsx        # Landing page (/)
+│   ├── BookingPage.tsx     # Seat booking (/booking/:eventId)
+│   ├── LoginPage.tsx       # Authentication (/login)
+│   └── ...                 # Each page = one URL route
+├── store/           # Global state management (Zustand)
+├── App.tsx          # Main application component + routing
+├── index.css        # Global styles
+└── main.tsx         # Application entry point
 ```
 
-### 🏗️ Architecture Principles
+### 🏗️ Architecture Overview
 
 - **Feature-based**: Each feature (`auth`, `booking`, `concerts`) is self-contained
 - **Component isolation**: Shared UI components in `components/ui/`
 - **Centralized state**: Global state in `store/` using Zustand
 - **Service layer**: API calls abstracted in feature services
-- **Type safety**: Full TypeScript coverage with feature-specific types
 
-## 🤝 Contributing & Team Collaboration
+## 🤝 Contributing
 
 ### 🚨 Important: Avoiding Merge Conflicts
 
-#### Files/Folders Prone to Conflicts:
-- **`components/ui/` & `components/layout/`**: Shared components used across features
-- **`src/lib/`**: Utility functions and shared configurations
-- **`src/store/`**: Global state stores
-- **`package.json`**: Dependencies and scripts
-- **`src/App.tsx`**: Main routing configuration
-- **`.env`**: Environment variables
-- **`tailwind.config.js`**: Styling configuration
-- **`src/index.css`**: Global styles
+**High Risk Files (Coordinate with team):**
+- `components/ui/` - Shared UI components
+- `src/lib/` - Utility functions
+- `src/store/` - Global state stores
+- `src/App.tsx` - Main routing
+- `package.json` - Dependencies
 
-#### Safe Areas (Low Conflict Risk):
-- **`src/features/*/components/`**: Feature-specific components
-- **`src/features/*/services/`**: Feature-specific API services
-- **`src/features/*/types/`**: Feature-specific TypeScript definitions
-- **`src/pages/`**: Individual page components
-- **`src/assets/`**: Static assets
+**Safe Areas (Low Risk):**
+- `src/features/*/components/` - Feature-specific components
+- `src/features/*/services/` - Feature-specific API services
+- `src/features/*/types/` - Feature-specific TypeScript types
+- `src/pages/` - Page components (route handlers)
+- `src/assets/` - Static assets
 
 ### 🔄 Development Workflow
 
-#### 1. Branching Strategy
-```bash
-# Feature branch
-git checkout -b feature/your-feature-name
+1. **Create feature branch**: `git checkout -b feature/your-feature-name`
+2. **Work in isolation**: Develop within `src/features/your-feature/`
+3. **Coordinate shared changes**: Notify team before modifying shared files
+4. **Test thoroughly**: Ensure no regressions in existing features
+5. **Pull request**: Include testing notes and tag reviewers for shared changes
 
-# Bug fix branch
-git checkout -b fix/bug-description
+### 📋 Quick Checklist
 
-# Never work directly on main branch
-```
-
-#### 2. Before Making Changes
-
-**For Shared Files (High Risk):**
-- Check with team: "Planning to modify `components/ui/button.tsx`"
-- Create a separate branch for shared component changes
-- Test thoroughly across all features that use the component
-
-**For Feature Development:**
-- Work within your feature folder (`src/features/your-feature/`)
-- Avoid touching shared files unless absolutely necessary
-- Use feature-specific types and services
-
-#### 3. Code Changes Guidelines
-
-```typescript
-// ✅ Good: Feature-specific component
-// src/features/booking/components/BookingForm.tsx
-export const BookingForm = () => { /* ... */ };
-
-// ❌ Bad: Adding to shared folder without coordination
-// src/components/BookingForm.tsx (Don't do this!)
-```
-
-#### 4. Pull Request Process
-- **Title**: `feat: add seat selection feature` or `fix: resolve booking validation bug`
-- **Description**: Include screenshots, testing notes, and affected areas
-- **Reviewers**: Tag team members for shared file changes
-- **Testing**: Ensure no regressions in other features
-
-### 📋 Feature Development Checklist
-
-**When adding a new feature:**
+**Adding a new feature:**
 - [ ] Create feature folder under `src/features/`
-- [ ] Implement components in `your-feature/components/`
-- [ ] Add services in `your-feature/services/`
-- [ ] Define types in `your-feature/types/`
-- [ ] Update routing in `App.tsx` (coordinate with team)
+- [ ] Implement in feature's components/services/types
+- [ ] Update routing in `App.tsx` (coordinate!)
 - [ ] Test integration with existing features
-- [ ] Update this README if adding new patterns
 
-**When modifying shared components:**
-- [ ] Notify team via Slack/discussion
-- [ ] Test across all features that use the component
+**Modifying shared components:**
+- [ ] Notify team before changes
+- [ ] Test across all features
 - [ ] Consider backward compatibility
-- [ ] Document changes in PR
+
+## 📚 Documentation
+
+- **[Detailed Documentation](docs/details.md)** - Complete guides, architecture details, and best practices
+- **Communication**: Use Slack/Discord for coordination on shared changes
+- **Code Review**: Required for shared file modifications
 
 ## 🎨 Design System
 
@@ -210,51 +145,7 @@ export const BookingForm = () => { /* ... */ };
 - **Accent**: White borders with opacity variations
 
 ### Components
-The app uses shadcn/ui components with custom styling:
-- **Button**: Multiple variants (default, outline) with dark mode support
-- **Card**: Glassmorphism effect with semi-transparent backgrounds
-- **Input**: Custom styled form inputs with focus states
-
-## 🔧 Development Guidelines
-
-### Code Style
-- Follow TypeScript strict mode
-- Use ESLint for code quality
-- Follow React best practices and hooks guidelines
-- Use meaningful component and variable names
-
-### Adding New Components
-
-#### For Feature Components:
-1. Create in `src/features/your-feature/components/`
-2. Export from feature's index file
-3. Use feature-specific styling
-
-#### For Shared UI Components:
-1. Use shadcn/ui CLI to add new components:
-```bash
-npx shadcn@latest add [component-name]
-```
-
-2. Customize the component styles in the component file
-3. Update the design system documentation
-4. Notify team about new shared component
-
-### Styling Guidelines
-- Use Tailwind CSS classes primarily
-- Leverage CSS custom properties for theming
-- Maintain consistent spacing using Tailwind's space scale
-- Use responsive prefixes (sm:, md:, lg:) for mobile-first design
-
-### State Management
-- Use Zustand stores for global state (`src/store/`)
-- Use local component state for component-specific state
-- Keep stores focused on specific domains (auth, modals, etc.)
-
-### API Integration
-- All API calls go through feature services
-- Use the shared axios instance from `src/lib/axios.ts`
-- Handle errors consistently across features
+Uses shadcn/ui components with custom dark theme styling.
 
 ## 🚢 Deployment
 
@@ -264,11 +155,7 @@ npx shadcn@latest add [component-name]
 npm run build
 ```
 
-The built files will be in the `dist/` directory, ready for deployment to any static hosting service like:
-- Vercel
-- Netlify
-- GitHub Pages
-- AWS S3 + CloudFront
+The built files will be in the `dist/` directory, ready for deployment to any static hosting service.
 
 ### Environment Variables
 
@@ -278,7 +165,6 @@ Create a `.env.local` file for environment-specific variables:
 VITE_API_URL=https://api.concertbooking.com
 VITE_APP_NAME=Concert Booking
 ```
-The api url is in .env file
 
 ## 📄 License
 
@@ -286,8 +172,10 @@ This project is private and proprietary.
 
 ## 👨‍💻 Author
 
-**Trinh Hung** - [GitHub](https://github.com/trinhhung12345)
+**Trinh Hung** - [GitHub](https://github.com/trinhhung12345/Concert_Booking_FE.git)
 
 ---
 
 *Built with ❤️ using modern web technologies*
+
+**📖 For detailed documentation, see [docs/details.md](docs/details.md)**
