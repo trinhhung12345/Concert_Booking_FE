@@ -142,7 +142,7 @@ export default function EventSchedule({ eventId }: EventScheduleProps) {
                             isOpen ? "bg-primary text-white" : "bg-gray-100 text-gray-600 hover:bg-gray-200"
                         )}
                     >
-                        {isOpen ? "Đang chọn" : "Mua vé ngay"}
+                        Mua vé ngay
                     </Button>
                     <FontAwesomeIcon
                         icon={isOpen ? faChevronUp : faChevronDown}
