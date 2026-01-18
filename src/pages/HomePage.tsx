@@ -1,5 +1,7 @@
 import { useEffect, useState } from "react";
 import EventCard, { type EventProps } from "@/features/concerts/components/EventCard";
+import CategoryFilter from "@/components/layout/CategoryFilter";
+import ChatBot from "@/components/ChatBot";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { eventService, type Event } from "@/features/concerts/services/eventService";
@@ -68,6 +70,9 @@ export default function HomePage() {
   return (
     <div className="container mx-auto px-4 py-8 space-y-12">
 
+      {/* SECTION: Danh mục sự kiện */}
+      <CategoryFilter />
+
       {/* SECTION: Sự kiện nổi bật */}
       <section>
         <div className="flex items-center justify-between mb-6">
@@ -109,6 +114,8 @@ export default function HomePage() {
         )}
       </section>
 
+      {/* Chatbot */}
+      <ChatBot />
     </div>
   );
 }
