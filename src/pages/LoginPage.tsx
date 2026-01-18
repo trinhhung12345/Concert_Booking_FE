@@ -57,8 +57,8 @@ export default function LoginPage() {
   return (
     <>
       <AuthLayout
-        title="Welcome back"
-        subtitle="Discover millions of concert, get alerts about your favorite artists, teams, plays and more."
+        title="Chào mừng trở lại!"
+        subtitle="Khám phá hàng triệu buổi hòa nhạc, nhận thông báo về các nghệ sĩ, vở kịch yêu thích của bạn và nhiều hơn thế nữa."
         isLogin={true}
       >
         {/* Truyền hàm xử lý và trạng thái loading xuống Form */}

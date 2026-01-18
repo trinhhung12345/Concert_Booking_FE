@@ -54,7 +54,7 @@ export default function LoginForm({ onSubmitAPI, isLoading }: LoginFormProps) {
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="password" className="text-gray-700 font-medium ml-1">Password</Label>
+        <Label htmlFor="password" className="text-gray-700 font-medium ml-1">Mật khẩu</Label>
         <div className="relative">
           <Input
             id="password"
@@ -76,7 +76,7 @@ export default function LoginForm({ onSubmitAPI, isLoading }: LoginFormProps) {
 
       <div className="flex justify-end">
         <a href="#" className="text-sm font-medium text-primary hover:underline">
-          Forget password?
+          Quên mật khẩu?
         </a>
       </div>
 
@@ -90,7 +90,7 @@ export default function LoginForm({ onSubmitAPI, isLoading }: LoginFormProps) {
         // Disable nút khi đang loading
         disabled={isSubmitting || isLoading || !isFormFilled}
       >
-        {(isSubmitting || isLoading) ? "Signing in..." : "Login"}
+        {(isSubmitting || isLoading) ? "Đang đăng nhập..." : "Đăng nhập"}
       </Button>
     </form>
   );

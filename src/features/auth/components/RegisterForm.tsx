@@ -49,7 +49,7 @@ export default function RegisterForm({ onSubmitAPI, isSubmittingAPI }: RegisterF
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 mt-4">
       {/* FULL NAME */}
       <div className="space-y-2">
-        <Label htmlFor="fullName" className="text-gray-700 font-medium ml-1">Full Name</Label>
+        <Label htmlFor="fullName" className="text-gray-700 font-medium ml-1">Họ và tên</Label>
         <Input
           id="fullName"
           placeholder=""
@@ -61,7 +61,7 @@ export default function RegisterForm({ onSubmitAPI, isSubmittingAPI }: RegisterF
 
       {/* PHONE & EMAIL (Chia đôi dòng nếu muốn, ở đây để dọc cho mobile dễ nhìn) */}
       <div className="space-y-2">
-        <Label htmlFor="phone" className="text-gray-700 font-medium ml-1">Phone Number</Label>
+        <Label htmlFor="phone" className="text-gray-700 font-medium ml-1">Số điện thoại</Label>
         <Input
           id="phone"
           placeholder=""
@@ -85,7 +85,7 @@ export default function RegisterForm({ onSubmitAPI, isSubmittingAPI }: RegisterF
 
       {/* PASSWORD */}
       <div className="space-y-2">
-        <Label htmlFor="password" className="text-gray-700 font-medium ml-1">Password</Label>
+        <Label htmlFor="password" className="text-gray-700 font-medium ml-1">Mật khẩu</Label>
         <div className="relative">
           <Input
             id="password"
@@ -107,7 +107,7 @@ export default function RegisterForm({ onSubmitAPI, isSubmittingAPI }: RegisterF
 
       {/* CONFIRM PASSWORD */}
       <div className="space-y-2">
-        <Label htmlFor="confirmPassword" className="text-gray-700 font-medium ml-1">Confirm Password</Label>
+        <Label htmlFor="confirmPassword" className="text-gray-700 font-medium ml-1">Xác nhận mật khẩu</Label>
         <div className="relative">
           <Input
             id="confirmPassword"
@@ -136,7 +136,7 @@ export default function RegisterForm({ onSubmitAPI, isSubmittingAPI }: RegisterF
         }`}
         disabled={isSubmitting || isSubmittingAPI || !isFormFilled}
       >
-        {(isSubmitting || isSubmittingAPI) ? "Processing..." : "Create Account"}
+        {(isSubmitting || isSubmittingAPI) ? "Đang xử lý..." : "Tạo tài khoản"}
       </Button>
     </form>
   );

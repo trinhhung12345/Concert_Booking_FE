@@ -40,9 +40,9 @@ export default function AuthLayout({ children, title, subtitle, isLogin = true }
           <div className="flex-1 flex items-start">
             <div className="w-full bg-white rounded-2xl px-5 py-5 shadow-2xl animate-in fade-in slide-in-from-bottom-5 duration-500">
               <div className="mb-3">
-                <h2 className="text-xl font-bold text-gray-900">
-                  {isLogin ? "Login" : "Register"}
-                </h2>
+              <h2 className="text-xl font-bold text-gray-900">
+                {isLogin ? "Đăng nhập" : "Đăng ký"}
+              </h2>
               </div>
 
               {/* Form content - compact */}
@@ -50,12 +50,12 @@ export default function AuthLayout({ children, title, subtitle, isLogin = true }
 
               {/* Link switch trang - Bottom */}
               <p className="text-sm text-gray-500 text-center mt-5">
-                {isLogin ? "Don't have an account? " : "Already have an account? "}
+                {isLogin ? "Chưa có tài khoản? " : "Đã có tài khoản? "}
                 <Link
                   to={isLogin ? "/register" : "/login"}
                   className="font-semibold text-primary hover:underline"
                 >
-                  {isLogin ? "Make an account" : "Login here"}
+                  {isLogin ? "Tạo tài khoản" : "Đăng nhập tại đây"}
                 </Link>
               </p>
             </div>
@@ -93,16 +93,16 @@ export default function AuthLayout({ children, title, subtitle, isLogin = true }
           <div className="w-full max-w-md bg-white rounded-3xl shadow-xl p-10 animate-in fade-in slide-in-from-right-10 duration-500">
             <div className="mb-8">
               <h2 className="text-3xl font-bold text-gray-900 mb-2">
-                {isLogin ? "Login" : "Register"}
+                {isLogin ? "Đăng nhập" : "Đăng ký"}
               </h2>
               {/* Link switch trang */}
               <p className="text-sm text-gray-500">
-                {isLogin ? "Don't have an account? " : "Already have an account? "}
+                {isLogin ? "Chưa có tài khoản? " : "Đã có tài khoản? "}
                 <Link
                   to={isLogin ? "/register" : "/login"}
                   className="font-semibold text-primary hover:underline"
                 >
-                  {isLogin ? "Make an account" : "Login here"}
+                  {isLogin ? "Tạo tài khoản" : "Đăng nhập tại đây"}
                 </Link>
               </p>
             </div>
