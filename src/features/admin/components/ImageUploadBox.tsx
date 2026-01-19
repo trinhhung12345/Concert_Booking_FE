@@ -68,11 +68,11 @@ export default function ImageUploadBox({ label, aspectRatio, onImageCropped, des
 
   return (
     <div className="space-y-2">
-      <div className="font-semibold text-sm text-gray-700 dark:text-gray-300">{label}</div>
+      <div className="font-semibold text-sm text-foreground">{label}</div>
 
       {/* KHUNG UPLOAD / PREVIEW */}
       <div
-        className="border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-xl bg-gray-50 dark:bg-[#1e293b] flex flex-col items-center justify-center relative overflow-hidden transition-colors hover:bg-gray-100 dark:hover:bg-gray-800"
+        className="border-2 border-dashed border-border rounded-xl bg-muted flex flex-col items-center justify-center relative overflow-hidden transition-colors hover:bg-muted/80"
         style={{ aspectRatio: aspectRatio }} // Tự động chỉnh chiều cao theo tỷ lệ
       >
         {croppedImage ? (
@@ -94,9 +94,9 @@ export default function ImageUploadBox({ label, aspectRatio, onImageCropped, des
             className="flex flex-col items-center justify-center cursor-pointer p-6 text-center"
             onClick={() => fileInputRef.current?.click()}
           >
-            <FontAwesomeIcon icon={faCloudUploadAlt} className="text-4xl text-emerald-500 mb-3" />
-            <p className="text-sm font-medium text-gray-600 dark:text-gray-300">Thêm ảnh sự kiện</p>
-            {description && <p className="text-xs text-gray-400 mt-1">{description}</p>}
+            <FontAwesomeIcon icon={faCloudUploadAlt} className="text-4xl text-primary mb-3" />
+            <p className="text-sm font-medium text-foreground">Thêm ảnh sự kiện</p>
+            {description && <p className="text-xs text-muted-foreground mt-1">{description}</p>}
           </div>
         )}
 
@@ -131,7 +131,7 @@ export default function ImageUploadBox({ label, aspectRatio, onImageCropped, des
           </div>
 
           <div className="py-2 flex items-center gap-4">
-             <span className="text-sm min-w-[50px]">Zoom:</span>
+             <span className="text-sm text-foreground min-w-[50px]">Zoom:</span>
              <Slider
                 defaultValue={[1]}
                 min={1} max={3} step={0.1}
@@ -142,7 +142,7 @@ export default function ImageUploadBox({ label, aspectRatio, onImageCropped, des
 
           <DialogFooter>
             <Button variant="outline" onClick={() => setIsDialogOpen(false)}>Hủy</Button>
-            <Button onClick={handleSaveCrop} className="bg-emerald-600 hover:bg-emerald-700">Cắt & Lưu</Button>
+            <Button onClick={handleSaveCrop} className="bg-primary hover:bg-primary/90 text-primary-foreground">Cắt & Lưu</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
