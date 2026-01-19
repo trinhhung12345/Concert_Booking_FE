@@ -1,75 +1,92 @@
+import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faSearch, faBoxOpen } from "@fortawesome/free-solid-svg-icons";
+import { faSearch, faPlus } from "@fortawesome/free-solid-svg-icons";
+import { Skeleton } from "@/components/ui/skeleton";
+
+// Services & Components
+import { eventService, type Event } from "@/features/concerts/services/eventService";
+import AdminEventCard from "@/features/admin/components/AdminEventCard";
 
 export default function EventManagerPage() {
-  return (
-    <div className="space-y-6">
+  const [events, setEvents] = useState<Event[]>([]);
+  const [loading, setLoading] = useState(true);
 
-      {/* 1. HEADER BAR: Search + Tabs */}
-      <div className="bg-card p-4 rounded-xl border border-border flex flex-col lg:flex-row gap-4 lg:items-center justify-between">
-        {/* LEFT: Search Group */}
-        <div className="flex gap-2 items-center">
-          <div className="relative flex-1 lg:w-96">
-            <FontAwesomeIcon icon={faSearch} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+  // Gọi API lấy danh sách sự kiện
+  useEffect(() => {
+    const fetchEvents = async () => {
+      try {
+        setLoading(true);
+        // Tạm dùng getAll (public) hoặc tạo API getMyEvents riêng cho admin nếu backend có
+        const data = await eventService.getAll();
+        setEvents(data);
+      } catch (error) {
+        console.error("Lỗi tải sự kiện:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchEvents();
+  }, []);
+
+  return (
+    <div className="space-y-6 max-w-5xl mx-auto">
+
+      {/* 1. FILTER BAR */}
+      <div className="bg-white dark:bg-[#1e293b] p-4 rounded-xl border border-gray-200 dark:border-gray-700 flex flex-col sm:flex-row gap-4 items-center justify-between shadow-sm">
+        <div className="relative w-full sm:w-96">
+            <FontAwesomeIcon icon={faSearch} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
             <Input
                 placeholder="Tìm kiếm sự kiện..."
-                className="pl-10 bg-input border-input text-foreground placeholder:text-muted-foreground focus-visible:ring-primary"
+                className="pl-10 bg-gray-50 dark:bg-[#0f172a] border-gray-300 dark:border-gray-600"
             />
-          </div>
-          <Button className="bg-primary hover:bg-primary/90 text-primary-foreground whitespace-nowrap">
-            Tìm kiếm đi
-          </Button>
         </div>
 
-        {/* RIGHT: Filter Tabs */}
-        <Tabs defaultValue="all" className="w-full lg:w-auto">
-          <TabsList className="bg-background border border-border text-muted-foreground">
-            <TabsTrigger value="all" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">Tất cả</TabsTrigger>
-            <TabsTrigger value="upcoming" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">Sắp tới</TabsTrigger>
-            <TabsTrigger value="past" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">Đã qua</TabsTrigger>
-            <TabsTrigger value="pending" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">Chờ duyệt</TabsTrigger>
-            <TabsTrigger value="draft" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">Nháp</TabsTrigger>
-          </TabsList>
-        </Tabs>
+        <Link to="/admin/events/create">
+            <Button className="bg-primary hover:bg-primary/90 text-white gap-2">
+                <FontAwesomeIcon icon={faPlus} /> Tạo sự kiện mới
+            </Button>
+        </Link>
       </div>
 
-      {/* 2. TAB CONTENT */}
+      {/* 2. TABS & CONTENT */}
       <Tabs defaultValue="all" className="w-full">
-        {/* Nội dung Tab: Tất cả */}
-        <TabsContent value="all" className="mt-6">
-            {/* TRẠNG THÁI TRỐNG (EMPTY STATE) - Giống ảnh mẫu */}
-            <div className="flex flex-col items-center justify-center py-20 text-muted-foreground bg-card rounded-xl border border-border border-dashed">
-                <div className="w-20 h-20 bg-muted rounded-full flex items-center justify-center mb-4">
-                    <FontAwesomeIcon icon={faBoxOpen} className="text-3xl text-muted-foreground" />
-                </div>
-                <h3 className="text-lg font-medium text-foreground">Chưa có sự kiện nào</h3>
-                <p className="text-sm mb-6">Hãy bắt đầu tạo sự kiện đầu tiên của bạn ngay hôm nay.</p>
-                <Button className="bg-primary hover:bg-primary/90 text-primary-foreground">
-                    Tạo sự kiện ngay
-                </Button>
-            </div>
-        </TabsContent>
+        <TabsList className="bg-gray-100 dark:bg-[#1e293b] border dark:border-gray-700 text-gray-500">
+          <TabsTrigger value="all" className="data-[state=active]:bg-white dark:data-[state=active]:bg-gray-700 data-[state=active]:shadow-sm">Tất cả ({events.length})</TabsTrigger>
+          <TabsTrigger value="upcoming">Sắp tới</TabsTrigger>
+          <TabsTrigger value="past">Đã qua</TabsTrigger>
+        </TabsList>
 
-        <TabsContent value="upcoming" className="mt-6">
-            {/* TRẠNG THÁI TRỐNG (EMPTY STATE) - Giống ảnh mẫu */}
-            <div className="flex flex-col items-center justify-center py-20 text-muted-foreground bg-card rounded-xl border border-border border-dashed">
-                <div className="w-20 h-20 bg-muted rounded-full flex items-center justify-center mb-4">
-                    <FontAwesomeIcon icon={faBoxOpen} className="text-3xl text-muted-foreground" />
-                </div>
-                <h3 className="text-lg font-medium text-foreground">Chưa có sự kiện nào</h3>
-                <p className="text-sm mb-6">Hãy bắt đầu tạo sự kiện đầu tiên của bạn ngay hôm nay.</p>
-                <Button className="bg-primary hover:bg-primary/90 text-primary-foreground">
-                    Tạo sự kiện ngay
-                </Button>
-            </div>
-        </TabsContent>
+        <TabsContent value="all" className="mt-6 space-y-4">
 
-        <TabsContent value="past"><div className="text-foreground">Danh sách sự kiện đã qua...</div></TabsContent>
-        <TabsContent value="pending"><div className="text-foreground">Danh sách chờ duyệt...</div></TabsContent>
-        <TabsContent value="draft"><div className="text-foreground">Danh sách nháp...</div></TabsContent>
+            {/* LOADING STATE */}
+            {loading && Array.from({ length: 3 }).map((_, i) => (
+                <div key={i} className="bg-white dark:bg-[#1e293b] h-48 rounded-xl border p-4 flex gap-4 animate-pulse">
+                    <Skeleton className="w-64 h-40 rounded-lg" />
+                    <div className="flex-1 space-y-3">
+                        <Skeleton className="h-6 w-1/2" />
+                        <Skeleton className="h-4 w-1/3" />
+                        <Skeleton className="h-4 w-1/4" />
+                    </div>
+                </div>
+            ))}
+
+            {/* DATA LIST */}
+            {!loading && events.length > 0 ? (
+                events.map((event) => (
+                    <AdminEventCard key={event.id} event={event} />
+                ))
+            ) : (
+                !loading && (
+                    <div className="text-center py-20 text-gray-500 dark:text-gray-400">
+                        Chưa có sự kiện nào.
+                    </div>
+                )
+            )}
+        </TabsContent>
       </Tabs>
     </div>
   );

@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useLayoutEffect } from "react";
 import { Outlet } from "react-router-dom";
 import AdminSidebar from "./AdminSidebar";
 import AdminHeader from "./AdminHeader";
@@ -7,23 +7,25 @@ import { useThemeStore } from "@/store/useThemeStore";
 export default function AdminLayout() {
   const { theme } = useThemeStore();
 
-  // Áp dụng theme class lên document element - chỉ trong admin
-  useEffect(() => {
+  // Áp dụng theme class ngay khi mount (trước khi paint)
+  useLayoutEffect(() => {
     const root = document.documentElement;
     if (theme === "dark") {
       root.classList.add("dark");
     } else {
       root.classList.remove("dark");
     }
-
-    // Cleanup: Gỡ class dark khi rời khỏi Admin
-    return () => {
-      root.classList.remove("dark");
-    };
   }, [theme]);
 
+  // Cleanup: Gỡ class dark khi rời khỏi Admin
+  useEffect(() => {
+    return () => {
+      document.documentElement.classList.remove("dark");
+    };
+  }, []);
+
   return (
-    <div className="flex min-h-screen bg-background">
+    <div className="flex min-h-screen bg-background text-foreground">
       {/* Sidebar cố định bên trái */}
       <AdminSidebar />
 
