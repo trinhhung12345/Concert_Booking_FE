@@ -8,6 +8,8 @@ import EventDetailPage from "./pages/EventDetailPage";
 import ProfilePage from "./pages/ProfilePage";
 import TicketsPage from "./pages/TicketsPage";
 import BookingPage from "./pages/BookingPage";
+import CheckoutPage from "./pages/CheckoutPage";
+import MyOrdersPage from "./pages/MyOrdersPage";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import LoginPromptModal from "./features/auth/components/LoginPromptModal";
 import { useModalStore } from "./store/useModalStore";
@@ -30,6 +32,8 @@ function App() {
             <Route path="/category/:slug" element={<CategoryPage />} />
             <Route path="/event/:id" element={<EventDetailPage />} />
             <Route path="/booking/:eventId" element={<BookingPage />} />
+            <Route path="/checkout" element={<CheckoutPage />} />
+            <Route path="/my-orders" element={<MyOrdersPage />} />
             <Route path="/profile" element={<ProfilePage />} />
             <Route path="/tickets" element={<TicketsPage />} />
         </Route>
