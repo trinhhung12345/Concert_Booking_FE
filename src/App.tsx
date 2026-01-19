@@ -7,6 +7,8 @@ import RegisterPage from "./pages/RegisterPage";
 import EventDetailPage from "./pages/EventDetailPage";
 import ProfilePage from "./pages/ProfilePage";
 import TicketsPage from "./pages/TicketsPage";
+import OrderDetailPage from "./pages/OrderDetailPage";
+import CheckInPage from "./pages/CheckInPage";
 import BookingPage from "./pages/BookingPage";
 import CheckoutPage from "./pages/CheckoutPage";
 import MyOrdersPage from "./pages/MyOrdersPage";
@@ -36,11 +38,15 @@ function App() {
             <Route path="/my-orders" element={<MyOrdersPage />} />
             <Route path="/profile" element={<ProfilePage />} />
             <Route path="/tickets" element={<TicketsPage />} />
+            <Route path="/tickets/:orderId" element={<OrderDetailPage />} />
         </Route>
 
         {/* Các trang Auth nằm riêng (Không có Header/Footer của MainLayout) */}
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
+
+        {/* Trang Check-in (Không cần MainLayout - dành cho scan QR) */}
+        <Route path="/check-in" element={<CheckInPage />} />
 
         {/* Trang Admin nằm riêng (Không có MainLayout) */}
         <Route path="/admin" element={<AdminDashboard />} />

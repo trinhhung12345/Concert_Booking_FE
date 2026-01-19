@@ -27,4 +27,9 @@ export const orderService = {
   getOrderById: async (orderId: number): Promise<ApiResponse<Order>> => {
     return apiClient.get(`/orders/${orderId}`) as Promise<ApiResponse<Order>>;
   },
+
+  // Check-in vé bằng token
+  checkIn: async (token: string): Promise<ApiResponse<{ message: string }>> => {
+    return apiClient.post(`/orders/check-in?token=${token}`) as Promise<ApiResponse<{ message: string }>>;
+  },
 };

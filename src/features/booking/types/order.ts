@@ -6,6 +6,7 @@ export interface OrderDetail {
   seatCode: string;
   price: number;
   originalPrice: number;
+  qr: string | null;
 }
 
 export interface Order {
