@@ -177,6 +177,13 @@ export default function BookingPage() {
                 <Button
                     className="w-full h-12 text-lg bg-primary hover:bg-primary/90 font-bold shadow-lg shadow-primary/20 rounded-xl"
                     disabled={selectedSeats.length === 0}
+                    onClick={() => navigate('/checkout', { 
+                        state: { 
+                            selectedSeats, 
+                            eventName: mapData.name,
+                            showingId 
+                        } 
+                    })}
                 >
                     Tiếp tục thanh toán <FontAwesomeIcon icon={faArrowRight} className="ml-2"/>
                 </Button>
