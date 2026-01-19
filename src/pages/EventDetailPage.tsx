@@ -1,9 +1,16 @@
 import { useEffect, useState } from "react";
-import { useParams, Link } from "react-router-dom";
+import { useParams, Link, useNavigate } from "react-router-dom";
 import { eventService, type Event, type EventFile } from "@/features/concerts/services/eventService";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
 import YouTube from 'react-youtube';
 import type { YouTubeProps } from 'react-youtube';
 import { getYouTubeId, getYouTubeThumbnail } from "@/lib/utils";
@@ -28,6 +35,15 @@ const formatDate = (dateString: string) =>
 const formatTime = (dateString: string) =>
   new Date(dateString).toLocaleTimeString("vi-VN", { hour: '2-digit', minute: '2-digit' });
 
+// Format lịch diễn ngắn gọn cho modal
+const formatScheduleShort = (start: string, end: string) => {
+  const startDate = new Date(start);
+  const endDate = new Date(end);
+  const timeStr = `${startDate.toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" })} - ${endDate.toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" })}`;
+  const dateStr = startDate.toLocaleDateString("vi-VN", { weekday: "short", day: "2-digit", month: "2-digit", year: "numeric" });
+  return { time: timeStr, date: dateStr };
+};
+
 // Cập nhật hàm check video: Chấp nhận type=1 (video từ backend) HOẶC link youtube
 const isVideo = (file: EventFile) => {
   // Check type từ backend trả về (type=1 là video)
@@ -40,11 +56,13 @@ const isVideo = (file: EventFile) => {
 
 export default function EventDetailPage() {
   const { id } = useParams();
+  const navigate = useNavigate();
   const [event, setEvent] = useState<Event | null>(null);
   const [loading, setLoading] = useState(true);
 
   const [videoId, setVideoId] = useState<string | null>(null); // Lưu ID sạch
   const [heroImage, setHeroImage] = useState<string>("");
+  const [showingModalOpen, setShowingModalOpen] = useState(false); // Modal chọn suất diễn
 
   useEffect(() => {
     const fetchEventDetail = async () => {
@@ -273,7 +291,19 @@ export default function EventDetailPage() {
                         </div>
                     </div>
 
-                    <Button className="w-full h-12 text-lg font-bold rounded-xl bg-primary hover:bg-primary/90 shadow-lg shadow-primary/30 animate-in fade-in zoom-in duration-300">
+                    <Button 
+                        className="w-full h-12 text-lg font-bold rounded-xl bg-primary hover:bg-primary/90 shadow-lg shadow-primary/30 animate-in fade-in zoom-in duration-300"
+                        onClick={() => {
+                            const showings = event?.showings || [];
+                            if (showings.length === 1) {
+                                // Chỉ có 1 suất diễn -> chuyển thẳng tới trang booking
+                                navigate(`/booking/${event?.id}?showingId=${showings[0].id}`);
+                            } else if (showings.length > 1) {
+                                // Nhiều suất diễn -> mở modal chọn
+                                setShowingModalOpen(true);
+                            }
+                        }}
+                    >
                         Đặt vé ngay
                     </Button>
 
@@ -285,6 +315,49 @@ export default function EventDetailPage() {
 
         </div>
       </div>
+
+      {/* MODAL CHỌN SUẤT DIỄN */}
+      <Dialog open={showingModalOpen} onOpenChange={setShowingModalOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <FontAwesomeIcon icon={faCalendarAlt} className="text-primary" />
+              Chọn suất diễn
+            </DialogTitle>
+            <DialogDescription>
+              Vui lòng chọn suất diễn bạn muốn đặt vé
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-3 mt-4 max-h-[400px] overflow-y-auto">
+            {event?.showings?.map((showing) => {
+              const { time, date } = formatScheduleShort(showing.startTime, showing.endTime);
+              return (
+                <div
+                  key={showing.id}
+                  className="p-4 border border-gray-200 rounded-xl hover:border-primary hover:bg-pink-50/50 cursor-pointer transition-all group"
+                  onClick={() => {
+                    setShowingModalOpen(false);
+                    navigate(`/booking/${event?.id}?showingId=${showing.id}`);
+                  }}
+                >
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-lg bg-gray-100 group-hover:bg-primary group-hover:text-white flex items-center justify-center transition-colors">
+                        <FontAwesomeIcon icon={faCalendarAlt} />
+                      </div>
+                      <div>
+                        <p className="font-bold text-gray-900">{time}</p>
+                        <p className="text-sm text-gray-500 group-hover:text-primary transition-colors">{date}</p>
+                      </div>
+                    </div>
+                    <FontAwesomeIcon icon={faTicketAlt} className="text-gray-400 group-hover:text-primary transition-colors" />
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

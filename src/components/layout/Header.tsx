@@ -79,7 +79,7 @@ export default function Header() {
             />
             <Input
               type="text"
-              placeholder="Search for concerts, artists..."
+              placeholder="Tìm kiếm sự kiện,..."
               className="pl-10 rounded-full bg-gray-100 border-transparent focus:bg-white focus:border-primary transition-all duration-300"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
@@ -118,7 +118,7 @@ export default function Header() {
                   <Link to="/tickets">
                       <Button variant="ghost" className="text-gray-600 hover:text-primary hover:bg-pink-50 gap-2">
                       <FontAwesomeIcon icon={faHistory} />
-                      <span>My Tickets</span>
+                      <span>Vé của tôi</span>
                       </Button>
                   </Link>
                 )}
@@ -149,7 +149,7 @@ export default function Header() {
                     <DropdownMenuSeparator />
                     <DropdownMenuItem className="cursor-pointer">
                       <FontAwesomeIcon icon={faUser} className="mr-2 h-4 w-4" />
-                      <span>Profile</span>
+                      <span>Cá nhân</span>
                     </DropdownMenuItem>
 
                     {/* Mục menu chuyển trang cho Mobile */}
@@ -163,12 +163,12 @@ export default function Header() {
                     <DropdownMenuItem className="cursor-pointer md:hidden">
                       {/* Trên mobile thì hiện ticket trong menu này luôn */}
                       <FontAwesomeIcon icon={faHistory} className="mr-2 h-4 w-4" />
-                      <span>My Tickets</span>
+                      <span>Vé của tôi</span>
                     </DropdownMenuItem>
                     <DropdownMenuSeparator />
                     <DropdownMenuItem className="cursor-pointer text-red-600 focus:text-red-600" onClick={handleLogout}>
                       <FontAwesomeIcon icon={faRightFromBracket} className="mr-2 h-4 w-4" />
-                      <span>Log out</span>
+                      <span>Đăng xuất</span>
                     </DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
@@ -177,7 +177,7 @@ export default function Header() {
               <Link to="/login">
                 <Button variant="secondary" className="gap-2">
                   <FontAwesomeIcon icon={faSignInAlt} />
-                  <span>Login</span>
+                  <span>Đăng nhập</span>
                 </Button>
               </Link>
             )}
@@ -228,13 +228,13 @@ export default function Header() {
 
                                     <Link to="/profile">
                                         <Button variant="ghost" className="w-full justify-start gap-3">
-                                            <FontAwesomeIcon icon={faUser} /> Profile
+                                            <FontAwesomeIcon icon={faUser} /> Cá nhân
                                         </Button>
                                     </Link>
 
                                     <Link to="/tickets">
                                         <Button variant="ghost" className="w-full justify-start gap-3">
-                                            <FontAwesomeIcon icon={faHistory} /> My Tickets
+                                            <FontAwesomeIcon icon={faHistory} /> Vé của tôi
                                         </Button>
                                     </Link>
 
@@ -243,7 +243,7 @@ export default function Header() {
                                         className="w-full justify-start gap-3 text-red-600 hover:text-red-600 hover:bg-red-50"
                                         onClick={handleLogout}
                                     >
-                                        <FontAwesomeIcon icon={faRightFromBracket} /> Log out
+                                        <FontAwesomeIcon icon={faRightFromBracket} /> Đăng xuất
                                     </Button>
                                 </nav>
                             </div>
@@ -251,7 +251,7 @@ export default function Header() {
                             <Link to="/login" className="w-full">
                                 <Button variant="secondary" className="w-full gap-2">
                                     <FontAwesomeIcon icon={faSignInAlt} />
-                                    <span>Login</span>
+                                    <span>Đăng nhập</span>
                                 </Button>
                             </Link>
                         )}
