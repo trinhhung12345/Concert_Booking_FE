@@ -7,7 +7,7 @@ import { useThemeStore } from "@/store/useThemeStore";
 export default function AdminLayout() {
   const { theme } = useThemeStore();
 
-  // Áp dụng theme class lên document element
+  // Áp dụng theme class lên document element - chỉ trong admin
   useEffect(() => {
     const root = document.documentElement;
     if (theme === "dark") {
@@ -15,6 +15,11 @@ export default function AdminLayout() {
     } else {
       root.classList.remove("dark");
     }
+
+    // Cleanup: Gỡ class dark khi rời khỏi Admin
+    return () => {
+      root.classList.remove("dark");
+    };
   }, [theme]);
 
   return (

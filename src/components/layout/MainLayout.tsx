@@ -1,8 +1,14 @@
+import { useEffect } from "react";
 import { Outlet } from "react-router-dom";
 import Header from "./Header";
 import CategoryNav from "./CategoryNav"; // Import mới
 
 const MainLayout = () => {
+  // Đảm bảo trang user luôn dùng light theme
+  useEffect(() => {
+    document.documentElement.classList.remove("dark");
+  }, []);
+
   return (
     <div className="flex flex-col min-h-screen font-sans bg-gray-50">
 
