@@ -63,6 +63,11 @@ export const eventService = {
     return apiClient.get(`/events/${id}`);
   },
 
+  // Lấy danh sách events theo category
+  getByCategory: async (categoryId: string | number): Promise<Event[]> => {
+    return apiClient.get(`/events/category/${categoryId}`);
+  },
+
   // Lấy danh sách lịch diễn theo Event ID
   getShowingsByEventId: async (eventId: string | number): Promise<Showing[]> => {
     return apiClient.get(`/showings/event/${eventId}`);
