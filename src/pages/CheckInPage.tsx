@@ -29,6 +29,11 @@ const CheckInPage = () => {
     message: "Đang xác thực vé...",
   });
 
+  // Đảm bảo trang check-in luôn dùng light theme
+  useEffect(() => {
+    document.documentElement.classList.remove("dark");
+  }, []);
+
   useEffect(() => {
     const performCheckIn = async () => {
       if (!token) {

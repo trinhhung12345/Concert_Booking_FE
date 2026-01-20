@@ -1,4 +1,4 @@
-import { type ReactNode } from "react";
+import { type ReactNode, useEffect } from "react";
 import { Link } from "react-router-dom";
 
 interface AuthLayoutProps {
@@ -9,6 +9,11 @@ interface AuthLayoutProps {
 }
 
 export default function AuthLayout({ children, title, subtitle, isLogin = true }: AuthLayoutProps) {
+  // Đảm bảo trang auth luôn dùng light theme
+  useEffect(() => {
+    document.documentElement.classList.remove("dark");
+  }, []);
+
   return (
     <>
       {/* ===== MOBILE LAYOUT (< lg) ===== */}

@@ -39,6 +39,45 @@
   --btn-disabled-text: 220 9% 60%;
 }
 
+.dark {
+  /* DARK THEME VARIABLES - For Admin Panel */
+  --background: 222 84% 5%; /* #0f0f23 - Very dark blue-gray */
+  --foreground: 210 40% 98%; /* Near white text */
+
+  --card: 222 84% 6%; /* Slightly lighter than background */
+  --card-foreground: 210 40% 98%;
+  --popover: 222 84% 6%;
+  --popover-foreground: 210 40% 98%;
+
+  /* Primary giữ nguyên - Pink brand color */
+  --primary: 330 81% 60%;
+  --primary-foreground: 0 0% 100%;
+
+  /* Secondary - Dark blue-gray */
+  --secondary: 217 33% 17%;
+  --secondary-foreground: 0 0% 100%;
+
+  /* Muted colors for dark theme */
+  --muted: 217 33% 10%; /* Darker muted */
+  --muted-foreground: 215 20% 65%; /* Light gray text */
+  --accent: 217 33% 15%; /* Dark accent */
+  --accent-foreground: 210 40% 98%;
+
+  --destructive: 0 84% 60%;
+  --destructive-foreground: 0 0% 100%;
+
+  --border: 217 33% 15%; /* Dark borders */
+  --input: 217 33% 10%; /* Dark input backgrounds */
+  --ring: 330 81% 60%; /* Focus ring giữ nguyên pink */
+
+  /* Admin-specific dark colors */
+  --admin-bg: 222 84% 5%; /* Main admin background */
+  --admin-sidebar: 222 84% 7%; /* Sidebar background */
+  --admin-header: 222 84% 7%; /* Header background */
+  --admin-border: 217 33% 15%; /* Admin borders */
+  --admin-hover: 217 33% 12%; /* Hover states */
+}
+
 @theme inline {
   --color-background: hsl(var(--background));
   --color-foreground: hsl(var(--foreground));
