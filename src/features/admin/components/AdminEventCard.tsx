@@ -39,7 +39,7 @@ export default function AdminEventCard({ event }: AdminEventCardProps) {
   const location = [event.venue, event.address].filter(Boolean).join(", ");
 
   return (
-    <div className="w-full bg-white dark:bg-[#1e293b] rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden flex flex-col transition-all hover:shadow-md">
+    <div className="w-full bg-card text-card-foreground rounded-xl shadow-sm border border-border overflow-hidden flex flex-col transition-all hover:shadow-md">
 
       {/* --- PHẦN TRÊN: ẢNH & THÔNG TIN --- */}
       <div className="flex flex-col md:flex-row p-4 gap-4 md:gap-6">
@@ -49,32 +49,32 @@ export default function AdminEventCard({ event }: AdminEventCardProps) {
           <img
             src={imageUrl}
             alt={event.title}
-            className="w-full h-full object-cover rounded-lg border border-gray-100 dark:border-gray-600"
+            className="w-full h-full object-cover rounded-lg border border-border"
           />
         </div>
 
         {/* Cột phải: Thông tin */}
         <div className="flex-1 space-y-3">
-          <h3 className="text-xl font-bold text-gray-900 dark:text-gray-100">
+          <h3 className="text-xl font-bold text-foreground">
             {event.title}
           </h3>
 
           <div className="space-y-2 text-sm">
             {/* Thời gian */}
-            <div className="flex items-center gap-3 text-emerald-600 dark:text-emerald-400 font-medium">
+            <div className="flex items-center gap-3 text-primary font-medium">
               <FontAwesomeIcon icon={faCalendarAlt} className="w-4" />
               <span>{formatDateTime(startTime)}</span>
             </div>
 
             {/* Địa điểm */}
-            <div className="flex items-start gap-3 text-gray-600 dark:text-gray-300">
+            <div className="flex items-start gap-3 text-muted-foreground">
               <FontAwesomeIcon icon={faMapMarkerAlt} className="w-4 mt-1" />
               <span className="line-clamp-2">{location || "Chưa cập nhật địa điểm"}</span>
             </div>
 
              {/* Category Badge */}
              <div className="pt-1">
-                <span className="inline-block px-2 py-1 bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 text-xs rounded-md">
+                <span className="inline-block px-2 py-1 bg-muted text-muted-foreground text-xs rounded-md">
                     {event.categoryName}
                 </span>
              </div>
@@ -83,7 +83,7 @@ export default function AdminEventCard({ event }: AdminEventCardProps) {
       </div>
 
       {/* --- PHẦN DƯỚI: ACTION BAR --- */}
-      <div className="bg-gray-50 dark:bg-[#0f172a]/50 border-t border-gray-100 dark:border-gray-700 p-2 grid grid-cols-5 gap-1">
+      <div className="bg-muted/50 border-t border-border p-2 grid grid-cols-5 gap-1">
 
         {/* Các nút chức năng (Giống ảnh mẫu) */}
         <ActionButton icon={faChartPie} label="Tổng quan" disabled />
@@ -92,7 +92,7 @@ export default function AdminEventCard({ event }: AdminEventCardProps) {
 
         {/* NÚT QUAN TRỌNG: Sơ đồ ghế */}
         <Link to={`/admin/events/${event.id}/seatmap`} className="contents">
-            <Button variant="ghost" className="flex flex-col h-auto py-2 gap-1 text-gray-600 dark:text-gray-400 hover:text-primary hover:bg-white dark:hover:bg-gray-800">
+            <Button variant="ghost" className="flex flex-col h-auto py-2 gap-1 text-muted-foreground hover:text-primary hover:bg-background">
                 <FontAwesomeIcon icon={faCouch} className="text-lg" />
                 <span className="text-xs font-normal">Sơ đồ ghế</span>
             </Button>
@@ -100,7 +100,7 @@ export default function AdminEventCard({ event }: AdminEventCardProps) {
 
         {/* NÚT QUAN TRỌNG: Chỉnh sửa */}
         <Link to={`/admin/events/${event.id}/edit`} className="contents">
-            <Button variant="ghost" className="flex flex-col h-auto py-2 gap-1 text-gray-600 dark:text-gray-400 hover:text-primary hover:bg-white dark:hover:bg-gray-800">
+            <Button variant="ghost" className="flex flex-col h-auto py-2 gap-1 text-muted-foreground hover:text-primary hover:bg-background">
                 <FontAwesomeIcon icon={faPen} className="text-lg" />
                 <span className="text-xs font-normal">Chỉnh sửa</span>
             </Button>
@@ -116,7 +116,7 @@ const ActionButton = ({ icon, label, disabled = false }: { icon: any, label: str
   <Button
     variant="ghost"
     disabled={disabled}
-    className="flex flex-col h-auto py-2 gap-1 text-gray-400 dark:text-gray-500 hover:text-gray-900 dark:hover:text-gray-200"
+    className="flex flex-col h-auto py-2 gap-1 text-muted-foreground hover:text-foreground"
   >
     <FontAwesomeIcon icon={icon} className="text-lg" />
     <span className="text-xs font-normal">{label}</span>
