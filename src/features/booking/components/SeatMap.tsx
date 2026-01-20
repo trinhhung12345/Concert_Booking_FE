@@ -77,6 +77,11 @@ export default function SeatMap({ data, selectedSeats, onSeatClick }: SeatMapPro
     );
   };
 
+  // Hàm kiểm tra hex color hợp lệ
+  const isValidHexColor = (color: string) => {
+    return /^#[0-9A-Fa-f]{6}$/.test(color) || /^#[0-9A-Fa-f]{3}$/.test(color);
+  };
+
   // --- COMPONENT VẼ KHU VỰC (ĐÃ CẬP NHẬT LABEL) ---
   const RenderSection = ({ section }: { section: Section }) => {
     const attr = section.attribute || { x: 0, y: 0, scaleX: 1, scaleY: 1, rotate: 0, fill: "transparent" };
@@ -88,12 +93,28 @@ export default function SeatMap({ data, selectedSeats, onSeatClick }: SeatMapPro
 
     return (
       <g
-        transform={`translate(${attr.x}, ${attr.y}) scale(${attr.scaleX}, ${attr.scaleY}) rotate(${attr.rotate})`}
+        transform={`translate(${attr.x}, ${attr.y}) scale(${attr.scaleX || 1}, ${attr.scaleY || 1}) rotate(${attr.rotate || 0})`}
       >
-        {/* Nền/Khung Section */}
+        {/* Nền/Khung Section - Hỗ trợ nhiều loại element */}
         {section.elements.map((el) => {
-            if (el.type === 'rect') {
-                return <rect key={el.id} x={el.x} y={el.y} width={el.width} height={el.height} fill={el.fill || "#f3f4f6"} opacity="0.3" stroke="#e5e7eb" />
+            const fillColor = isValidHexColor(el.fill) ? el.fill : "#9CA3AF";
+            
+            // Render rect cho cả type "rect" và các type khác (như "string")
+            // vì chúng đều có x, y, width, height
+            if (el.width && el.height) {
+                return (
+                  <rect 
+                    key={el.id} 
+                    x={el.x} 
+                    y={el.y} 
+                    width={el.width} 
+                    height={el.height} 
+                    fill={fillColor} 
+                    opacity="0.3" 
+                    stroke="#e5e7eb" 
+                    rx={4}
+                  />
+                );
             }
             return null;
         })}
@@ -150,10 +171,33 @@ export default function SeatMap({ data, selectedSeats, onSeatClick }: SeatMapPro
           <RenderSeat key={seat.id} seat={seat} />
         ))}
 
-        {/* Tên khu vực */}
-        <text x={0} y={-45} fontSize="16" fontWeight="bold" fill="#374151">
+        {/* Tên khu vực - Vị trí dựa vào có ghế hay không */}
+        {section.seats.length > 0 ? (
+          // Nếu có ghế, hiển thị tên phía trên
+          <text x={0} y={-45} fontSize="16" fontWeight="bold" fill="#374151">
             {section.name}
-        </text>
+          </text>
+        ) : (
+          // Nếu không có ghế (khu đứng/standing), hiển thị tên ở giữa element
+          section.elements[0] && (
+            <text 
+              x={(section.elements[0].x || 0) + (section.elements[0].width || 0) / 2} 
+              y={(section.elements[0].y || 0) + (section.elements[0].height || 0) / 2} 
+              fontSize="18" 
+              fontWeight="bold" 
+              fill="#374151"
+              textAnchor="middle"
+              dominantBaseline="middle"
+            >
+              {section.name}
+              {section.message && (
+                <tspan x={(section.elements[0].x || 0) + (section.elements[0].width || 0) / 2} dy="20" fontSize="12" fill="#6B7280">
+                  {section.message}
+                </tspan>
+              )}
+            </text>
+          )
+        )}
       </g>
     );
   };
