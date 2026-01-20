@@ -49,6 +49,7 @@ export interface Event {
   categoryName: string;
   files: EventFile[];
   showings: Showing[];
+  youtubeUrl?: string; // Optional YouTube URL field
 }
 
 // 3. Service gọi API

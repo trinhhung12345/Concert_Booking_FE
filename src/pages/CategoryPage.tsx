@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { eventService, type Event } from "@/features/concerts/services/eventService";
 import { categoryService, type Category } from "@/features/concerts/services/categoryService";
+import { cleanImageUrl } from "@/lib/utils";
 
 export default function CategoryPage() {
   const { slug } = useParams<{ slug: string }>();
@@ -75,12 +76,13 @@ export default function CategoryPage() {
               ? item.showings[0].startTime
               : new Date().toISOString();
 
-          const image =
+          const rawImage =
             item.files &&
             item.files.length > 0 &&
             item.files[0].thumbUrl
               ? item.files[0].thumbUrl
-              : "https://images.unsplash.com/photo-1459749411177-334811adbced?q=80&w=800&auto=format&fit=crop";
+              : null;
+          const image = cleanImageUrl(rawImage);
 
           return {
             id: item.id,

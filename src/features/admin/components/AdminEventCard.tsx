@@ -11,6 +11,7 @@ import {
 } from "@fortawesome/free-solid-svg-icons";
 import { Button } from "@/components/ui/button";
 import type { Event } from "@/features/concerts/services/eventService";
+import { cleanImageUrl } from "@/lib/utils";
 
 // Helper format ngày giờ
 const formatDateTime = (dateString: string) => {
@@ -27,9 +28,10 @@ interface AdminEventCardProps {
 
 export default function AdminEventCard({ event }: AdminEventCardProps) {
   // 1. Xử lý lấy ảnh Thumbnail
-  // Tìm file có type = 0 (Ảnh) hoặc lấy file đầu tiên
+  // Dùng cleanImageUrl để xử lý thumbUrl từ backend (có thể bị lỗi YouTube)
   const thumbnailFile = event.files?.find(f => f.type === 0) || event.files?.[0];
-  const imageUrl = thumbnailFile?.thumbUrl || thumbnailFile?.originUrl || "https://placehold.co/600x400?text=No+Image";
+  const imageUrl = cleanImageUrl(thumbnailFile?.thumbUrl || thumbnailFile?.originUrl);
+  console.log("🖼 Event Image URL:", imageUrl);
 
   // 2. Lấy thông tin hiển thị (Thời gian & Địa điểm)
   const firstShowing = event.showings?.[0];

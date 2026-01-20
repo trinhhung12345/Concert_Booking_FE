@@ -65,8 +65,8 @@ export default function CreateEventPage() {
         // 2. Append File (Lưu ý key là "files" cho cả 2 ảnh theo Postman)
         // Backend sẽ phân biệt dựa trên thứ tự hoặc xử lý nội bộ.
         // Thường thì ảnh đầu là thumbnail, ảnh sau là cover, hoặc backend tự resize.
-        formData.append("files", thumbnailFile);
-        formData.append("files", coverFile);
+        if (thumbnailFile) formData.append("files", thumbnailFile);
+        if (coverFile) formData.append("files", coverFile);
 
         // 3. Gọi API (Header Content-Type sẽ tự động được axios set là multipart/form-data)
         const response = await apiClient.post("/events", formData);

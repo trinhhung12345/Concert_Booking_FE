@@ -5,6 +5,7 @@ import ChatBot from "@/components/ChatBot";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { eventService, type Event } from "@/features/concerts/services/eventService";
+import { cleanImageUrl } from "@/lib/utils";
 
 export default function HomePage() {
   const [events, setEvents] = useState<EventProps[]>([]);
@@ -39,10 +40,11 @@ export default function HomePage() {
             ? item.showings[0].startTime
             : new Date().toISOString(); // Fallback nếu chưa có lịch
 
-          // 3. Lấy ảnh thumbnail (Check kỹ null/undefined)
-          const image = item.files && item.files.length > 0 && item.files[0].thumbUrl
+          // 3. Lấy ảnh thumbnail (Check kỹ null/undefined + clean YouTube URL)
+          const rawImage = item.files && item.files.length > 0 && item.files[0].thumbUrl
             ? item.files[0].thumbUrl
-            : "https://images.unsplash.com/photo-1459749411177-334811adbced?q=80&w=800&auto=format&fit=crop"; // Ảnh placeholder
+            : null;
+          const image = cleanImageUrl(rawImage);
 
           return {
             id: item.id,
