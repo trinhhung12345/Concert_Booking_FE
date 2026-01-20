@@ -40,10 +40,9 @@ export default function HomePage() {
             ? item.showings[0].startTime
             : new Date().toISOString(); // Fallback nếu chưa có lịch
 
-          // 3. Lấy ảnh thumbnail (Check kỹ null/undefined + clean YouTube URL)
-          const rawImage = item.files && item.files.length > 0 && item.files[0].thumbUrl
-            ? item.files[0].thumbUrl
-            : null;
+          // 3. Lấy ảnh thumbnail (Ưu tiên type = 0, fallback file đầu tiên)
+          const thumbnailFile = item.files?.find(f => f.type === 0) || item.files?.[0];
+          const rawImage = thumbnailFile?.thumbUrl || thumbnailFile?.originUrl || null;
           const image = cleanImageUrl(rawImage);
 
           return {
