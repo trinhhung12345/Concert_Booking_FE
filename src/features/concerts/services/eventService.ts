@@ -78,4 +78,13 @@ export const eventService = {
   getTicketTypesByShowingId: async (showingId: string | number): Promise<TicketType[]> => {
     return apiClient.get(`/ticket-types/showing/${showingId}`);
   },
+
+  // API Tạo sự kiện (FormData)
+  create: async (formData: FormData) => {
+    return apiClient.post<any, Event>("/events", formData, {
+      headers: {
+        "Content-Type": "multipart/form-data",
+      },
+    });
+  },
 };

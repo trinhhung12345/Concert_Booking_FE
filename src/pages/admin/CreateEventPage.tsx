@@ -1,7 +1,6 @@
 import { useState, useEffect } from "react";
 import { useForm, Controller } from "react-hook-form";
 import { useNavigate } from "react-router-dom";
-import apiClient from "@/lib/axios";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -10,6 +9,9 @@ import ReactQuill from "react-quill-new";
 import "react-quill-new/dist/quill.snow.css";
 import ImageUploadBox from "@/features/admin/components/ImageUploadBox";
 import { categoryService, type Category } from "@/features/concerts/services/categoryService";
+import { eventService } from "@/features/concerts/services/eventService"; // Import service vừa sửa
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faSpinner, faArrowLeft } from "@fortawesome/free-solid-svg-icons";
 
 interface CreateEventForm {
   title: string;
@@ -17,7 +19,7 @@ interface CreateEventForm {
   address: string;
   categoryId: string;
   description: string;
-  youtubeUrl?: string;
+  YoutubeUrl?: string; // Viết hoa chữ Y cho giống Postman key
 }
 
 export default function CreateEventPage() {
@@ -45,48 +47,69 @@ export default function CreateEventPage() {
   }, []);
 
   const onSubmit = async (data: CreateEventForm) => {
-    if (!thumbnailFile || !coverFile) {
-        alert("Vui lòng tải lên đầy đủ ảnh đại diện và ảnh bìa!");
+    // Validate ảnh thủ công
+    if (!thumbnailFile) {
+        alert("Vui lòng tải lên ảnh Thumbnail (Dọc)");
+        return;
+    }
+    // Ảnh Cover là optional tùy bạn, nhưng nên bắt buộc cho đẹp
+    if (!coverFile) {
+        alert("Vui lòng tải lên ảnh Bìa/Hero (Ngang)");
         return;
     }
 
     try {
         setLoading(true);
 
-        // 1. Tạo FormData
+        // --- TẠO FORM DATA CHUẨN POSTMAN ---
         const formData = new FormData();
+
+        // Các trường Text
         formData.append("title", data.title);
         formData.append("venue", data.venue);
         formData.append("address", data.address);
         formData.append("description", data.description);
-        formData.append("categoryId", data.categoryId);
-        if (data.youtubeUrl) formData.append("YoutubeUrl", data.youtubeUrl);
+        formData.append("categoryId", data.categoryId); // API nhận text "2"
 
-        // 2. Append File (Lưu ý key là "files" cho cả 2 ảnh theo Postman)
-        // Backend sẽ phân biệt dựa trên thứ tự hoặc xử lý nội bộ.
-        // Thường thì ảnh đầu là thumbnail, ảnh sau là cover, hoặc backend tự resize.
-        if (thumbnailFile) formData.append("files", thumbnailFile);
-        if (coverFile) formData.append("files", coverFile);
+        // Trường YoutubeUrl (Optional)
+        if (data.YoutubeUrl && data.YoutubeUrl.trim() !== "") {
+            formData.append("YoutubeUrl", data.YoutubeUrl);
+        }
 
-        // 3. Gọi API (Header Content-Type sẽ tự động được axios set là multipart/form-data)
-        const response = await apiClient.post("/events", formData);
+        // Trường Files (Multiple)
+        // Append lần lượt từng file vào cùng 1 key là "files"
+        formData.append("files", thumbnailFile);
+        formData.append("files", coverFile);
 
-        console.log("Success:", response);
-        alert("Tạo sự kiện thành công!");
+        // Nếu muốn hỗ trợ file thứ 3, bạn thêm ImageUploadBox thứ 3 và append tiếp vào đây.
+        // formData.append("files", fileThu3);
+
+        // --- GỌI API ---
+        const res = await eventService.create(formData);
+
+        console.log("Created Event:", res);
+
+        // Thành công -> Chuyển hướng
+        // Có thể redirect về trang list hoặc trang edit của event vừa tạo
+        alert(`Tạo sự kiện "${res.title}" thành công!`);
         navigate("/admin/events");
 
     } catch (error: any) {
-        console.error("Error creating event:", error);
-        alert("Lỗi khi tạo sự kiện: " + (error.response?.data?.message || error.message));
+        console.error("Lỗi tạo sự kiện:", error);
+        const serverMessage = error.response?.data?.message || "Có lỗi xảy ra, vui lòng thử lại.";
+        alert(`Thất bại: ${serverMessage}`);
     } finally {
         setLoading(false);
     }
   };
 
   return (
-    <div className="max-w-5xl mx-auto pb-20">
-      <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-bold text-foreground">Tạo sự kiện mới</h1>
+    <div className="max-w-5xl mx-auto pb-20 px-4">
+      <div className="flex items-center gap-4 mb-6 pt-4">
+        <Button variant="ghost" size="icon" onClick={() => navigate("/admin/events")}>
+            <FontAwesomeIcon icon={faArrowLeft} />
+        </Button>
+        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Tạo sự kiện mới</h1>
       </div>
 
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-8">
@@ -114,15 +137,14 @@ export default function CreateEventPage() {
                         onImageCropped={setCoverFile}
                     />
 
-                    {/* Youtube URL Input */}
+                    {/* YoutubeUrl */}
                     <div className="mt-4">
-                        <Label className="text-foreground">Link Video Youtube (Optional)</Label>
+                        <Label>Youtube URL (Trailer/Intro)</Label>
                         <Input
                             placeholder="https://www.youtube.com/watch?v=..."
-                            {...register("youtubeUrl")}
-                            className="mt-1 bg-input text-foreground"
+                            {...register("YoutubeUrl")}
+                            className="mt-1 bg-gray-50 dark:bg-[#0f172a]"
                         />
-                        <p className="text-xs text-muted-foreground mt-1">Nếu có link Youtube, video sẽ được ưu tiên hiển thị trên banner.</p>
                     </div>
                 </div>
             </div>
@@ -201,10 +223,16 @@ export default function CreateEventPage() {
         </div>
 
         {/* FOOTER ACTIONS */}
-        <div className="flex items-center justify-end gap-4 pt-4 border-t border-border">
-            <Button type="button" variant="outline" onClick={() => navigate("/admin/events")}>Hủy bỏ</Button>
-            <Button type="submit" className="bg-primary hover:bg-primary/90 text-primary-foreground min-w-[150px]" disabled={loading}>
-                {loading ? "Đang xử lý..." : "Lưu & Tạo sự kiện"}
+        <div className="flex items-center justify-end gap-4 pt-4 border-t sticky bottom-0 bg-gray-50 dark:bg-[#121418] p-4 z-10">
+            <Button type="button" variant="outline" onClick={() => navigate("/admin/events")}>
+                Hủy bỏ
+            </Button>
+            <Button
+                type="submit"
+                className="bg-emerald-600 hover:bg-emerald-700 text-white min-w-[180px] text-lg font-semibold shadow-lg"
+                disabled={loading}
+            >
+                {loading ? <><FontAwesomeIcon icon={faSpinner} spin className="mr-2"/> Đang xử lý...</> : "Lưu sự kiện"}
             </Button>
         </div>
 
