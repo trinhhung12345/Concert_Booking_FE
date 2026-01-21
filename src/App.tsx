@@ -14,7 +14,7 @@ import CheckoutPage from "./pages/CheckoutPage";
 import MyOrdersPage from "./pages/MyOrdersPage";
 import AdminLayout from "@/components/layout/admin/AdminLayout";
 import EventManagerPage from "@/pages/admin/EventManagerPage";
-import CreateEventPage from "@/pages/admin/CreateEventPage";
+import EventWizardPage from "@/pages/admin/EventWizardPage";
 import LoginPromptModal from "./features/auth/components/LoginPromptModal";
 import { useModalStore } from "./store/useModalStore";
 
@@ -56,10 +56,10 @@ function App() {
             <Route index element={<EventManagerPage />} />
 
             <Route path="events" element={<EventManagerPage />} />
-            <Route path="events/create" element={<CreateEventPage />} />
+            <Route path="events/create" element={<EventWizardPage />} />
 
             {/* Thêm các route placeholder này */}
-            <Route path="events/:id/edit" element={<div>Trang Chỉnh Sửa Sự Kiện (ID)</div>} />
+            <Route path="events/:id/edit" element={<EventWizardPage />} />
             <Route path="events/:id/seatmap" element={<div>Trang Quản Lý Sơ Đồ Ghế</div>} />
 
             <Route path="reports" element={<div className="text-white p-4">Trang Báo Cáo (Đang phát triển)</div>} />
