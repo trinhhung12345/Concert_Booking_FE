@@ -34,6 +34,13 @@ export interface Seat {
 export interface Section {
   id: number;
   name: string;
+  isReservingSeat?: boolean;
+  isStage?: boolean;
+  status?: number;
+  isSalable?: boolean;
+  message?: string;
+  seatMapId?: number;
+  ticketTypeId?: number;
   seats: Seat[];
   elements: MapElement[];
   attribute: SeatAttribute | null; // Có thể null
