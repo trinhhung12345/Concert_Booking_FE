@@ -143,7 +143,7 @@ export default function CreateEventPage() {
                         <Input
                             placeholder="https://www.youtube.com/watch?v=..."
                             {...register("YoutubeUrl")}
-                            className="mt-1 bg-gray-50 dark:bg-[#0f172a]"
+                            className="mt-1 bg-input text-foreground"
                         />
                     </div>
                 </div>
@@ -223,7 +223,7 @@ export default function CreateEventPage() {
         </div>
 
         {/* FOOTER ACTIONS */}
-        <div className="flex items-center justify-end gap-4 pt-4 border-t sticky bottom-0 bg-gray-50 dark:bg-[#121418] p-4 z-10">
+        <div className="flex items-center justify-end gap-4 pt-4 border-t sticky bottom-0 bg-background p-4 z-10">
             <Button type="button" variant="outline" onClick={() => navigate("/admin/events")}>
                 Hủy bỏ
             </Button>
