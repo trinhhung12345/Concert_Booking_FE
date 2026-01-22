@@ -77,4 +77,9 @@ export const eventService = {
   getTicketTypesByShowingId: async (showingId: string | number): Promise<TicketType[]> => {
     return apiClient.get(`/ticket-types/showing/${showingId}`);
   },
+
+  // Tìm kiếm sự kiện theo keyword
+  search: async (keyword: string): Promise<Event[]> => {
+    return apiClient.get(`/events/search?keyword=${encodeURIComponent(keyword)}`);
+  },
 };
