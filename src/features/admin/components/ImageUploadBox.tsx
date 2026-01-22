@@ -11,10 +11,12 @@ interface ImageUploadBoxProps {
   label: string;
   aspectRatio: number; // Tỷ lệ khung hình (VD: 16/9 hoặc 2/3)
   onImageCropped: (file: File) => void;
+  existingImageUrl?: string; // URL của ảnh hiện tại (cho edit mode)
+  filePreviewUrl?: string; // URL của file đã upload (cho wizard persistence)
   description?: string;
 }
 
-export default function ImageUploadBox({ label, aspectRatio, onImageCropped, description }: ImageUploadBoxProps) {
+export default function ImageUploadBox({ label, aspectRatio, onImageCropped, existingImageUrl, filePreviewUrl, description }: ImageUploadBoxProps) {
   const [imageSrc, setImageSrc] = useState<string | null>(null);
   const [croppedImage, setCroppedImage] = useState<string | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -76,7 +78,7 @@ export default function ImageUploadBox({ label, aspectRatio, onImageCropped, des
         style={{ aspectRatio: aspectRatio }} // Tự động chỉnh chiều cao theo tỷ lệ
       >
         {croppedImage ? (
-          // TRẠNG THÁI ĐÃ CÓ ẢNH
+          // TRẠNG THÁI ĐÃ CÓ ẢNH (MỚI UPLOAD)
           <div className="relative w-full h-full group">
             <img src={croppedImage} alt="Preview" className="w-full h-full object-cover" />
             <div className="absolute inset-0 bg-black/50 flex items-center justify-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -88,8 +90,34 @@ export default function ImageUploadBox({ label, aspectRatio, onImageCropped, des
                 </Button>
             </div>
           </div>
+        ) : filePreviewUrl ? (
+          // TRẠNG THÁI CÓ FILE PREVIEW (WIZARD PERSISTENCE)
+          <div className="relative w-full h-full group">
+            <img src={filePreviewUrl} alt="File Preview" className="w-full h-full object-cover" />
+            <div className="absolute inset-0 bg-black/50 flex items-center justify-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                <Button size="sm" variant="secondary" onClick={() => fileInputRef.current?.click()}>
+                   <FontAwesomeIcon icon={faCropSimple} /> Đổi ảnh
+                </Button>
+                <Button size="sm" variant="destructive" onClick={() => setCroppedImage(null)}>
+                   <FontAwesomeIcon icon={faTrash} />
+                </Button>
+            </div>
+          </div>
+        ) : existingImageUrl ? (
+          // TRẠNG THÁI CÓ ẢNH HIỆN TẠI (EDIT MODE)
+          <div className="relative w-full h-full group">
+            <img src={existingImageUrl} alt="Existing" className="w-full h-full object-cover" />
+            <div className="absolute inset-0 bg-black/50 flex items-center justify-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                <Button size="sm" variant="secondary" onClick={() => fileInputRef.current?.click()}>
+                   <FontAwesomeIcon icon={faCropSimple} /> Đổi ảnh
+                </Button>
+                <div className="text-xs text-white/80 text-center">
+                  Ảnh hiện tại
+                </div>
+            </div>
+          </div>
         ) : (
-          // TRẠNG THÁI CHƯA CÓ ẢNH
+          // TRẠNG THÁI CHƯA CÓ ẢNH (CREATE MODE)
           <div
             className="flex flex-col items-center justify-center cursor-pointer p-6 text-center"
             onClick={() => fileInputRef.current?.click()}

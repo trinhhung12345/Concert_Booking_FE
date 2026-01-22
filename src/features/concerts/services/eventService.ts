@@ -87,4 +87,14 @@ export const eventService = {
       },
     });
   },
+
+  // API Tạo Suất diễn
+  createShowing: async (payload: any): Promise<{ id: number }> => {
+    return apiClient.post("/showings", payload);
+  },
+
+  // API Tạo Loại vé
+  createTicketType: async (payload: any): Promise<{ id: number }> => {
+    return apiClient.post("/ticket-types", payload);
+  },
 };

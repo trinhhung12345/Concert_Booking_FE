@@ -1,4 +1,4 @@
-import { useState, useImperativeHandle, forwardRef } from "react";
+import { useState, useImperativeHandle, forwardRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -27,10 +27,10 @@ export interface ShowingFormValues {
 
 interface StepTimeTicketsProps {
   eventId: number | null;
-  initialData?: any;
+  initialData?: any[] | null;
 }
 
-const StepTimeTickets = forwardRef(({ eventId }: StepTimeTicketsProps, ref) => {
+const StepTimeTickets = forwardRef(({ eventId, initialData }: StepTimeTicketsProps, ref) => {
   // State quản lý danh sách suất diễn
   const [showings, setShowings] = useState<ShowingFormValues[]>([
     { id: Date.now(), startTime: "", endTime: "", tickets: [], isOpen: true } // Mặc định có 1 cái đang mở
@@ -39,6 +39,17 @@ const StepTimeTickets = forwardRef(({ eventId }: StepTimeTicketsProps, ref) => {
   // State cho Modal vé
   const [modalOpen, setModalOpen] = useState(false);
   const [editingTicket, setEditingTicket] = useState<{ showingId: number | string, ticketIndex?: number, data?: TicketFormValues } | null>(null);
+
+  // Populate showings from initialData when it changes
+  useEffect(() => {
+    if (initialData && initialData.length > 0) {
+      console.log("Populating StepTimeTickets with initialData:", initialData);
+      setShowings(initialData);
+    } else if (!initialData) {
+      // Reset to default when no initialData (for new events)
+      setShowings([{ id: Date.now(), startTime: "", endTime: "", tickets: [], isOpen: true }]);
+    }
+  }, [initialData]);
 
   // --- ACTIONS SHOWING ---
   const addShowing = () => {
