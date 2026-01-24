@@ -12,7 +12,9 @@ import CheckInPage from "./pages/CheckInPage";
 import BookingPage from "./pages/BookingPage";
 import CheckoutPage from "./pages/CheckoutPage";
 import MyOrdersPage from "./pages/MyOrdersPage";
-import AdminDashboard from "./pages/admin/AdminDashboard";
+import AdminLayout from "@/components/layout/admin/AdminLayout";
+import EventManagerPage from "@/pages/admin/EventManagerPage";
+import EventWizardPage from "@/pages/admin/EventWizardPage";
 import LoginPromptModal from "./features/auth/components/LoginPromptModal";
 import { useModalStore } from "./store/useModalStore";
 
@@ -48,8 +50,21 @@ function App() {
         {/* Trang Check-in (Không cần MainLayout - dành cho scan QR) */}
         <Route path="/check-in" element={<CheckInPage />} />
 
-        {/* Trang Admin nằm riêng (Không có MainLayout) */}
-        <Route path="/admin" element={<AdminDashboard />} />
+        {/* --- ROUTE ADMIN (MỚI) --- */}
+        <Route path="/admin" element={<AdminLayout />}>
+            {/* Mặc định vào /admin sẽ redirect hoặc render trang events */}
+            <Route index element={<EventManagerPage />} />
+
+            <Route path="events" element={<EventManagerPage />} />
+            <Route path="events/create" element={<EventWizardPage />} />
+
+            {/* Thêm các route placeholder này */}
+            <Route path="events/:id/edit" element={<EventWizardPage />} />
+            <Route path="events/:id/seatmap" element={<div>Trang Quản Lý Sơ Đồ Ghế</div>} />
+
+            <Route path="reports" element={<div className="text-white p-4">Trang Báo Cáo (Đang phát triển)</div>} />
+            <Route path="policies" element={<div className="text-white p-4">Trang Điều Khoản (Đang phát triển)</div>} />
+        </Route>
       </Routes>
     </BrowserRouter>
   );
