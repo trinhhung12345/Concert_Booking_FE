@@ -8,6 +8,7 @@ interface EventWizardHeaderProps {
   onStepChange: (step: number) => void;
   onSave: () => void;
   onNext: () => void;
+  onCancel: () => void;
   loading?: boolean;
 }
 
@@ -23,6 +24,7 @@ export default function EventWizardHeader({
   onStepChange,
   onSave,
   onNext,
+  onCancel,
   loading
 }: EventWizardHeaderProps) {
   return (
@@ -69,6 +71,15 @@ export default function EventWizardHeader({
 
         {/* ACTION BUTTONS */}
         <div className="flex items-center gap-2">
+            <Button
+                variant="ghost"
+                size="sm"
+                className="text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+                onClick={onCancel}
+                disabled={loading}
+            >
+                Hủy
+            </Button>
             <Button
                 variant="outline"
                 size="sm"

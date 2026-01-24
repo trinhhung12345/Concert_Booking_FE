@@ -1,5 +1,7 @@
 import { useState, useRef, useEffect } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
 import EventWizardHeader from "@/features/admin/components/event-wizard/EventWizardHeader";
 import StepEventInfo, { type EventInfoFormValues } from "@/features/admin/components/event-wizard/StepEventInfo";
 import StepTimeTickets from "@/features/admin/components/event-wizard/StepTimeTickets";
@@ -8,9 +10,13 @@ import { eventService, type Event, type Showing, type TicketType } from "@/featu
 
 export default function EventWizardPage() {
   const { id } = useParams(); // Nếu có ID -> Chế độ Edit
+  const navigate = useNavigate();
 
   const [currentStep, setCurrentStep] = useState(1);
   const [loading, setLoading] = useState(false);
+
+  // State for cancel confirmation dialog
+  const [showCancelDialog, setShowCancelDialog] = useState(false);
 
   // State lưu dữ liệu của từng step trong wizard session
   const [step1Data, setStep1Data] = useState<EventInfoFormValues | null>(null);
@@ -170,6 +176,143 @@ export default function EventWizardPage() {
     loadStepData();
   }, [currentStep, createdEventId, loadedEventData, loadedShowingsData]);
 
+  // --- CHECK FORM DIRTY ---
+  const isFormDirty = () => {
+    console.log("Checking form dirty...");
+
+    // Check if any step has persisted data
+    if (step1Data) {
+      console.log("Step 1 has persisted data:", step1Data);
+      return true;
+    }
+    if (step2Data) {
+      console.log("Step 2 has persisted data:", step2Data);
+      return true;
+    }
+
+    // Check if current step has unsaved changes
+    try {
+      if (currentStep === 1 && step1Ref.current) {
+        const currentData = step1Ref.current.getData();
+        console.log("Current step 1 data:", currentData);
+
+        // Compare with initial data
+        const initial = loadedEventData || null; // Use null instead of empty object to distinguish create vs edit mode
+        console.log("Initial step 1 data:", initial);
+
+        // If we're in create mode (no initial data loaded), check if any fields are filled
+        if (!initial) {
+          // We're in create mode, check if any field has been filled
+          // Exclude default empty values like empty string descriptions
+          const hasAnyData =
+            currentData.title.trim() !== '' ||
+            currentData.venue.trim() !== '' ||
+            currentData.address.trim() !== '' ||
+            currentData.categoryId !== '' ||
+            (currentData.description && currentData.description.trim() !== '' && currentData.description !== '<p></p>') ||
+            (currentData.YoutubeUrl && currentData.YoutubeUrl.trim() !== '') ||
+            (currentData.thumbnailFile !== null && currentData.thumbnailFile !== undefined) || // If a thumbnail was selected
+            (currentData.coverFile !== null && currentData.coverFile !== undefined) || // If a cover was selected
+            currentData.existingThumbnailUrl !== undefined ||
+            currentData.existingCoverUrl !== undefined;
+
+          console.log("Create mode - has any data:", hasAnyData);
+          return hasAnyData;
+        }
+
+        // We're in edit mode, compare with loaded data
+        // Create a version of current data without files for comparison
+        const currentDataWithoutFiles = {
+          title: currentData.title || '',
+          venue: currentData.venue || '',
+          address: currentData.address || '',
+          categoryId: currentData.categoryId || '',
+          description: currentData.description || '',
+          YoutubeUrl: currentData.YoutubeUrl || '',
+          existingThumbnailUrl: currentData.existingThumbnailUrl,
+          existingCoverUrl: currentData.existingCoverUrl,
+          thumbnailFile: null,
+          coverFile: null
+        };
+
+        const initialDataWithoutFiles = {
+          title: initial.title || '',
+          venue: initial.venue || '',
+          address: initial.address || '',
+          categoryId: initial.categoryId || '',
+          description: initial.description || '',
+          YoutubeUrl: initial.YoutubeUrl || '',
+          existingThumbnailUrl: initial.existingThumbnailUrl || undefined,
+          existingCoverUrl: initial.existingCoverUrl || undefined,
+          thumbnailFile: null,
+          coverFile: null
+        };
+
+        // Deep compare only the fields that matter
+        const isDifferent =
+          currentDataWithoutFiles.title !== initialDataWithoutFiles.title ||
+          currentDataWithoutFiles.venue !== initialDataWithoutFiles.venue ||
+          currentDataWithoutFiles.address !== initialDataWithoutFiles.address ||
+          currentDataWithoutFiles.categoryId !== initialDataWithoutFiles.categoryId ||
+          currentDataWithoutFiles.description !== initialDataWithoutFiles.description ||
+          currentDataWithoutFiles.YoutubeUrl !== initialDataWithoutFiles.YoutubeUrl ||
+          currentDataWithoutFiles.existingThumbnailUrl !== initialDataWithoutFiles.existingThumbnailUrl ||
+          currentDataWithoutFiles.existingCoverUrl !== initialDataWithoutFiles.existingCoverUrl ||
+          (currentData.thumbnailFile !== null && currentData.thumbnailFile !== undefined) ||  // If a new thumbnail was selected
+          (currentData.coverFile !== null && currentData.coverFile !== undefined);        // If a new cover was selected
+
+        console.log("Step 1 data compared - different:", isDifferent);
+        console.log("Current without files:", currentDataWithoutFiles);
+        console.log("Initial without files:", initialDataWithoutFiles);
+
+        return isDifferent;
+      } else if (currentStep === 2 && step2Ref.current) {
+        const currentData = step2Ref.current.getData();
+        const initial = loadedShowingsData || [];
+        const isDifferent = JSON.stringify(currentData) !== JSON.stringify(initial);
+        console.log("Step 2 data compared - different:", isDifferent);
+        return isDifferent;
+      }
+    } catch (error) {
+      console.error("Error checking form dirty:", error);
+    }
+
+    console.log("Form is not dirty");
+    return false;
+  };
+
+  // Effect to handle browser back/close
+  useEffect(() => {
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      if (isFormDirty()) {
+        e.preventDefault();
+        e.returnValue = "Bạn có thay đổi chưa lưu. Nếu rời khỏi trang, dữ liệu sẽ bị mất.";
+        return e.returnValue;
+      }
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    
+    return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+    };
+  }, []);
+
+  // --- CANCEL HANDLER ---
+  const handleCancel = () => {
+    if (isFormDirty()) {
+      setShowCancelDialog(true);
+    } else {
+      // No unsaved changes, navigate back directly
+      navigate(-1);
+    }
+  };
+
+  const confirmCancel = () => {
+    setShowCancelDialog(false);
+    navigate(-1);
+  };
+
   // HÀM LƯU DỮ LIỆU (Tùy bước mà gọi API khác nhau)
   const handleSave = async (andNext: boolean = false) => {
     setLoading(true);
@@ -302,6 +445,7 @@ export default function EventWizardPage() {
             onStepChange={handleStepChange}
             onSave={() => handleSave(false)}
             onNext={() => handleSave(true)}
+            onCancel={handleCancel}
             loading={loading}
         />
 
@@ -348,6 +492,27 @@ export default function EventWizardPage() {
                 </>
             )}
         </div>
+
+        {/* CANCEL CONFIRMATION DIALOG */}
+        <Dialog open={showCancelDialog} onOpenChange={setShowCancelDialog}>
+            <DialogContent>
+                <DialogHeader>
+                    <DialogTitle>Xác nhận hủy</DialogTitle>
+                    <DialogDescription>
+                        Bạn có thay đổi chưa lưu. Nếu hủy bây giờ, tất cả dữ liệu sẽ bị mất.
+                        Bạn có chắc muốn hủy không?
+                    </DialogDescription>
+                </DialogHeader>
+                <DialogFooter>
+                    <Button variant="outline" onClick={() => setShowCancelDialog(false)}>
+                        Tiếp tục chỉnh sửa
+                    </Button>
+                    <Button variant="destructive" onClick={confirmCancel}>
+                        Hủy và thoát
+                    </Button>
+                </DialogFooter>
+            </DialogContent>
+        </Dialog>
     </div>
   );
 }
