@@ -82,6 +82,8 @@ export const eventService = {
   // Tìm kiếm sự kiện theo keyword
   search: async (keyword: string): Promise<Event[]> => {
     return apiClient.get(`/events/search?keyword=${encodeURIComponent(keyword)}`);
+  },
+
   // API Tạo sự kiện (FormData)
   create: async (formData: FormData) => {
     return apiClient.post<any, Event>("/events", formData, {

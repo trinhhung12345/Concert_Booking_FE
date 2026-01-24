@@ -7,11 +7,6 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { eventService, type Event } from "@/features/concerts/services/eventService";
 import ChatBot from "@/components/ChatBot";
 import { Link } from "react-router-dom";
-import EventCard, { type EventProps } from "@/features/concerts/components/EventCard";
-import ChatBot from "@/components/ChatBot";
-import { Button } from "@/components/ui/button";
-import { Skeleton } from "@/components/ui/skeleton";
-import { eventService, type Event } from "@/features/concerts/services/eventService";
 import { categoryService, type Category } from "@/features/concerts/services/categoryService";
 import { cleanImageUrl } from "@/lib/utils";
 
