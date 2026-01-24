@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom"; // Import useLocation
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
@@ -33,12 +33,104 @@ import {
 
 // Store & Utils
 import { useAuthStore } from "@/store/useAuthStore";
+import { eventService, type Event } from "@/features/concerts/services/eventService";
 
 export default function Header() {
   const navigate = useNavigate();
   const location = useLocation(); // Hook lấy đường dẫn hiện tại
   const { user, isAuthenticated, logout } = useAuthStore();
   const [searchQuery, setSearchQuery] = useState("");
+  const [searchLoading, setSearchLoading] = useState(false);
+  const [suggestions, setSuggestions] = useState([]);
+  const [showDropdown, setShowDropdown] = useState(false);
+  const inputRef = useRef(null);
+  const dropdownRef = useRef(null);
+    // Xử lý debounce cho search
+    useEffect(() => {
+      if (!searchQuery.trim()) {
+        setSuggestions([]);
+        setShowDropdown(false);
+        return;
+      }
+      const handler = setTimeout(async () => {
+        setSearchLoading(true);
+        try {
+          const res = await eventService.search(searchQuery.trim());
+          const events = res.data ? res.data : res;
+          setSuggestions(events.slice(0, 6)); // Hiện tối đa 6 gợi ý
+          setShowDropdown(true);
+        } catch (e) {
+          setSuggestions([]);
+          setShowDropdown(false);
+        } finally {
+          setSearchLoading(false);
+        }
+      }, 350); // debounce 350ms
+      return () => clearTimeout(handler);
+    }, [searchQuery]);
+
+    // Đóng dropdown khi click ra ngoài
+    useEffect(() => {
+      const handleClickOutside = (event: MouseEvent) => {
+        if (
+          dropdownRef.current &&
+          !dropdownRef.current.contains(event.target) &&
+          inputRef.current &&
+          !inputRef.current.contains(event.target)
+        ) {
+          setShowDropdown(false);
+        }
+      };
+      document.addEventListener("mousedown", handleClickOutside);
+      return () => document.removeEventListener("mousedown", handleClickOutside);
+    }, []);
+  // Hàm xử lý tìm kiếm
+  const handleSearch = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!searchQuery.trim()) return;
+    setSearchLoading(true);
+    try {
+      const res = await eventService.search(searchQuery.trim());
+      // Nếu API trả về .data thì lấy .data, còn không thì lấy trực tiếp
+      const events: Event[] = res.data ? res.data : res;
+      // Chuyển đổi dữ liệu về EventProps[] như HomePage
+      const transformedEvents = events.map((item: Event) => {
+        let minPrice = 0;
+        const allPrices: number[] = [];
+        if (item.showings && item.showings.length > 0) {
+          item.showings.forEach(show => {
+            if (show.types && show.types.length > 0) {
+              show.types.forEach(ticket => allPrices.push(ticket.price));
+            }
+          });
+        }
+        if (allPrices.length > 0) {
+          minPrice = Math.min(...allPrices);
+        }
+        const firstDate = item.showings && item.showings.length > 0
+          ? item.showings[0].startTime
+          : new Date().toISOString();
+        const image = item.files && item.files.length > 0 && item.files[0].thumbUrl
+          ? item.files[0].thumbUrl
+          : "https://images.unsplash.com/photo-1459749411177-334811adbced?q=80&w=800&auto=format&fit=crop";
+        return {
+          id: item.id,
+          title: item.title,
+          imageUrl: image,
+          minPrice: minPrice,
+          date: firstDate,
+          category: item.categoryName
+        };
+      });
+      // Chuyển hướng sang trang chủ với state chứa kết quả tìm kiếm
+      navigate("/", { state: { searchResults: transformedEvents, searchQuery } });
+    } catch (error) {
+      // Có thể hiển thị toast lỗi ở đây
+      console.error("Lỗi tìm kiếm sự kiện:", error);
+    } finally {
+      setSearchLoading(false);
+    }
+  };
 
   const handleLogout = () => {
     logout();
@@ -73,17 +165,54 @@ export default function Header() {
         {/* 2. SEARCH BAR (Giữa - Chỉ hiện trên Desktop/Tablet) */}
         {!isAdminPage && (
           <div className="hidden md:flex flex-1 max-w-md mx-8 relative">
-            <FontAwesomeIcon
-              icon={faSearch}
-              className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
-            />
-            <Input
-              type="text"
-              placeholder="Tìm kiếm sự kiện,..."
-              className="pl-10 rounded-full bg-gray-100 border-transparent focus:bg-white focus:border-primary transition-all duration-300"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-            />
+            <form className="w-full" onSubmit={handleSearch} autoComplete="off">
+              <FontAwesomeIcon
+                icon={faSearch}
+                className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
+              />
+              <Input
+                ref={inputRef}
+                type="text"
+                placeholder="Tìm kiếm sự kiện,..."
+                className="pl-10 rounded-full bg-gray-100 border-transparent focus:bg-white focus:border-primary transition-all duration-300"
+                value={searchQuery}
+                onChange={(e) => {
+                  setSearchQuery(e.target.value);
+                  setShowDropdown(true);
+                }}
+                disabled={searchLoading}
+                onFocus={() => { if (suggestions.length > 0) setShowDropdown(true); }}
+              />
+              <button type="submit" className="hidden" aria-label="Tìm kiếm" />
+            </form>
+            {/* Dropdown gợi ý */}
+            {showDropdown && suggestions.length > 0 && (
+              <div ref={dropdownRef} className="absolute left-0 top-12 w-full bg-white border border-gray-200 rounded-xl shadow-lg z-50 max-h-80 overflow-y-auto animate-fade-in">
+                {suggestions.map((event) => (
+                  <div
+                    key={event.id}
+                    className="flex items-center gap-3 px-4 py-2 cursor-pointer hover:bg-primary/10 transition-colors"
+                    onClick={() => {
+                      setShowDropdown(false);
+                      setSearchQuery("");
+                      navigate(`/event/${event.id}`);
+                    }}
+                  >
+                    <img src={event.files && event.files[0]?.thumbUrl ? event.files[0].thumbUrl : 'https://images.unsplash.com/photo-1459749411177-334811adbced?q=80&w=800&auto=format&fit=crop'} alt={event.title} className="w-10 h-10 rounded-lg object-cover border" />
+                    <div className="flex-1">
+                      <div className="font-semibold text-gray-900 line-clamp-1">{event.title}</div>
+                      <div className="text-xs text-gray-500 line-clamp-1">{event.venue}</div>
+                    </div>
+                  </div>
+                ))}
+                {searchLoading && (
+                  <div className="px-4 py-2 text-sm text-gray-400">Đang tìm kiếm...</div>
+                )}
+                {!searchLoading && suggestions.length === 0 && (
+                  <div className="px-4 py-2 text-sm text-gray-400">Không tìm thấy sự kiện phù hợp.</div>
+                )}
+              </div>
+            )}
           </div>
         )}
 

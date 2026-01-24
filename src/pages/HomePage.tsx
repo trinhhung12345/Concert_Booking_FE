@@ -1,4 +1,11 @@
 import { useEffect, useState } from "react";
+import { useLocation } from "react-router-dom";
+import EventCard, { type EventProps } from "@/features/concerts/components/EventCard";
+import CategoryFilter from "@/components/layout/CategoryFilter";
+import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
+import { eventService, type Event } from "@/features/concerts/services/eventService";
+import ChatBot from "@/components/ChatBot";
 import { Link } from "react-router-dom";
 import EventCard, { type EventProps } from "@/features/concerts/components/EventCard";
 import ChatBot from "@/components/ChatBot";
@@ -61,23 +68,27 @@ function CategoryEvents({ categoryId, transformEvents }: { categoryId: number; t
 }
 
 export default function HomePage() {
+  const location = useLocation();
   const [events, setEvents] = useState<EventProps[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const searchResults = location.state?.searchResults;
+  const searchQuery = location.state?.searchQuery;
   const [categories, setCategories] = useState<Category[]>([]);
   const [categoriesLoading, setCategoriesLoading] = useState(true);
 
   useEffect(() => {
+    // Nếu có kết quả tìm kiếm thì set luôn, không gọi API
+    if (searchResults) {
+      setEvents(searchResults);
+      setIsLoading(false);
+      return;
+    }
     const fetchEvents = async () => {
       try {
         const data: Event[] = await eventService.getAll();
-
-        // --- LOGIC TRANSFORM DATA (Backend -> Frontend) ---
         const transformedEvents: EventProps[] = data.map((item: Event) => {
-
-          // 1. Tìm giá thấp nhất trong tất cả các showing và ticket types
           let minPrice = 0;
           const allPrices: number[] = [];
-
           if (item.showings && item.showings.length > 0) {
             item.showings.forEach(show => {
               if (show.types && show.types.length > 0) {
@@ -85,12 +96,9 @@ export default function HomePage() {
               }
             });
           }
-
           if (allPrices.length > 0) {
             minPrice = Math.min(...allPrices);
           }
-
-          // 2. Lấy ngày diễn ra đầu tiên
           const firstDate = item.showings && item.showings.length > 0
             ? item.showings[0].startTime
             : new Date().toISOString(); // Fallback nếu chưa có lịch
@@ -109,19 +117,15 @@ export default function HomePage() {
             category: item.categoryName
           };
         });
-
         setEvents(transformedEvents);
-
       } catch (error) {
         console.error("Failed to fetch events:", error);
-        // Có thể hiển thị toast error ở đây
       } finally {
         setIsLoading(false);
       }
     };
-
     fetchEvents();
-  }, []);
+  }, [searchResults]);
 
   useEffect(() => {
     const fetchCategories = async () => {
@@ -171,6 +175,7 @@ export default function HomePage() {
       const rawImage = thumbnailFile?.thumbUrl || thumbnailFile?.originUrl || null;
       const image = cleanImageUrl(rawImage);
 
+      {/* SECTION: Sự kiện nổi bật hoặc kết quả tìm kiếm */}
       return {
         id: item.id,
         title: item.title,
@@ -188,12 +193,16 @@ export default function HomePage() {
       <section>
         <div className="flex items-center justify-between mb-6">
           <h2 className="text-3xl font-bold text-secondary">
-            Sự kiện mới nhất
+            {searchQuery
+              ? `Kết quả tìm kiếm cho "${searchQuery}"`
+              : "Sự kiện mới nhất"}
             <span className="block w-16 h-1.5 bg-primary mt-2 rounded-full"></span>
           </h2>
-          <Button variant="ghost" className="text-primary hover:text-primary/80 hover:bg-primary/5">
-            Xem tất cả &rarr;
-          </Button>
+          {!searchQuery && (
+            <Button variant="ghost" className="text-primary hover:text-primary/80 hover:bg-primary/5">
+              Xem tất cả &rarr;
+            </Button>
+          )}
         </div>
 
         {/* LOADING STATE */}
