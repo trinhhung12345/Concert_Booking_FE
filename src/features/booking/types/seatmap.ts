@@ -7,6 +7,7 @@ export interface SeatAttribute {
   scaleY: number;
   rotate: number;
   fill: string;
+  section?: null;
 }
 
 export interface MapElement {
@@ -18,6 +19,8 @@ export interface MapElement {
   height?: number;
   fill: string;
   data?: string;
+  display?: number;
+  sectionId?: number;
 }
 
 export interface Seat {
@@ -26,29 +29,34 @@ export interface Seat {
   rowIndex: number;
   colIndex: number;
   sectionId: number;
+  ticketTypeId?: number | null;
+  seatElementId?: number | null;
   status: "AVAILABLE" | "BOOKED" | "LOCKED";
-  price?: number;
+  price?: number | null;
+  isSalable?: boolean;
   type?: string; // VIP, Standard...
 }
 
 export interface Section {
   id: number;
   name: string;
-  isReservingSeat?: boolean;
-  isStage?: boolean;
-  status?: number;
-  isSalable?: boolean;
+  isReservingSeat: boolean;
+  isStage: boolean;
+  status: number;
+  isSalable: boolean;
   message?: string;
-  seatMapId?: number;
-  ticketTypeId?: number;
+  seatMapId: number;
+  ticketTypeId?: number | null;
   seats: Seat[];
   elements: MapElement[];
-  attribute: SeatAttribute | null; // Có thể null
+  attribute: SeatAttribute | null;
 }
 
 export interface SeatMapData {
   id: number;
   name: string;
+  status: number;
   viewbox: string; // "0 0 1200 800"
+  showingId: number;
   sections: Section[];
 }
