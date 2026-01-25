@@ -4,6 +4,16 @@ import { eventService, type Event, type EventFile } from "@/features/concerts/se
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
+import parse from "html-react-parser";
+import DOMPurify from "dompurify";
+
+// Hàm decode HTML entities (xử lý trường hợp double-encoded)
+const decodeHtmlEntities = (text: string): string => {
+  if (!text) return "";
+  const textarea = document.createElement("textarea");
+  textarea.innerHTML = text;
+  return textarea.value;
+};
 import {
   Dialog,
   DialogContent,
@@ -231,9 +241,12 @@ export default function EventDetailPage() {
                 {/* Giới thiệu */}
                 <div className="bg-white p-8 rounded-3xl shadow-sm border border-gray-100">
                     <h2 className="text-2xl font-bold text-gray-900 mb-4">Giới thiệu sự kiện</h2>
-                    <p className="text-gray-600 leading-relaxed whitespace-pre-line">
-                        {event.description}
-                    </p>
+                    <div className="text-gray-600 leading-relaxed event-description">
+                        {parse(DOMPurify.sanitize(decodeHtmlEntities(event.description || ""), {
+                            ALLOWED_TAGS: ['p', 'br', 'strong', 'em', 'u', 's', 'a', 'ul', 'ol', 'li', 'h1', 'h2', 'h3', 'blockquote', 'span', 'div'],
+                            ALLOWED_ATTR: ['href', 'target', 'rel', 'class']
+                        }))}
+                    </div>
 
                     {/* Gallery ảnh (loại bỏ video) */}
                     {event.files && event.files.length > 0 && (

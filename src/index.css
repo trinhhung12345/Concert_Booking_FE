@@ -168,3 +168,81 @@
     scrollbar-width: none;  /* Firefox */
   }
 }
+
+/* Event Description Styles - Cho nội dung từ ReactQuill */
+.event-description {
+  line-height: 1.8;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  word-break: break-word;
+  max-width: 100%;
+}
+
+.event-description p {
+  margin-bottom: 0.75rem;
+}
+
+.event-description h1,
+.event-description h2,
+.event-description h3 {
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+  margin-top: 1rem;
+  color: #1f2937;
+}
+
+.event-description h1 {
+  font-size: 1.5rem;
+}
+
+.event-description h2 {
+  font-size: 1.25rem;
+}
+
+.event-description h3 {
+  font-size: 1.1rem;
+}
+
+.event-description ul,
+.event-description ol {
+  padding-left: 1.5rem;
+  margin-bottom: 0.75rem;
+}
+
+.event-description ul {
+  list-style-type: disc;
+}
+
+.event-description ol {
+  list-style-type: decimal;
+}
+
+.event-description li {
+  margin-bottom: 0.25rem;
+}
+
+.event-description a {
+  color: hsl(var(--primary));
+  text-decoration: underline;
+}
+
+.event-description a:hover {
+  opacity: 0.8;
+}
+
+.event-description strong {
+  font-weight: 600;
+  color: #1f2937;
+}
+
+.event-description em {
+  font-style: italic;
+}
+
+.event-description blockquote {
+  border-left: 4px solid hsl(var(--primary));
+  padding-left: 1rem;
+  margin: 1rem 0;
+  color: #6b7280;
+  font-style: italic;
+}

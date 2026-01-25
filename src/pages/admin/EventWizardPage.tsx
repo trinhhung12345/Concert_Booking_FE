@@ -331,12 +331,15 @@ export default function EventWizardPage() {
 
             // Prepare Form Data
             const formData = new FormData();
-            formData.append("title", eventData.title);
-            formData.append("venue", eventData.venue);
-            formData.append("address", eventData.address);
+            formData.append("title", eventData.title.trim());
+            formData.append("venue", eventData.venue.trim());
+            formData.append("address", eventData.address.trim());
             formData.append("description", eventData.description);
-            formData.append("categoryId", eventData.categoryId);
-            if (eventData.YoutubeUrl) formData.append("YoutubeUrl", eventData.YoutubeUrl);
+            formData.append("categoryId", String(Number(eventData.categoryId))); // Đảm bảo là số
+            // Chỉ gửi YoutubeUrl nếu có giá trị (không rỗng)
+            if (eventData.YoutubeUrl && eventData.YoutubeUrl.trim() !== "") {
+                formData.append("youtubeUrl", eventData.YoutubeUrl.trim());
+            }
             if (eventData.thumbnailFile) formData.append("files", eventData.thumbnailFile);
             if (eventData.coverFile) formData.append("files", eventData.coverFile);
 
