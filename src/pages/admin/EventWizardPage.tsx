@@ -480,7 +480,7 @@ export default function EventWizardPage() {
                     )}
 
                     {currentStep === 3 && (
-                        <StepSeatMap />
+                        <StepSeatMap eventId={createdEventId || undefined} />
                     )}
 
                     {currentStep === 4 && (

@@ -49,10 +49,10 @@ export default function OtpModal({ isOpen, onClose, onVerify, email }: OtpModalP
             </svg>
           </div>
           <DialogTitle className="text-2xl font-bold text-gray-900">
-            Verify Validation Code
+             Xác nhận OTP
           </DialogTitle>
           <DialogDescription className="text-gray-500 text-base">
-            We have sent a verification code to <br />
+            Chúng tôi đã gửi mã xác nhận đến <br />
             <span className="font-semibold text-gray-900">{email}</span>
           </DialogDescription>
         </DialogHeader>
@@ -86,9 +86,9 @@ export default function OtpModal({ isOpen, onClose, onVerify, email }: OtpModalP
           </Button>
 
           <div className="text-sm text-center text-gray-500">
-            Didn't receive the code?{" "}
+            Không nhận được mã?{" "}
             <button className="text-primary font-semibold hover:underline">
-              Resend Code
+              Gửi lại mã
             </button>
             <span className="ml-2 text-gray-400">(00:59)</span>
           </div>
