@@ -5,7 +5,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { seatMapService } from '@/features/admin/services/seatMapService';
 import type { SeatMap } from '@/features/admin/types/seatmap';
-import SeatMapEditor from '@/features/admin/components/seatmap-editor/SeatMapEditor';
+import SeatMapEditor from '@/features/admin/components/seatmap/SeatMapEditor';
 
 const AdminSeatMapPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
