@@ -98,6 +98,11 @@ export const eventService = {
     return apiClient.post("/showings", payload);
   },
 
+  // API Cập nhật Suất diễn
+  updateShowing: async (payload: Partial<Showing>): Promise<Showing> => {
+    return apiClient.put("/showings", payload);
+  },
+
   // API Tạo Loại vé
   createTicketType: async (payload: any): Promise<{ id: number }> => {
     return apiClient.post("/ticket-types", payload);

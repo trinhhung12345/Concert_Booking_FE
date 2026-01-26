@@ -38,11 +38,16 @@ export default function BookingPage() {
         setLoading(true);
         setError(null);
 
-        console.log("📡 Gọi API: GET /seat-maps/" + showingId);
-        // Gọi API: GET /seat-maps/{showingId}
-        const data = await bookingService.getSeatMapById(showingId);
+        console.log("📡 Gọi API: GET /seat-maps?showingId=" + showingId);
+        // Gọi API: GET /seat-maps?showingId={showingId}
+        const data = await bookingService.getSeatMapByShowingId(showingId);
         console.log("✅ API response:", data);
-        setMapData(data);
+
+        if (data) {
+          setMapData(data);
+        } else {
+          setError("Không tìm thấy sơ đồ ghế cho suất diễn này.");
+        }
 
       } catch (err) {
         console.error("❌ Lỗi tải sơ đồ ghế:", err);

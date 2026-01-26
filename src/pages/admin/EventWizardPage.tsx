@@ -483,7 +483,10 @@ export default function EventWizardPage() {
                     )}
 
                     {currentStep === 3 && (
-                        <StepSeatMap eventId={createdEventId || undefined} />
+                        <StepSeatMap 
+                          eventId={createdEventId || undefined} 
+                          showingsData={step2Data || loadedShowingsData}
+                        />
                     )}
 
                     {currentStep === 4 && (

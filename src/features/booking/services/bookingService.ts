@@ -7,16 +7,24 @@ export const bookingService = {
     return apiClient.get(`/seat-maps/${id}`) as Promise<SeatMapData>;
   },
 
-  // Lấy danh sách sơ đồ ghế theo eventId (showing)
+  // Lấy danh sách sơ đồ ghế theo eventId
   getSeatMapsByEventId: async (eventId: number | string): Promise<SeatMapData[]> => {
     return apiClient.get(`/seat-maps`, {
       params: { eventId },
     }) as Promise<SeatMapData[]>;
   },
 
-  // Lấy sơ đồ ghế theo showingId
-  getSeatMapByShowingId: async (eventId: number | string, showingId: number | string): Promise<SeatMapData | undefined> => {
-    const seatMaps = await bookingService.getSeatMapsByEventId(eventId);
-    return seatMaps.find((seatMap) => seatMap.showingId === Number(showingId));
+  // Lấy danh sách sơ đồ ghế theo showingId (mới cập nhật)
+  getSeatMapsByShowingId: async (showingId: number | string): Promise<SeatMapData[]> => {
+    return apiClient.get(`/seat-maps`, {
+      params: { showingId },
+    }) as Promise<SeatMapData[]>;
+  },
+
+  // Lấy sơ đồ ghế theo showingId (trả về một seat map cụ thể)
+  getSeatMapByShowingId: async (showingId: number | string): Promise<SeatMapData | undefined> => {
+    const seatMaps = await bookingService.getSeatMapsByShowingId(showingId);
+    // Trả về seat map đầu tiên nếu có nhiều
+    return seatMaps.length > 0 ? seatMaps[0] : undefined;
   },
 };
