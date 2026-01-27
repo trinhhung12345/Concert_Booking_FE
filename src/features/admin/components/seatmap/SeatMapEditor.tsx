@@ -3,11 +3,31 @@ import { Stage, Layer, Rect, Transformer, Group, Text } from "react-konva";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faPlus, faSave, faTrash, faMousePointer } from "@fortawesome/free-solid-svg-icons";
 import Konva from "konva";
+import { eventService } from "@/features/concerts/services/eventService";
 
 // --- TYPES ---
+interface TicketType {
+  id: number;
+  name: string;
+  description: string;
+  color: string;
+  isFree: boolean;
+  price: number;
+  originalPrice: number;
+  maxQtyPerOrder: number;
+  minQtyPerOrder: number;
+  startTime: string;
+  endTime: string;
+  position: number;
+  status: string;
+  imageUrl: string;
+  showingId: number | null;
+}
+
 interface ShapeData {
   id: string;
   x: number;
@@ -20,6 +40,7 @@ interface ShapeData {
   cols: number;
   price: number;
   color: string;
+  ticketTypeId: number | null;
 }
 
 interface SeatMapEditorProps {
@@ -30,6 +51,30 @@ interface SeatMapEditorProps {
 export default function SeatMapEditor({ showingId, onSave }: SeatMapEditorProps) {
   const [shapes, setShapes] = useState<ShapeData[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [ticketTypes, setTicketTypes] = useState<TicketType[]>([]);
+  const [loadingTicketTypes, setLoadingTicketTypes] = useState(false);
+
+  // Load ticket types when component mounts and has showingId
+  useEffect(() => {
+    if (showingId) {
+      const fetchTicketTypes = async () => {
+        setLoadingTicketTypes(true);
+        try {
+          const types = await eventService.getTicketTypesByShowingId(showingId);
+          setTicketTypes(types);
+        } catch (error) {
+          console.error('Error fetching ticket types:', error);
+          setTicketTypes([]);
+        } finally {
+          setLoadingTicketTypes(false);
+        }
+      };
+
+      fetchTicketTypes();
+    } else {
+      setTicketTypes([]);
+    }
+  }, [showingId]);
 
   // 1. HÀM THÊM KHU VỰC MỚI
   const addSection = () => {
@@ -44,7 +89,8 @@ export default function SeatMapEditor({ showingId, onSave }: SeatMapEditorProps)
       rows: 5,
       cols: 8,
       price: 100000,
-      color: "#FF0082" // Màu hồng thương hiệu
+      color: "#FF0082", // Màu hồng thương hiệu
+      ticketTypeId: null
     };
     setShapes([...shapes, newShape]);
     setSelectedId(newShape.id);
@@ -83,7 +129,18 @@ export default function SeatMapEditor({ showingId, onSave }: SeatMapEditorProps)
 
   // 4. CẬP NHẬT DỮ LIỆU TỪ FORM (Sidebar phải)
   const updateSelectedShape = (field: keyof ShapeData, value: any) => {
-    setShapes(shapes.map(s => s.id === selectedId ? { ...s, [field]: value } : s));
+    // If updating ticketTypeId, check constraint
+    if (field === 'ticketTypeId') {
+      const ticketTypeId = value === 'none' ? null : Number(value);
+      
+      // Check if this ticket type is already used in another section
+      if (ticketTypeId !== null && shapes.some(s => s.id !== selectedId && s.ticketTypeId === ticketTypeId)) {
+        alert('Loại vé này đã được sử dụng cho khu vực khác. Mỗi loại vé chỉ được dùng cho một khu vực.');
+        return;
+      }
+    }
+    
+    setShapes(shapes.map(s => s.id === selectedId ? { ...s, [field]: value === 'none' ? null : value } : s));
   };
 
   // 5. XUẤT JSON CHO BACKEND
@@ -114,7 +171,8 @@ export default function SeatMapEditor({ showingId, onSave }: SeatMapEditorProps)
           fill: shape.color
         },
         elements: [{ type: "rect", width: shape.width, height: shape.height, fill: shape.color }],
-        seats: seats
+        seats: seats,
+        ticketTypeId: shape.ticketTypeId // Add ticketTypeId to export data
       };
     });
 
@@ -361,6 +419,37 @@ export default function SeatMapEditor({ showingId, onSave }: SeatMapEditorProps)
                   className="bg-background border-input flex-1"
                 />
               </div>
+            </div>
+
+            {/* Thêm phần chọn loại vé */}
+            <div className="space-y-1">
+              <Label>Loại vé</Label>
+              {loadingTicketTypes ? (
+                <div className="text-muted-foreground text-sm">Đang tải loại vé...</div>
+              ) : ticketTypes.length > 0 ? (
+                <Select
+                  value={selectedShape.ticketTypeId?.toString() || 'none'}
+                  onValueChange={(value) => updateSelectedShape("ticketTypeId", value)}
+                >
+                  <SelectTrigger className="bg-background border-input">
+                    <SelectValue placeholder="Chọn loại vé" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">Không chọn</SelectItem>
+                    {ticketTypes.map((ticketType) => (
+                      <SelectItem 
+                        key={ticketType.id} 
+                        value={ticketType.id.toString()}
+                        disabled={shapes.some(s => s.id !== selectedId && s.ticketTypeId === ticketType.id)}
+                      >
+                        {ticketType.name} - {new Intl.NumberFormat('vi-VN').format(ticketType.price)}đ
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              ) : (
+                <div className="text-muted-foreground text-sm">Chưa có loại vé nào</div>
+              )}
             </div>
 
             <Button

@@ -39,8 +39,8 @@ interface CreateSectionAttributePayload {
   width: number;
   height: number;
   scaleX: number;
-  scaleY: number;
-  rotate: number;
+ scaleY: number;
+ rotate: number;
   sectionId: number;
   fill: string;
 }
@@ -113,5 +113,10 @@ export const seatMapService = {
     return await apiClient.get('/seat-maps', {
       params: { showingId }
     });
+  },
+
+  // Get all seatmaps for a showing using the new v1 API
+  getSeatMapsByShowingIdV1: async (showingId: number): Promise<SeatMap[]> => {
+    return await apiClient.get(`/seat-maps/showings/${showingId}`);
   }
 };

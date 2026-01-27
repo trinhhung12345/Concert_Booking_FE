@@ -27,4 +27,9 @@ export const bookingService = {
     // Trả về seat map đầu tiên nếu có nhiều
     return seatMaps.length > 0 ? seatMaps[0] : undefined;
   },
+
+  // Lấy sơ đồ ghế theo showingId từ API mới (v1)
+  getSeatMapByShowingIdV1: async (showingId: number | string): Promise<SeatMapData[]> => {
+    return apiClient.get(`/seat-maps/showings/${showingId}`) as Promise<SeatMapData[]>;
+  },
 };

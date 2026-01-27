@@ -28,7 +28,7 @@ const StepSeatMap: React.FC<StepSeatMapProps> = ({ eventId, showingsData }) => {
     } else if (!eventId) {
       setError("Vui lòng hoàn tất thông tin sự kiện và tạo suất diễn trước.");
     } else if (showingsData && showingsData.length === 0) {
-      setError("Chưa có suất diễn nào. Vui lòng quay lại bước 2 để tầo suất diễn.");
+      setError("Chưa có suất diễn nào. Vui lòng quay lại bước 2 để tạo suất diễn.");
     }
   }, [showingsData, eventId, selectedShowingId]);
 
@@ -62,7 +62,7 @@ const StepSeatMap: React.FC<StepSeatMapProps> = ({ eventId, showingsData }) => {
           isSalable: true, // Assuming these are sellable areas
           isReservingSeat: false,
           message: "",
-          ticketTypeId: null
+          ticketTypeId: section.ticketTypeId // Use the ticketTypeId from the section data
         };
 
         const createdSection = await seatMapService.createSection(sectionPayload);
@@ -142,7 +142,7 @@ const StepSeatMap: React.FC<StepSeatMapProps> = ({ eventId, showingsData }) => {
           </div>
 
           {selectedShowingId ? (
-            <SeatMapEditor showingId={selectedShowingId} />
+            <SeatMapEditor showingId={selectedShowingId} onSave={handleSaveSeatMap} />
           ) : error ? (
             <div className="h-[60vh] flex flex-col items-center justify-center border border-dashed border-gray-300 rounded-lg bg-gray-50">
               <div className="text-center text-muted-foreground p-6">
@@ -155,7 +155,7 @@ const StepSeatMap: React.FC<StepSeatMapProps> = ({ eventId, showingsData }) => {
               </div>
             </div>
           ) : (
-            <div className="h-[60vh] flex items-center justify-center border border-dashed border-gray-300 rounded-lg">
+            <div className="h-[60vh] flex items-center justify-center border-dashed border-gray-300 rounded-lg">
               <div className="text-center text-muted-foreground">
                 <p>Vui lòng chọn suất diễn để thiết lập sơ đồ ghế</p>
               </div>
