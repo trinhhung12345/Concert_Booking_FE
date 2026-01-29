@@ -18,7 +18,7 @@ const AdminSeatMapPage: React.FC = () => {
     const loadSeatMaps = async () => {
       try {
         // Sử dụng API mới để lấy seatmaps theo showingId
-        const response = await seatMapService.getSeatMapsByShowingIdV1(showingId);
+        const response = await seatMapService.getSeatMapsByShowingId(showingId);
         setSeatMaps(response);
         if (response.length > 0) {
           setActiveTab(`view-${response[0].id}`);

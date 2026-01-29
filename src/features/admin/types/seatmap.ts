@@ -1,33 +1,6 @@
-// Type definitions for seatmap functionality
-
-export interface SeatMapSectionAttribute {
-  x: number;
-  y: number;
-  width: number;
-  height: number;
-  scaleX: number;
-  scaleY: number;
-  rotate: number;
-  fill: string;
-  sectionId: number;
-}
-
-export interface SeatMapSection {
-  id: number;
-  name: string;
-  seatMapId: number;
-  status: number;
-  isStage: boolean;
-  isSalable: boolean;
-  isReservingSeat: boolean;
-  message: string;
-  ticketTypeId: number | null;
-  attribute: SeatMapSectionAttribute;
-}
-
 export interface SeatMapElement {
   id: number;
-  type: string;
+  type: 'rect' | 'circle';
   x: number;
   y: number;
   width: number;
@@ -36,19 +9,8 @@ export interface SeatMapElement {
   data: string;
   display: number;
   sectionId: number;
-}
-
-export interface Seat {
-  id: number;
-  code: string;
-  rowIndex: number;
-  colIndex: number;
-  sectionId: number;
-  ticketTypeId?: number | null;
-  seatElementId?: number | null;
-  status: 'AVAILABLE' | 'BOOKED' | 'LOCKED';
-  price?: number | null;
-  isSalable?: boolean;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 export interface SeatMap {
@@ -57,6 +19,49 @@ export interface SeatMap {
   status: number;
   viewbox: string;
   showingId: number;
-  sections: SeatMapSection[];
-  elements: SeatMapElement[];
+  createdAt?: string;
+  updatedAt?: string;
+  sections?: Section[];
+}
+
+export interface Section {
+  id: number;
+  name: string;
+  seatMapId: number;
+  status: number;
+  isStage: boolean;
+  isSalable: boolean;
+  isReservingSeat: boolean;
+  message: string;
+  ticketTypeId: number;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface SectionAttribute {
+  id: number;
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  scaleX: number;
+  scaleY: number;
+ rotate: number;
+ fill: string;
+  sectionId: number;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface Seat {
+  id: number;
+  code: string;
+  row: number;
+  col: number;
+  status: 'AVAILABLE' | 'BOOKED' | 'SELECTED';
+  isSalable: boolean;
+  price: number;
+  sectionId: number;
+  createdAt?: string;
+  updatedAt?: string;
 }

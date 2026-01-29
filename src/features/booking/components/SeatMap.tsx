@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { TransformWrapper, TransformComponent } from "react-zoom-pan-pinch";
-import type { SeatMapData, Section, Seat } from "../types/seatmap";
+import type { SeatMapData, Section, Seat, MapElement } from "../types/seatmap";
 import { cn } from "@/lib/utils";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faSearchPlus, faSearchMinus, faRedo } from "@fortawesome/free-solid-svg-icons";
@@ -51,12 +51,31 @@ export default function SeatMap({ data, selectedSeats, onSeatClick }: SeatMapPro
     zoomControls.zoomIn();
   };
 
-  // --- COMPONENT VẼ 1 GHẾ (Giữ nguyên) ---
+  // --- COMPONENT VẼ 1 GHẾ (Cập nhật để sử dụng elements) ---
   const RenderSeat = ({ seat }: { seat: Seat }) => {
     const x = (seat.colIndex - 1) * STEP;
     const y = (seat.rowIndex - 1) * STEP;
     const selected = isSelected(seat.id);
     const available = seat.status === "AVAILABLE";
+
+    // Xác định element tương ứng với trạng thái ghế
+    let seatElement: MapElement | undefined;
+    if (selected) {
+      seatElement = data.sections
+        .find(s => s.id === seat.sectionId)
+        ?.elements?.find(el => el.data === "selected-seat-element");
+    } else if (!available) {
+      seatElement = data.sections
+        .find(s => s.id === seat.sectionId)
+        ?.elements?.find(el => el.data === "booked-seat-element");
+    } else {
+      seatElement = data.sections
+        .find(s => s.id === seat.sectionId)
+        ?.elements?.find(el => el.data === "available-seat-element");
+    }
+
+    // Sử dụng fill từ element hoặc màu mặc định theo quy chuẩn
+    const fill = seatElement?.fill || (selected ? "#FF69B4" : available ? "#808080" : "#000000");
 
     return (
       <g
@@ -74,7 +93,7 @@ export default function SeatMap({ data, selectedSeats, onSeatClick }: SeatMapPro
           width={SEAT_SIZE}
           height={SEAT_SIZE}
           rx={SEAT_RADIUS}
-          fill={selected ? "#FF0082" : available ? "#E5E7EB" : "#374151"}
+          fill={fill}
           stroke={selected ? "#FF0082" : "#D1D5DB"}
           strokeWidth="1"
         />
@@ -100,7 +119,7 @@ export default function SeatMap({ data, selectedSeats, onSeatClick }: SeatMapPro
 
   // --- COMPONENT VẼ KHU VỰC (PROGRESSIVE DISCLOSURE) ---
   const RenderSection = ({ section, zoomControls }: { section: Section, zoomControls: any }) => {
-    const attr = section.attribute || { x: 0, y: 0, scaleX: 1, scaleY: 1, rotate: 0, fill: "transparent" };
+    const attr = section.attribute || { x: 0, y: 0, width: 200, height: 150, scaleX: 1, scaleY: 1, rotate: 0, fill: "transparent" };
     const expanded = isSectionExpanded(section.id);
 
     // 1. Tìm danh sách các hàng và cột duy nhất có trong section này
@@ -113,12 +132,13 @@ export default function SeatMap({ data, selectedSeats, onSeatClick }: SeatMapPro
         transform={`translate(${attr.x}, ${attr.y}) scale(${attr.scaleX || 1}, ${attr.scaleY || 1}) rotate(${attr.rotate || 0})`}
       >
         {/* Nền/Khung Section - Clickable khi chưa expand */}
-        {section.elements.map((el) => {
+        {section.elements && section.elements.length > 0 ? (
+          section.elements.map((el) => {
             const fillColor = isValidHexColor(el.fill) ? el.fill : "#9CA3AF";
 
             // Render rect cho cả type "rect" và các type khác (như "string")
             // vì chúng đều có x, y, width, height
-            if (el.width && el.height) {
+            if (el.width && el.height && el.data !== "available-seat-element" && el.data !== "selected-seat-element" && el.data !== "booked-seat-element") {
                 return (
                   <rect
                     key={el.id}
@@ -137,7 +157,24 @@ export default function SeatMap({ data, selectedSeats, onSeatClick }: SeatMapPro
                 );
             }
             return null;
-        })}
+          })
+        ) : (
+          // Fallback khi elements rỗng: sử dụng attribute để render section
+          <rect
+            key="section-fallback"
+            x={attr.x || 0}
+            y={attr.y || 0}
+            width={attr.width || 200}
+            height={attr.height || 150}
+            fill={attr.fill || "#FF0082"}
+            opacity="0.3"
+            stroke={expanded ? "#e5e7eb" : "#3B82F6"} // Blue border when not expanded
+            strokeWidth={expanded ? 1 : 2}
+            rx={4}
+            className={!expanded ? "cursor-pointer hover:opacity-50 transition-opacity" : ""}
+            onClick={!expanded ? () => handleSectionClick(section.id, zoomControls) : undefined}
+          />
+        )}
 
         {/* Chỉ render seats và labels khi expanded */}
         {expanded && (
@@ -197,10 +234,10 @@ export default function SeatMap({ data, selectedSeats, onSeatClick }: SeatMapPro
         )}
 
         {/* Tên khu vực - Chỉ hiển thị khi chưa expanded */}
-        {!expanded && section.elements[0] && (
+        {!expanded && (
           <text
-            x={(section.elements[0].x || 0) + (section.elements[0].width || 0) / 2}
-            y={(section.elements[0].y || 0) + (section.elements[0].height || 0) / 2}
+            x={(section.elements && section.elements[0] ? (section.elements[0].x || 0) + (section.elements[0].width || 0) / 2 : attr.x + attr.width / 2)}
+            y={(section.elements && section.elements[0] ? (section.elements[0].y || 0) + (section.elements[0].height || 0) / 2 : attr.y + attr.height / 2)}
             fontSize="18"
             fontWeight="bold"
             fill="#374151"
@@ -211,7 +248,7 @@ export default function SeatMap({ data, selectedSeats, onSeatClick }: SeatMapPro
             {section.name}
             {section.message && (
               <tspan
-                x={(section.elements[0].x || 0) + (section.elements[0].width || 0) / 2}
+                x={(section.elements && section.elements[0] ? (section.elements[0].x || 0) + (section.elements[0].width || 0) / 2 : attr.x + attr.width / 2)}
                 dy="20"
                 fontSize="12"
                 fill="#6B7280"
@@ -237,7 +274,7 @@ export default function SeatMap({ data, selectedSeats, onSeatClick }: SeatMapPro
       >
         {({ zoomIn, zoomOut, resetTransform }) => (
           <>
-            <div className="absolute top-4 right-4 z-10 flex flex-col gap-2 bg-white p-2 rounded-lg shadow-md border border-gray-100">
+            <div className="absolute top-4 right-4 z-10 flex-col gap-2 bg-white p-2 rounded-lg shadow-md border border-gray-100">
               <Button size="icon" variant="ghost" onClick={() => zoomIn()} title="Phóng to">
                 <FontAwesomeIcon icon={faSearchPlus} />
               </Button>
@@ -266,9 +303,9 @@ export default function SeatMap({ data, selectedSeats, onSeatClick }: SeatMapPro
 
       {/* Legend giữ nguyên */}
       <div className="absolute bottom-4 left-4 z-10 bg-white/90 backdrop-blur px-4 py-2 rounded-lg shadow-sm border border-gray-200 flex gap-4 text-xs font-medium">
-          <div className="flex items-center gap-2"><div className="w-4 h-4 rounded bg-[#E5E7EB] border border-gray-300"></div> Trống</div>
-          <div className="flex items-center gap-2"><div className="w-4 h-4 rounded bg-[#FF0082]"></div> Đang chọn</div>
-          <div className="flex items-center gap-2"><div className="w-4 h-4 rounded bg-[#374151]"></div> Đã bán</div>
+          <div className="flex items-center gap-2"><div className="w-4 h-4 rounded bg-[#808080] border-gray-300"></div> Trống</div>
+          <div className="flex items-center gap-2"><div className="w-4 h-4 rounded bg-[#FF69B4]"></div> Đang chọn</div>
+          <div className="flex items-center gap-2"><div className="w-4 h-4 rounded bg-[#000000]"></div> Đã bán</div>
       </div>
     </div>
   );

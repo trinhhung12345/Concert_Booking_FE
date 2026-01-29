@@ -20,8 +20,8 @@ const StepSeatMap: React.FC<StepSeatMapProps> = ({ eventId, showingsData }) => {
   useEffect(() => {
     if (showingsData && showingsData.length > 0) {
       setShowings(showingsData);
-      // Auto-select first showing if available
-      if (!selectedShowingId) {
+      // Auto-select first showing if no showing is currently selected
+      if (selectedShowingId === null || !showingsData.some(s => s.id === selectedShowingId)) {
         setSelectedShowingId(showingsData[0].id);
       }
       setError(null);
@@ -52,7 +52,7 @@ const StepSeatMap: React.FC<StepSeatMapProps> = ({ eventId, showingsData }) => {
       // For now, we'll create a new one
       const createdSeatMap = await seatMapService.createSeatMap(seatMapPayload);
 
-      // Process sections
+        // Process sections
       for (const section of data.sections) {
         const sectionPayload = {
           name: section.name,
@@ -81,6 +81,25 @@ const StepSeatMap: React.FC<StepSeatMapProps> = ({ eventId, showingsData }) => {
         };
 
         await seatMapService.createSectionAttribute(attributePayload);
+
+        // Create seat map elements for seat status colors
+        if (section.elements && section.elements.length > 0) {
+          for (const element of section.elements) {
+            const elementPayload = {
+              type: element.type,
+              x: element.x || 0,
+              y: element.y || 0,
+              width: element.width || 20,
+              height: element.height || 20,
+              fill: element.fill,
+              data: element.data,
+              display: element.display || 1,
+              sectionId: createdSection.id
+            };
+
+            await seatMapService.createSeatMapElement(elementPayload);
+          }
+        }
 
         // Create seats based on rows and columns
         if (section.seats && section.seats.length > 0) {

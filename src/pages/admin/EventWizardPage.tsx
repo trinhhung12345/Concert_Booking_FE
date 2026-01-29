@@ -134,17 +134,30 @@ export default function EventWizardPage() {
       const data = step2Ref.current.getData();
       setStep2Data(data);
       console.log("Saved step 2 data:", data);
+      
+      // Nếu chuyển từ step 2 sang step 3 và đã có eventId, load fresh data từ API
+      if (newStep === 3 && createdEventId) {
+        try {
+          const showings = await eventService.getShowingsByEventId(createdEventId);
+          const transformedData = await transformShowingsToFormValues(showings, createdEventId);
+          setLoadedShowingsData(transformedData);
+          setStep2Data(transformedData);
+          console.log("Loaded fresh showings data for step 3:", transformedData);
+        } catch (error) {
+          console.error("Error loading showings for step 3:", error);
+        }
+      }
     }
 
     // Change step
     setCurrentStep(newStep);
   };
 
-  // --- NAVIGATION DATA LOADING (fallback for create mode) ---
+   // --- NAVIGATION DATA LOADING (fallback for create mode) ---
   useEffect(() => {
     const loadStepData = async () => {
-      // Skip if we're in edit mode and data is already loaded
-      if (createdEventId && (loadedEventData || loadedShowingsData)) {
+      // Skip if we're in edit mode and data is already loaded (but not when transitioning between steps)
+      if (createdEventId && loadedEventData && loadedShowingsData && currentStep !== 2 && currentStep !== 3) {
         console.log("Edit mode data already loaded, skipping navigation load");
         return;
       }
@@ -174,7 +187,7 @@ export default function EventWizardPage() {
     };
 
     loadStepData();
-  }, [currentStep, createdEventId, loadedEventData, loadedShowingsData]);
+  }, [currentStep, createdEventId]); // Run when step changes, removed loadedEventData and loadedShowingsData to prevent infinite loop
 
   // --- CHECK FORM DIRTY ---
   const isFormDirty = () => {
@@ -346,9 +359,9 @@ export default function EventWizardPage() {
             // API Call
             let res;
             if (createdEventId) {
-                // TODO: Gọi API Update nếu đã có ID (nếu bạn làm tính năng edit)
-                // res = await eventService.update(createdEventId, formData);
-                console.log("Update logic here");
+                // Update existing event - append ID to FormData as required by API
+                formData.append("id", String(createdEventId));
+                res = await eventService.update(formData);
             } else {
                 // Create New
                 res = await eventService.create(formData);
@@ -423,7 +436,16 @@ export default function EventWizardPage() {
                 }
             }
 
-            alert("Đã lưu thành công tất cả Suất diễn & Vé!");
+                alert("Đã lưu thành công tất cả Suất diễn & Vé!");
+
+                // Load lại dữ liệu showings từ API để cập nhật cho bước tiếp theo
+                if (createdEventId) {
+                    const freshShowings = await eventService.getShowingsByEventId(createdEventId);
+                    const transformedData = await transformShowingsToFormValues(freshShowings, createdEventId);
+                    setLoadedShowingsData(transformedData);
+                    setStep2Data(transformedData);
+                    console.log("Updated showings data after save:", transformedData);
+                }
         }
 
         // Chuyển bước nếu cần

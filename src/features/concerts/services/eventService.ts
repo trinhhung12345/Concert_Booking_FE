@@ -107,4 +107,13 @@ export const eventService = {
   createTicketType: async (payload: any): Promise<{ id: number }> => {
     return apiClient.post("/ticket-types", payload);
   },
+
+  // API Cập nhật sự kiện (FormData)
+  update: async (formData: FormData) => {
+    return apiClient.put<any, Event>("/events", formData, {
+      headers: {
+        "Content-Type": "multipart/form-data",
+      },
+    });
+  },
 };

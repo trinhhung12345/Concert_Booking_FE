@@ -1,122 +1,137 @@
-import apiClient from '@/lib/axios';
-import type { SeatMap, SeatMapSection } from '../types/seatmap';
-
-// Type definitions for API payloads
-interface CreateSeatMapPayload {
-  name: string;
-  status: number;
-  viewbox: string;
-  showingId: number;
-}
-
-interface CreateSectionPayload {
-  name: string;
-  seatMapId: number;
-  status: number;
-  isStage: boolean;
-  isSalable: boolean;
-  isReservingSeat: boolean;
-  message: string;
-  ticketTypeId: number | null;
-}
-
-interface CreateSeatBatchPayload {
-  sectionId: number;
-  price: number;
-  status: string;
-  isSalable: boolean;
-  rows: number;
-  cols: number;
-  startRow: number;
-  startCol: number;
-  codePrefix: string;
-  overwrite: boolean;
-}
-
-interface CreateSectionAttributePayload {
-  x: number;
-  y: number;
-  width: number;
-  height: number;
-  scaleX: number;
- scaleY: number;
- rotate: number;
-  sectionId: number;
-  fill: string;
-}
-
-interface CreateSeatMapElementPayload {
-  type: string;
-  x: number;
-  y: number;
-  width: number;
-  height: number;
-  fill: string;
-  data: string;
-  display: number;
-  sectionId: number;
-}
+import axios from '@/lib/axios';
+import type { SeatMap, Section, SectionAttribute, Seat, SeatMapElement } from '../types/seatmap';
 
 export const seatMapService = {
-  // Create a new seatmap
-  createSeatMap: async (payload: CreateSeatMapPayload): Promise<SeatMap> => {
-    return await apiClient.post('/seat-maps', payload);
+  // Seat Map CRUD operations
+  createSeatMap: async (payload: Omit<SeatMap, 'id'>): Promise<SeatMap> => {
+    const response = await axios.post('/api/seat-map', payload);
+    return response.data;
   },
 
-  // Get seatmap by ID
   getSeatMapById: async (id: number): Promise<SeatMap> => {
-    return await apiClient.get(`/seat-maps/${id}`);
+    const response = await axios.get(`/api/seat-map/${id}`);
+    return response.data;
   },
 
-  // Update seatmap
-  updateSeatMap: async (id: number, payload: Partial<CreateSeatMapPayload>): Promise<SeatMap> => {
-    return await apiClient.put(`/seat-maps/${id}`, payload);
+  updateSeatMap: async (id: number, payload: Partial<SeatMap>): Promise<SeatMap> => {
+    const response = await axios.put(`/api/seat-map/${id}`, payload);
+    return response.data;
   },
 
-  // Delete seatmap
   deleteSeatMap: async (id: number): Promise<void> => {
-    return await apiClient.delete(`/seat-maps/${id}`);
+    await axios.delete(`/api/seat-map/${id}`);
   },
 
-  // Create a new section
-  createSection: async (payload: CreateSectionPayload): Promise<SeatMapSection> => {
-    return await apiClient.post('/seat-map-sections', payload);
-  },
-
-  // Update section
-  updateSection: async (id: number, payload: Partial<CreateSectionPayload>): Promise<SeatMapSection> => {
-    return await apiClient.put(`/seat-map-sections/${id}`, payload);
-  },
-
-  // Delete section
-  deleteSection: async (id: number): Promise<void> => {
-    return await apiClient.delete(`/seat-map-sections/${id}`);
-  },
-
-  // Create seats in batch
-  createSeatsBatch: async (payload: CreateSeatBatchPayload): Promise<any> => {
-    return await apiClient.post('/seats/batch', payload);
-  },
-
-  // Create section attribute
-  createSectionAttribute: async (payload: CreateSectionAttributePayload): Promise<any> => {
-    return await apiClient.post('/seat-map/section-attributes', payload);
-  },
-
-  // Create seatmap element
-  createSeatMapElement: async (payload: CreateSeatMapElementPayload): Promise<any> => {
-    return await apiClient.post('/seat-map-elements', payload);
-  },
-
-  // Get all seatmaps for a showing
+  // Alternative API route for seat maps by showing ID
   getSeatMapsByShowingId: async (showingId: number): Promise<SeatMap[]> => {
-    return await apiClient.get('/seat-maps', {
-      params: { showingId }
-    });
+    const response = await axios.get(`/seat-maps/showings/${showingId}`);
+    return response.data;
   },
 
-  // Get all seatmaps for a showing using the new v1 API
-  getSeatMapsByShowingIdV1: async (showingId: number): Promise<SeatMap[]> => {
-    return await apiClient.get(`/seat-maps/showings/${showingId}`);
+  // Section CRUD operations
+  createSection: async (payload: Omit<Section, 'id'>): Promise<Section> => {
+    const response = await axios.post('/api/seat-map-section', payload);
+    return response.data;
+  },
+
+  getSectionById: async (id: number): Promise<Section> => {
+    const response = await axios.get(`/api/seat-map-section/${id}`);
+    return response.data;
+  },
+
+  updateSection: async (id: number, payload: Partial<Section>): Promise<Section> => {
+    const response = await axios.put(`/api/seat-map-section/${id}`, payload);
+    return response.data;
+  },
+
+  deleteSection: async (id: number): Promise<void> => {
+    await axios.delete(`/api/seat-map-section/${id}`);
+  },
+
+  // Section Attribute CRUD operations
+  createSectionAttribute: async (payload: Omit<SectionAttribute, 'id'>): Promise<SectionAttribute> => {
+    const response = await axios.post('/api/seat-map-section-attribute', payload);
+    return response.data;
+  },
+
+  getSectionAttributeById: async (id: number): Promise<SectionAttribute> => {
+    const response = await axios.get(`/api/seat-map-section-attribute/${id}`);
+    return response.data;
+  },
+
+  updateSectionAttribute: async (id: number, payload: Partial<SectionAttribute>): Promise<SectionAttribute> => {
+    const response = await axios.put(`/api/seat-map-section-attribute/${id}`, payload);
+    return response.data;
+  },
+
+  deleteSectionAttribute: async (id: number): Promise<void> => {
+    await axios.delete(`/api/seat-map-section-attribute/${id}`);
+  },
+
+  // Seat CRUD operations
+  createSeat: async (payload: Omit<Seat, 'id'>): Promise<Seat> => {
+    const response = await axios.post('/api/seat', payload);
+    return response.data;
+  },
+
+  getSeatById: async (id: number): Promise<Seat> => {
+    const response = await axios.get(`/api/seat/${id}`);
+    return response.data;
+  },
+
+  updateSeat: async (id: number, payload: Partial<Seat>): Promise<Seat> => {
+    const response = await axios.put(`/api/seat/${id}`, payload);
+    return response.data;
+  },
+
+  deleteSeat: async (id: number): Promise<void> => {
+    await axios.delete(`/api/seat/${id}`);
+  },
+
+  // Batch operations for seats
+  createSeatsBatch: async (payload: {
+    sectionId: number;
+    price: number;
+    status: 'AVAILABLE' | 'BOOKED' | 'SELECTED';
+    isSalable: boolean;
+    rows: number;
+    cols: number;
+    startRow: number;
+    startCol: number;
+    codePrefix: string;
+    overwrite: boolean;
+  }): Promise<Seat[]> => {
+    const response = await axios.post('/api/seat/batch', payload);
+    return response.data;
+  },
+
+  getSeatsBySectionId: async (sectionId: number): Promise<Seat[]> => {
+    const response = await axios.get(`/api/seat/section/${sectionId}`);
+    return response.data;
+  },
+
+  // Seat Map Element CRUD operations
+  createSeatMapElement: async (payload: Omit<SeatMapElement, 'id'>): Promise<SeatMapElement> => {
+    const response = await axios.post('/api/seat-map/elements', payload);
+    return response.data;
+  },
+
+  getSeatMapElementById: async (id: number): Promise<SeatMapElement> => {
+    const response = await axios.get(`/api/seat-map/elements/${id}`);
+    return response.data;
+  },
+
+  getSeatMapElementsBySectionId: async (sectionId: number): Promise<SeatMapElement[]> => {
+    const response = await axios.get(`/api/seat-map/elements/section/${sectionId}`);
+    return response.data;
+  },
+
+  updateSeatMapElement: async (id: number, payload: Partial<SeatMapElement>): Promise<SeatMapElement> => {
+    const response = await axios.put(`/api/seat-map/elements/${id}`, payload);
+    return response.data;
+  },
+
+  deleteSeatMapElement: async (id: number): Promise<void> => {
+    await axios.delete(`/api/seat-map/elements/${id}`);
   }
 };

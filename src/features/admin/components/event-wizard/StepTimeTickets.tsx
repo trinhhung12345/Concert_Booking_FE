@@ -44,7 +44,11 @@ const StepTimeTickets = forwardRef(({ eventId, initialData }: StepTimeTicketsPro
   useEffect(() => {
     if (initialData && initialData.length > 0) {
       console.log("Populating StepTimeTickets with initialData:", initialData);
-      setShowings(initialData);
+      // Close all showings by default when loading edit data
+      setShowings(initialData.map(show => ({
+        ...show,
+        isOpen: show.isOpen || false // Keep existing isOpen state or default to false
+      })));
     } else if (!initialData) {
       // Reset to default when no initialData (for new events)
       setShowings([{ id: Date.now(), startTime: "", endTime: "", tickets: [], isOpen: true }]);

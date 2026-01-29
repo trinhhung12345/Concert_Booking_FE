@@ -32,16 +32,30 @@ const StepEventInfo = forwardRef(({ initialData }: StepEventInfoProps, ref) => {
   const [thumbnailFile, setThumbnailFile] = useState<File | null>(null);
   const [coverFile, setCoverFile] = useState<File | null>(null);
 
-  const { register, control, trigger, getValues } = useForm<EventInfoFormValues>({
+  const { register, control, trigger, getValues, reset } = useForm<EventInfoFormValues>({
     defaultValues: {
-        title: initialData?.title || "",
-        venue: initialData?.venue || "",
-        address: initialData?.address || "",
-        categoryId: initialData?.categoryId?.toString() || "",
-        description: initialData?.description || "",
-        YoutubeUrl: initialData?.YoutubeUrl || "",
+        title: "",
+        venue: "",
+        address: "",
+        categoryId: "",
+        description: "",
+        YoutubeUrl: "",
     }
   });
+
+  // Reset form when initialData changes (for edit mode)
+  useEffect(() => {
+    if (initialData) {
+      reset({
+        title: initialData.title || "",
+        venue: initialData.venue || "",
+        address: initialData.address || "",
+        categoryId: initialData.categoryId?.toString() || "",
+        description: initialData.description || "",
+        YoutubeUrl: initialData.YoutubeUrl || "",
+      });
+    }
+  }, [initialData, reset]);
 
   // Load Categories
   useEffect(() => {

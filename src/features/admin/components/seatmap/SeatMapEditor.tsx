@@ -5,9 +5,10 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faPlus, faSave, faTrash, faMousePointer } from "@fortawesome/free-solid-svg-icons";
+import { faPlus, faSave, faTrash, faMousePointer, faRefresh } from "@fortawesome/free-solid-svg-icons";
 import Konva from "konva";
 import { eventService } from "@/features/concerts/services/eventService";
+import { seatMapService } from "@/features/admin/services/seatMapService";
 
 // --- TYPES ---
 interface TicketType {
@@ -53,31 +54,127 @@ export default function SeatMapEditor({ showingId, onSave }: SeatMapEditorProps)
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [ticketTypes, setTicketTypes] = useState<TicketType[]>([]);
   const [loadingTicketTypes, setLoadingTicketTypes] = useState(false);
+  const [loadingSeatMap, setLoadingSeatMap] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  // Load ticket types when component mounts and has showingId
+  // Load ticket types and seatmap when component mounts and has showingId
   useEffect(() => {
     if (showingId) {
-      const fetchTicketTypes = async () => {
-        setLoadingTicketTypes(true);
+      const loadData = async () => {
+        setLoadingSeatMap(true);
+        setError(null);
+        
         try {
+          // Fetch ticket types
+          setLoadingTicketTypes(true);
           const types = await eventService.getTicketTypesByShowingId(showingId);
           setTicketTypes(types);
-        } catch (error) {
-          console.error('Error fetching ticket types:', error);
-          setTicketTypes([]);
-        } finally {
           setLoadingTicketTypes(false);
+          
+          // Fetch existing seatmap for the showing
+          const seatMaps = await seatMapService.getSeatMapsByShowingId(showingId);
+          if (seatMaps && seatMaps.length > 0) {
+        // Convert seatmap data to ShapeData format
+        const convertedShapes: ShapeData[] = (seatMaps[0].sections || [])?.map((section: any) => {
+              // Find the first seat to determine rows and cols if possible
+              let rows = 5, cols = 8; // default values
+              
+              if (section.seats && section.seats.length > 0) {
+                const maxRowIndex = Math.max(...section.seats.map((seat: any) => seat.rowIndex));
+                const maxColIndex = Math.max(...section.seats.map((seat: any) => seat.colIndex));
+                rows = maxRowIndex;
+                cols = maxColIndex;
+              }
+              
+              // Get attribute values if available
+              const attr = section.attribute || {};
+              
+              return {
+                id: `section-${section.id}`,
+                x: (attr && attr.x) || 50,
+                y: (attr && attr.y) || 50,
+                width: (attr && attr.width) || 200,
+                height: (attr && attr.height) || 150,
+                rotation: (attr && attr.rotate) || 0,
+                name: section.name || `Khu vực ${section.id}`,
+                rows: rows,
+                cols: cols,
+                price: section.price || 100000,
+                color: (attr && attr.fill) || "#FF0082",
+                ticketTypeId: section.ticketTypeId || null
+              };
+            });
+            
+            setShapes(convertedShapes);
+          }
+        } catch (err) {
+          console.error('Error loading seat map data:', err);
+          setError("Lỗi khi tải dữ liệu sơ đồ ghế: " + (err as Error).message);
+        } finally {
+          setLoadingSeatMap(false);
         }
       };
 
-      fetchTicketTypes();
+      loadData();
     } else {
       setTicketTypes([]);
+      setShapes([]);
     }
   }, [showingId]);
 
+  // Refresh seatmap data
+  const refreshSeatMap = async () => {
+    if (!showingId) return;
+    
+    setLoadingSeatMap(true);
+    setError(null);
+    
+    try {
+      const seatMaps = await seatMapService.getSeatMapsByShowingId(showingId);
+      if (seatMaps && seatMaps.length > 0) {
+        // Convert seatmap data to ShapeData format
+        const convertedShapes: ShapeData[] = (seatMaps[0].sections || [])?.map((section: any) => {
+          // Find the first seat to determine rows and cols if possible
+          let rows = 5, cols = 8; // default values
+          
+          if (section.seats && section.seats.length > 0) {
+            const maxRowIndex = Math.max(...section.seats.map((seat: any) => seat.rowIndex));
+            const maxColIndex = Math.max(...section.seats.map((seat: any) => seat.colIndex));
+            rows = maxRowIndex;
+            cols = maxColIndex;
+          }
+          
+          // Get attribute values if available
+          const attr = section.attribute || {};
+          
+          return {
+            id: `section-${section.id}`,
+            x: (attr && attr.x) || 50,
+            y: (attr && attr.y) || 50,
+            width: (attr && attr.width) || 200,
+            height: (attr && attr.height) || 150,
+            rotation: (attr && attr.rotate) || 0,
+            name: section.name || `Khu vực ${section.id}`,
+            rows: rows,
+            cols: cols,
+            price: section.price || 100000,
+            color: (attr && attr.fill) || "#FF0082",
+            ticketTypeId: section.ticketTypeId || null
+          };
+        });
+        
+        setShapes(convertedShapes);
+      }
+    } catch (err) {
+      console.error('Error refreshing seat map data:', err);
+      setError("Lỗi khi làm mới dữ liệu sơ đồ ghế: " + (err as Error).message);
+    } finally {
+      setLoadingSeatMap(false);
+    }
+  };
+
   // 1. HÀM THÊM KHU VỰC MỚI
-  const addSection = () => {
+ const addSection = () => {
     const newShape: ShapeData = {
       id: `section-${Date.now()}`,
       x: 50,
@@ -159,6 +256,49 @@ export default function SeatMapEditor({ showingId, onSave }: SeatMapEditorProps)
         }
       }
 
+      // Tạo các elements mặc định cho trạng thái ghế
+      const elements = [
+        {
+          type: "rect",
+          width: shape.width,
+          height: shape.height,
+          fill: shape.color,
+          data: "default-section-element",
+          display: 1,
+          sectionId: Math.floor(Math.random() * 10000) // Temporary ID, sẽ được thay thế khi lưu
+        },
+        // Element cho ghế trống
+        {
+          type: "rect",
+          width: 20,
+          height: 20,
+          fill: "#808080", // màu xám cho ghế trống
+          data: "available-seat-element",
+          display: 1,
+          sectionId: Math.floor(Math.random() * 10000)
+        },
+        // Element cho ghế đang chọn
+        {
+          type: "rect",
+          width: 20,
+          height: 20,
+          fill: "#FF69B4", // màu hồng cho ghế đang chọn
+          data: "selected-seat-element",
+          display: 1,
+          sectionId: Math.floor(Math.random() * 10000)
+        },
+        // Element cho ghế đã bán
+        {
+          type: "rect",
+          width: 20,
+          height: 20,
+          fill: "#000000", // màu đen cho ghế đã bán
+          data: "booked-seat-element",
+          display: 1,
+          sectionId: Math.floor(Math.random() * 10000)
+        }
+      ];
+
       return {
         id: Math.floor(Math.random() * 10000),
         name: shape.name,
@@ -170,7 +310,7 @@ export default function SeatMapEditor({ showingId, onSave }: SeatMapEditorProps)
           rotation: shape.rotation,
           fill: shape.color
         },
-        elements: [{ type: "rect", width: shape.width, height: shape.height, fill: shape.color }],
+        elements: elements,
         seats: seats,
         ticketTypeId: shape.ticketTypeId // Add ticketTypeId to export data
       };
@@ -282,6 +422,30 @@ export default function SeatMapEditor({ showingId, onSave }: SeatMapEditorProps)
   // --- RENDER CHÍNH ---
   const selectedShape = shapes.find(s => s.id === selectedId);
 
+  if (loadingSeatMap) {
+    return (
+      <div className="flex h-[600px] items-center justify-center bg-card border border-border rounded-xl">
+        <div className="text-center">
+          <FontAwesomeIcon icon={faRefresh} spin className="text-2xl text-primary mb-2" />
+          <p className="text-muted-foreground">Đang tải sơ đồ ghế...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex h-[600px] flex-col items-center justify-center bg-card border border-border rounded-xl p-4">
+        <div className="text-red-500 text-center mb-4">
+          <p className="font-medium">Lỗi: {error}</p>
+        </div>
+        <Button onClick={() => showingId && refreshSeatMap()}>
+          <FontAwesomeIcon icon={faRefresh} className="mr-2" /> Thử lại
+        </Button>
+      </div>
+    );
+  }
+
   return (
     <div className="flex h-[600px] border border-border rounded-xl overflow-hidden bg-card">
       {/* 1. TOOLBAR TRÁI */}
@@ -302,6 +466,16 @@ export default function SeatMapEditor({ showingId, onSave }: SeatMapEditorProps)
         >
           <FontAwesomeIcon icon={faMousePointer} className="text-muted-foreground" />
         </Button>
+        {showingId && (
+          <Button
+            size="icon"
+            variant="outline"
+            onClick={refreshSeatMap}
+            title="Làm mới dữ liệu"
+          >
+            <FontAwesomeIcon icon={faRefresh} className="text-muted-foreground" />
+          </Button>
+        )}
       </div>
 
       {/* 2. CANVAS CHÍNH */}
@@ -466,6 +640,9 @@ export default function SeatMapEditor({ showingId, onSave }: SeatMapEditorProps)
         ) : (
           <div className="text-muted-foreground text-sm text-center mt-10">
             Chọn một khu vực trên bản vẽ để chỉnh sửa hoặc nhấn dấu (+) để thêm mới.
+            {showingId && shapes.length === 0 && (
+              <p className="mt-2 text-xs">Chưa có khu vực nào được tạo cho suất diễn này.</p>
+            )}
           </div>
         )}
       </div>
