@@ -7,7 +7,6 @@ import {
 	DialogContent,
 	DialogHeader,
 	DialogTitle,
-	DialogClose,
 } from './ui/dialog';
 
 interface Message {
@@ -16,28 +15,50 @@ interface Message {
 	options?: Option[];
 }
 
+interface FormField {
+	name: string;
+	label: string;
+	type: string;
+	required: boolean;
+	placeholder?: string;
+	options?: Array<{ label: string; value: string | number }>;
+}
+
 const ChatBot: React.FC = () => {
 	const [messages, setMessages] = useState<Message[]>([]);
 	const [input, setInput] = useState('');
 	const [loading, setLoading] = useState(false);
 
+	const [activeForm, setActiveForm] = useState<FormField[] | null>(null);
+	const [formData, setFormData] = useState<Record<string, string>>({});
+
 	const sendMessage = async (msg: string) => {
 		setMessages(prev => [...prev, { sender: 'user', text: msg }]);
 		setLoading(true);
+
 		try {
-			const res: ChatbotResponse | undefined = await chatWithBot({ message: msg });
-			const reply = res?.reply ?? 'Không nhận được phản hồi từ server.';
-			const options = res?.options;
+			const res: ChatbotResponse = await chatWithBot({ message: msg });
+
 			setMessages(prev => [
 				...prev,
-				{ sender: 'bot', text: reply, options }
+				{ sender: 'bot', text: res.reply, options: res.options },
 			]);
-		} catch (err) {
+
+			if (res.formFields && res.formFields.length > 0) {
+				// Đảm bảo required luôn là boolean
+				setActiveForm(res.formFields.map(f => ({
+					...f,
+					required: f.required === true // true nếu true, còn lại là false
+				})));
+				setFormData({});
+			}
+		} catch {
 			setMessages(prev => [
 				...prev,
-				{ sender: 'bot', text: 'Có lỗi xảy ra, vui lòng thử lại.' }
+				{ sender: 'bot', text: 'Có lỗi xảy ra.' },
 			]);
 		}
+
 		setLoading(false);
 	};
 
@@ -49,17 +70,40 @@ const ChatBot: React.FC = () => {
 	};
 
 	const handleOptionClick = (option: Option) => {
-		// Nếu có actionUrl, có thể gọi API hoặc chuyển bước
 		sendMessage(option.label);
+	};
+
+	const submitForm = async (e: React.FormEvent) => {
+		e.preventDefault();
+		setLoading(true);
+
+		try {
+			const res: ChatbotResponse = await chatWithBot({
+				message: '',
+				recipient: formData,
+			} as any);
+
+			setMessages(prev => [
+				...prev,
+				{ sender: 'bot', text: res.reply },
+			]);
+
+			setActiveForm(null);
+			setFormData({});
+		} catch {
+			setMessages(prev => [
+				...prev,
+				{ sender: 'bot', text: 'Gửi thông tin thất bại.' },
+			]);
+		}
+
+		setLoading(false);
 	};
 
 	return (
 		<Dialog>
 			<DialogTrigger asChild>
-				<button
-					aria-label="Open chat"
-					className="fixed right-4 bottom-6 z-50 h-12 w-12 rounded-full bg-primary text-white shadow-lg shadow-primary/30 flex items-center justify-center hover:bg-primary/90"
-				>
+				<button className="fixed right-4 bottom-6 z-50 h-12 w-12 rounded-full bg-primary text-white">
 					💬
 				</button>
 			</DialogTrigger>
@@ -72,15 +116,16 @@ const ChatBot: React.FC = () => {
 				<div className="h-64 overflow-y-auto mb-3 flex flex-col gap-3">
 					{messages.map((msg, idx) => (
 						<div key={idx} className={msg.sender === 'user' ? 'text-right' : 'text-left'}>
-							<div className={msg.sender === 'user' ? 'bg-primary text-white inline-block px-3 py-2 rounded-2xl' : 'bg-popover text-popover-foreground inline-block px-3 py-2 rounded-2xl'}>
+							<div className="inline-block px-3 py-2 rounded-2xl bg-muted">
 								{msg.text}
 							</div>
+
 							{msg.options && (
 								<div className="flex flex-wrap gap-2 mt-2">
 									{msg.options.map((opt, i) => (
 										<button
 											key={i}
-											className="inline-flex items-center gap-2 px-3 py-1 bg-primary text-white rounded-md shadow-sm hover:bg-primary/90"
+											className="px-3 py-1 bg-primary text-white rounded-md"
 											onClick={() => handleOptionClick(opt)}
 										>
 											{opt.label}
@@ -93,20 +138,49 @@ const ChatBot: React.FC = () => {
 					{loading && <div className="text-gray-400">Đang trả lời...</div>}
 				</div>
 
-				<form onSubmit={handleSend} className="flex gap-2">
-					<input
-						className="flex-1 border border-input rounded-xl px-3 py-2 bg-transparent text-sm"
-						value={input}
-						onChange={e => setInput(e.target.value)}
-						placeholder="Nhập tin nhắn..."
-						disabled={loading}
-					/>
-					<button type="submit" className="bg-primary text-white px-4 py-2 rounded-xl shadow-lg shadow-primary/20 text-sm" disabled={loading}>
-						Gửi
-					</button>
-				</form>
-
-        
+				{activeForm ? (
+					<form onSubmit={submitForm} className="flex flex-col gap-2">
+						{activeForm.map(f => (
+							<input
+								key={f.name}
+								required={f.required}
+								placeholder={f.label}
+								value={formData[f.name] || ''}
+								onChange={e =>
+									setFormData(prev => ({
+										...prev,
+										[f.name]: e.target.value,
+									}))
+								}
+								className="border rounded-lg px-3 py-2"
+							/>
+						))}
+						<button
+							type="submit"
+							className="bg-primary text-white py-2 rounded-lg"
+							disabled={loading}
+						>
+							Gửi thông tin
+						</button>
+					</form>
+				) : (
+					<form onSubmit={handleSend} className="flex gap-2">
+						<input
+							className="flex-1 border rounded-xl px-3 py-2"
+							value={input}
+							onChange={e => setInput(e.target.value)}
+							placeholder="Nhập tin nhắn..."
+							disabled={loading}
+						/>
+						<button
+							type="submit"
+							className="bg-primary text-white px-4 py-2 rounded-xl"
+							disabled={loading}
+						>
+							Gửi
+						</button>
+					</form>
+				)}
 			</DialogContent>
 		</Dialog>
 	);

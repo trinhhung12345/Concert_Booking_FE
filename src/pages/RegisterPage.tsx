@@ -100,7 +100,7 @@ export default function RegisterPage() {
   };
 
   return (
-    <>
+    <div className="bg-gray-900 min-h-screen w-full">
       <AuthLayout
         title="Join Us"
         subtitle="Create an account to start booking your favorite concerts today. Simple, fast and secure."
@@ -123,6 +123,6 @@ export default function RegisterPage() {
         message={errorDialog.message}
         code={errorDialog.code}
       />
-    </>
+    </div>
   );
 }

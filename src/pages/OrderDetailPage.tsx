@@ -252,7 +252,7 @@ const OrderDetailPage = () => {
                       <h4 className="font-bold text-lg">{ticket.seatCode}</h4>
                       <p className="text-sm text-gray-500">Mã ghế: {ticket.seatId}</p>
                       <p className="text-xs text-gray-400 line-through">
-                        Giá gốc: {ticket.originalPrice.toLocaleString("vi-VN")} đ
+                        Giá gốc: {ticket.originalPrice != null ? ticket.originalPrice.toLocaleString("vi-VN") : "-"} đ
                       </p>
                     </div>
                   </div>

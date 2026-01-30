@@ -1,30 +1,31 @@
-import { useState } from "react";
-import { TransformWrapper, TransformComponent } from "react-zoom-pan-pinch";
-import type { SeatMapData, Section, Seat, MapElement } from "../types/seatmap";
-import { cn } from "@/lib/utils";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faSearchPlus, faSearchMinus, faRedo } from "@fortawesome/free-solid-svg-icons";
-import { Button } from "@/components/ui/button";
+import React, { useState } from 'react';
+import type { SeatMapData, Section, Seat } from '../types/seatmap';
 
-// CẤU HÌNH KÍCH THƯỚC
-const SEAT_SIZE = 25;
-const SEAT_GAP = 10;
-const SEAT_RADIUS = 6;
-// Tính bước nhảy (khoảng cách từ đầu ghế này sang đầu ghế kia)
-const STEP = SEAT_SIZE + SEAT_GAP;
-
-// HÀM TIỆN ÍCH: Đổi số thành chữ (1 -> A, 2 -> B, ..., 27 -> AA)
-const getRowLabel = (n: number) => {
-  const ordA = 'A'.charCodeAt(0);
-  const ordZ = 'Z'.charCodeAt(0);
-  const len = ordZ - ordA + 1;
-  let s = "";
-  while (n >= 0) {
-    s = String.fromCharCode(n % len + ordA - 1) + s; // -1 vì n bắt đầu từ 1
-    n = Math.floor(n / len) - 1;
-  }
-  return s;
-};
+const SeatItem = ({
+  seat,
+  onSelect,
+  selected,
+}: {
+  seat: Seat;
+  onSelect: (seat: Seat) => void;
+  selected: boolean;
+}) => (
+  <button
+    className={`w-7 h-7 m-1 rounded text-xs font-bold border
+      ${
+        seat.status === 'BOOKED' || seat.status === 'LOCKED'
+          ? 'bg-gray-400 cursor-not-allowed'
+          : selected
+          ? 'bg-green-400'
+          : 'bg-white hover:bg-blue-200'
+      }`}
+    disabled={seat.status === 'BOOKED' || seat.status === 'LOCKED'}
+    onClick={() => onSelect(seat)}
+    title={seat.code}
+  >
+    {seat.code}
+  </button>
+);
 
 interface SeatMapProps {
   data: SeatMapData;
@@ -32,280 +33,141 @@ interface SeatMapProps {
   onSeatClick: (seat: Seat) => void;
 }
 
-export default function SeatMap({ data, selectedSeats, onSeatClick }: SeatMapProps) {
-  // State cho progressive disclosure
-  const [currentZoom, setCurrentZoom] = useState(0.8);
-  const [focusedSection, setFocusedSection] = useState<number | null>(null);
+export default function SeatMap({
+  data,
+  selectedSeats,
+  onSeatClick,
+}: SeatMapProps) {
+  const [expanded, setExpanded] = useState(false);
+  const [selectedSection, setSelectedSection] = useState<Section | null>(null);
 
-  const isSelected = (seatId: number) => selectedSeats.some((s) => s.id === seatId);
+  /* ===== LOGIC ===== */
 
-  // Check if section should be expanded (based on zoom level and focus)
-  const isSectionExpanded = (sectionId: number) => {
-    return focusedSection === sectionId && currentZoom >= 1.2;
-  };
+  const stageSection = data.sections.find((s: any) => s.isStage);
+  const seatSections = data.sections.filter((s: any) => !s.isStage);
 
-  // Handle section click - set focused section and zoom in
-  const handleSectionClick = (sectionId: number, zoomControls: any) => {
-    setFocusedSection(sectionId);
-    // Zoom in to show seats
-    zoomControls.zoomIn();
-  };
+  const viewBox = data.viewbox
+    ? data.viewbox.split(' ').map(Number)
+    : [0, 0, 1000, 1000];
 
-  // --- COMPONENT VẼ 1 GHẾ (Cập nhật để sử dụng elements) ---
-  const RenderSeat = ({ seat }: { seat: Seat }) => {
-    const x = (seat.colIndex - 1) * STEP;
-    const y = (seat.rowIndex - 1) * STEP;
-    const selected = isSelected(seat.id);
-    const available = seat.status === "AVAILABLE";
+  const [, , vbW, vbH] = viewBox;
 
-    // Xác định element tương ứng với trạng thái ghế
-    let seatElement: MapElement | undefined;
-    if (selected) {
-      seatElement = data.sections
-        .find(s => s.id === seat.sectionId)
-        ?.elements?.find(el => el.data === "selected-seat-element");
-    } else if (!available) {
-      seatElement = data.sections
-        .find(s => s.id === seat.sectionId)
-        ?.elements?.find(el => el.data === "booked-seat-element");
-    } else {
-      seatElement = data.sections
-        .find(s => s.id === seat.sectionId)
-        ?.elements?.find(el => el.data === "available-seat-element");
-    }
+  const canvasW = 800;
+  const canvasH = 600;
 
-    // Sử dụng fill từ element hoặc màu mặc định theo quy chuẩn
-    const fill = seatElement?.fill || (selected ? "#FF69B4" : available ? "#808080" : "#000000");
+  const scale = Math.min(canvasW / vbW, canvasH / vbH);
 
-    return (
-      <g
-        transform={`translate(${x}, ${y})`}
-        onClick={(e) => {
-           e.stopPropagation();
-           if (available) onSeatClick(seat);
-        }}
-        className={cn(
-            "cursor-pointer transition-all duration-200",
-            available ? "hover:opacity-80" : "cursor-not-allowed opacity-50"
-        )}
-      >
-        <rect
-          width={SEAT_SIZE}
-          height={SEAT_SIZE}
-          rx={SEAT_RADIUS}
-          fill={fill}
-          stroke={selected ? "#FF0082" : "#D1D5DB"}
-          strokeWidth="1"
-        />
-        <text
-          x={SEAT_SIZE / 2}
-          y={SEAT_SIZE / 2}
-          dy=".35em"
-          fontSize="10"
-          textAnchor="middle"
-          fill={selected ? "white" : "#111827"}
-          className="select-none pointer-events-none font-medium"
-        >
-          {seat.colIndex}
-        </text>
-      </g>
-    );
-  };
-
-  // Hàm kiểm tra hex color hợp lệ
-  const isValidHexColor = (color: string) => {
-    return /^#[0-9A-Fa-f]{6}$/.test(color) || /^#[0-9A-Fa-f]{3}$/.test(color);
-  };
-
-  // --- COMPONENT VẼ KHU VỰC (PROGRESSIVE DISCLOSURE) ---
-  const RenderSection = ({ section, zoomControls }: { section: Section, zoomControls: any }) => {
-    const attr = section.attribute || { x: 0, y: 0, width: 200, height: 150, scaleX: 1, scaleY: 1, rotate: 0, fill: "transparent" };
-    const expanded = isSectionExpanded(section.id);
-
-    // 1. Tìm danh sách các hàng và cột duy nhất có trong section này
-    // Set giúp loại bỏ các giá trị trùng lặp
-    const uniqueRows = [...new Set(section.seats.map(s => s.rowIndex))].sort((a, b) => a - b);
-    const uniqueCols = [...new Set(section.seats.map(s => s.colIndex))].sort((a, b) => a - b);
-
-    return (
-      <g
-        transform={`translate(${attr.x}, ${attr.y}) scale(${attr.scaleX || 1}, ${attr.scaleY || 1}) rotate(${attr.rotate || 0})`}
-      >
-        {/* Nền/Khung Section - Clickable khi chưa expand */}
-        {section.elements && section.elements.length > 0 ? (
-          section.elements.map((el) => {
-            const fillColor = isValidHexColor(el.fill) ? el.fill : "#9CA3AF";
-
-            // Render rect cho cả type "rect" và các type khác (như "string")
-            // vì chúng đều có x, y, width, height
-            if (el.width && el.height && el.data !== "available-seat-element" && el.data !== "selected-seat-element" && el.data !== "booked-seat-element") {
-                return (
-                  <rect
-                    key={el.id}
-                    x={el.x}
-                    y={el.y}
-                    width={el.width}
-                    height={el.height}
-                    fill={fillColor}
-                    opacity="0.3"
-                    stroke={expanded ? "#e5e7eb" : "#3B82F6"} // Blue border when not expanded
-                    strokeWidth={expanded ? 1 : 2}
-                    rx={4}
-                    className={!expanded ? "cursor-pointer hover:opacity-50 transition-opacity" : ""}
-                    onClick={!expanded ? () => handleSectionClick(section.id, zoomControls) : undefined}
-                  />
-                );
-            }
-            return null;
-          })
-        ) : (
-          // Fallback khi elements rỗng: sử dụng attribute để render section
-          <rect
-            key="section-fallback"
-            x={attr.x || 0}
-            y={attr.y || 0}
-            width={attr.width || 200}
-            height={attr.height || 150}
-            fill={attr.fill || "#FF0082"}
-            opacity="0.3"
-            stroke={expanded ? "#e5e7eb" : "#3B82F6"} // Blue border when not expanded
-            strokeWidth={expanded ? 1 : 2}
-            rx={4}
-            className={!expanded ? "cursor-pointer hover:opacity-50 transition-opacity" : ""}
-            onClick={!expanded ? () => handleSectionClick(section.id, zoomControls) : undefined}
-          />
-        )}
-
-        {/* Chỉ render seats và labels khi expanded */}
-        {expanded && (
-          <>
-            {/* --- VẼ CHỈ MỤC HÀNG (A, B, C...) --- */}
-            {uniqueRows.map((rowIndex) => {
-                // Vị trí Y: Dựa vào rowIndex
-                const yPos = (rowIndex - 1) * STEP + (SEAT_SIZE / 2);
-                // Vị trí X: Cách lề trái 25px
-                const xPos = -25;
-
-                return (
-                    <text
-                        key={`row-${rowIndex}`}
-                        x={xPos}
-                        y={yPos}
-                        dy=".35em" // Căn giữa theo chiều dọc
-                        textAnchor="middle"
-                        fontSize="14"
-                        fontWeight="bold"
-                        fill="#9CA3AF" // Màu xám nhạt
-                        className="select-none"
-                    >
-                        {getRowLabel(rowIndex)}
-                    </text>
-                );
-            })}
-
-            {/* --- VẼ CHỈ MỤC CỘT (1, 2, 3...) --- */}
-            {uniqueCols.map((colIndex) => {
-                 // Vị trí X: Dựa vào colIndex
-                 const xPos = (colIndex - 1) * STEP + (SEAT_SIZE / 2);
-                 // Vị trí Y: Cách lề trên 25px
-                 const yPos = -25;
-
-                 return (
-                    <text
-                        key={`col-${colIndex}`}
-                        x={xPos}
-                        y={yPos}
-                        textAnchor="middle"
-                        fontSize="12"
-                        fontWeight="bold"
-                        fill="#9CA3AF"
-                        className="select-none"
-                    >
-                        {colIndex}
-                    </text>
-                 );
-            })}
-
-            {/* Vẽ Ghế */}
-            {section.seats.map((seat) => (
-              <RenderSeat key={seat.id} seat={seat} />
-            ))}
-          </>
-        )}
-
-        {/* Tên khu vực - Chỉ hiển thị khi chưa expanded */}
-        {!expanded && (
-          <text
-            x={(section.elements && section.elements[0] ? (section.elements[0].x || 0) + (section.elements[0].width || 0) / 2 : attr.x + attr.width / 2)}
-            y={(section.elements && section.elements[0] ? (section.elements[0].y || 0) + (section.elements[0].height || 0) / 2 : attr.y + attr.height / 2)}
-            fontSize="18"
-            fontWeight="bold"
-            fill="#374151"
-            textAnchor="middle"
-            dominantBaseline="middle"
-            className="pointer-events-none select-none"
-          >
-            {section.name}
-            {section.message && (
-              <tspan
-                x={(section.elements && section.elements[0] ? (section.elements[0].x || 0) + (section.elements[0].width || 0) / 2 : attr.x + attr.width / 2)}
-                dy="20"
-                fontSize="12"
-                fill="#6B7280"
-              >
-                {section.message}
-              </tspan>
-            )}
-          </text>
-        )}
-      </g>
-    );
-  };
+  /* ===== RENDER ===== */
 
   return (
-    <div className="relative w-full h-[600px] bg-white border border-gray-200 rounded-xl overflow-hidden shadow-inner">
-      <TransformWrapper
-        initialScale={0.8} // Zoom nhỏ lại chút để nhìn bao quát hơn lúc đầu
-        minScale={0.4}
-        maxScale={3}
-        centerOnInit
-        limitToBounds={false} // Cho phép kéo ra ngoài vùng viewbox chút để xem rìa
-        onTransformed={(ref, state) => setCurrentZoom(state.scale)}
+    <div className="flex w-full h-screen bg-black text-white">
+      <div
+        className="relative mx-auto my-auto"
+        style={{ width: canvasW, height: canvasH }}
       >
-        {({ zoomIn, zoomOut, resetTransform }) => (
-          <>
-            <div className="absolute top-4 right-4 z-10 flex-col gap-2 bg-white p-2 rounded-lg shadow-md border border-gray-100">
-              <Button size="icon" variant="ghost" onClick={() => zoomIn()} title="Phóng to">
-                <FontAwesomeIcon icon={faSearchPlus} />
-              </Button>
-              <Button size="icon" variant="ghost" onClick={() => zoomOut()} title="Thu nhỏ">
-                <FontAwesomeIcon icon={faSearchMinus} />
-              </Button>
-              <Button size="icon" variant="ghost" onClick={() => { setFocusedSection(null); resetTransform(); }} title="Đặt lại">
-                <FontAwesomeIcon icon={faRedo} />
-              </Button>
+        {/* STAGE */}
+        {stageSection?.attribute && (
+          <div
+            className="absolute flex items-center justify-center font-bold text-2xl rounded-lg"
+            style={{
+              left: stageSection.attribute.x * scale,
+              top: stageSection.attribute.y * scale,
+              width: stageSection.attribute.width * scale,
+              height: stageSection.attribute.height * scale,
+              background: stageSection.attribute.fill || '#ccc',
+              color: '#222',
+              border: '2px solid #fff',
+              zIndex: 10,
+            }}
+          >
+            STAGE
+          </div>
+        )}
+
+        {/* SECTIONS */}
+        {seatSections.map(
+          (section) =>
+            section.attribute && (
+              <div
+                key={section.id}
+                className={`absolute flex flex-col items-center justify-center border-2 rounded-lg cursor-pointer transition
+                  ${
+                    selectedSection?.id === section.id
+                      ? 'ring-4 ring-green-400'
+                      : ''
+                  }`}
+                style={{
+                  left: section.attribute.x * scale,
+                  top: section.attribute.y * scale,
+                  width: section.attribute.width * scale,
+                  height: section.attribute.height * scale,
+                  background: section.attribute.fill || '#666',
+                }}
+                onClick={() => {
+                  setSelectedSection(section);
+                  setExpanded(false);
+                }}
+              >
+                <div className="font-bold">{section.name}</div>
+                <div className="text-xs">
+                  {section.seats.length ? 'Seating' : 'Standing'}
+                </div>
+              </div>
+            )
+        )}
+
+        {/* SEATS POPUP */}
+        {selectedSection && (
+          <div className="absolute left-1/2 top-1/2 z-50 -translate-x-1/2 -translate-y-1/2 bg-gray-800 p-5 rounded-lg shadow-xl">
+            <div className="mb-3 font-bold text-green-400">
+              {selectedSection.name}
             </div>
 
-            <TransformComponent wrapperClass="w-full h-full" contentClass="w-full h-full">
-              <svg
-                viewBox={data.viewbox}
-                className="w-full h-full"
-                style={{ cursor: "grab" }}
-              >
-                {data.sections.map((section) => (
-                  <RenderSection key={section.id} section={section} zoomControls={{ zoomIn, zoomOut, resetTransform }} />
-                ))}
-              </svg>
-            </TransformComponent>
-          </>
-        )}
-      </TransformWrapper>
+            {!expanded ? (
+              <div className="flex flex-col items-center">
+                <button
+                  className="mt-2 px-4 py-2 bg-green-500 rounded hover:bg-green-600 transition"
+                  onClick={() => setExpanded(true)}
+                >
+                  Phóng to để chọn ghế
+                </button>
+              </div>
+            ) : (
+              <>
+                {Array.from(
+                  new Set(selectedSection.seats.map((s) => s.rowIndex))
+                )
+                  .sort((a, b) => a - b)
+                  .map((row) => (
+                    <div key={row} className="flex items-center">
+                      <span className="w-6 text-xs text-gray-300">
+                        {row <= 26 ? String.fromCharCode(64 + row) : row}
+                      </span>
 
-      {/* Legend giữ nguyên */}
-      <div className="absolute bottom-4 left-4 z-10 bg-white/90 backdrop-blur px-4 py-2 rounded-lg shadow-sm border border-gray-200 flex gap-4 text-xs font-medium">
-          <div className="flex items-center gap-2"><div className="w-4 h-4 rounded bg-[#808080] border-gray-300"></div> Trống</div>
-          <div className="flex items-center gap-2"><div className="w-4 h-4 rounded bg-[#FF69B4]"></div> Đang chọn</div>
-          <div className="flex items-center gap-2"><div className="w-4 h-4 rounded bg-[#000000]"></div> Đã bán</div>
+                      {selectedSection.seats
+                        .filter((s) => s.rowIndex === row)
+                        .sort((a, b) => a.colIndex - b.colIndex)
+                        .map((seat) => (
+                          <SeatItem
+                            key={seat.id}
+                            seat={seat}
+                            onSelect={onSeatClick}
+                            selected={selectedSeats.some(
+                              (s) => s.id === seat.id
+                            )}
+                          />
+                        ))}
+                    </div>
+                  ))}
+
+                <div className="mt-3 text-sm">
+                  Selected:{' '}
+                  {selectedSeats.map((s) => s.code).join(', ') || 'None'}
+                </div>
+              </>
+            )}
+          </div>
+        )}
       </div>
     </div>
   );

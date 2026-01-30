@@ -11,6 +11,8 @@ export interface EventProps {
   minPrice: number;
   date: string; // ISO String (2026-01-25)
   category?: string;
+  large?: boolean;
+  aspect?: '3/2' | '16/9';
 }
 
 // Hàm format tiền tệ VNĐ
@@ -31,19 +33,23 @@ const formatDate = (dateString: string) => {
   });
 };
 
-export default function EventCard({ id, title, imageUrl, minPrice, date, category }: EventProps) {
+export default function EventCard({ id, title, imageUrl, minPrice, date, category, aspect = '3/2' }: EventProps) {
   return (
-    <Link to={`/event/${id}`} className="group block h-full">
-      <div className="
-        relative h-full flex flex-col
-        bg-white rounded-2xl overflow-hidden
-        border border-gray-100
-        transition-all duration-300 ease-in-out
-        hover:shadow-xl hover:-translate-y-1
-      ">
-
+    <Link
+      to={`/event/${id}`}
+      className="group block h-full w-full min-w-0 max-w-xs md:max-w-sm lg:max-w-md"
+    >
+      <div
+        className="
+          relative h-full flex flex-col
+          bg-white rounded-2xl overflow-hidden
+          border border-gray-100
+          transition-all duration-300 ease-in-out
+          hover:shadow-lg hover:-translate-y-1
+          min-h-[180px] md:min-h-[200px]"
+      >
         {/* 1. IMAGE SECTION */}
-        <div className="relative aspect-[3/2] overflow-hidden">
+        <div className={`relative ${aspect === '16/9' ? 'aspect-[16/9]' : 'aspect-[3/2]'} overflow-hidden`}>
             <img
               src={imageUrl}
               alt={title}

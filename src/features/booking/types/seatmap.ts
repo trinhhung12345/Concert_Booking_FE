@@ -12,7 +12,7 @@ export interface SeatAttribute {
 
 export interface MapElement {
   id: number;
-  type: string; // "rect", "circle", "path"...
+  type: "rect" | "circle" | "path";
   x: number;
   y: number;
   width?: number;
@@ -25,16 +25,14 @@ export interface MapElement {
 
 export interface Seat {
   id: number;
-  code: string; // "A1-1"
+  code: string;
   rowIndex: number;
   colIndex: number;
   sectionId: number;
   ticketTypeId?: number | null;
   seatElementId?: number | null;
   status: "AVAILABLE" | "BOOKED" | "LOCKED";
-  price?: number | null;
-  isSalable?: boolean;
-  type?: string; // VIP, Standard...
+  price?: number;
 }
 
 export interface Section {
@@ -55,8 +53,6 @@ export interface Section {
 export interface SeatMapData {
   id: number;
   name: string;
-  status: number;
-  viewbox: string; // "0 0 1200 800"
-  showingId: number;
+  viewbox: string;
   sections: Section[];
 }
