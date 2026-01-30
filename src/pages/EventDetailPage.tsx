@@ -149,7 +149,7 @@ export default function EventDetailPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 pb-20">
+    <div className="bg-gray-900 min-h-screen w-full pb-20">
 
       {/* 1. HERO BANNER (VIDEO HOẶC ẢNH) */}
       <div className="relative h-[400px] md:h-[550px] bg-gray-900 overflow-hidden group">

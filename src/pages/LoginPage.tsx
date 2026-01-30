@@ -55,7 +55,7 @@ export default function LoginPage() {
   };
 
   return (
-    <>
+    <div className="bg-gray-900 min-h-screen w-full">
       <AuthLayout
         title="Chào mừng trở lại!"
         subtitle="Khám phá hàng triệu buổi hòa nhạc, nhận thông báo về các nghệ sĩ, vở kịch yêu thích của bạn và nhiều hơn thế nữa."
@@ -71,6 +71,6 @@ export default function LoginPage() {
         message={errorDialog.message}
         code={errorDialog.code}
       />
-    </>
+    </div>
   );
 }

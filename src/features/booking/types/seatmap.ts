@@ -11,7 +11,7 @@ export interface SeatAttribute {
 
 export interface MapElement {
   id: number;
-  type: string; // "rect", "circle", "path"...
+  type: "rect" | "circle" | "path";
   x: number;
   y: number;
   width?: number;
@@ -22,13 +22,12 @@ export interface MapElement {
 
 export interface Seat {
   id: number;
-  code: string; // "A1-1"
+  code: string;
   rowIndex: number;
   colIndex: number;
   sectionId: number;
   status: "AVAILABLE" | "BOOKED" | "LOCKED";
   price?: number;
-  type?: string; // VIP, Standard...
 }
 
 export interface Section {
@@ -36,12 +35,12 @@ export interface Section {
   name: string;
   seats: Seat[];
   elements: MapElement[];
-  attribute: SeatAttribute | null; // Có thể null
+  attribute: SeatAttribute | null;
 }
 
 export interface SeatMapData {
   id: number;
   name: string;
-  viewbox: string; // "0 0 1200 800"
+  viewbox: string;
   sections: Section[];
 }

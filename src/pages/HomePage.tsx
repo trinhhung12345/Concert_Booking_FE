@@ -1,119 +1,198 @@
+import EventSlider from "@/components/EventSlider";
 import { useEffect, useState } from "react";
-import { useLocation } from "react-router-dom";
-import EventCard, { type EventProps } from "@/features/concerts/components/EventCard";
-import CategoryFilter from "@/components/layout/CategoryFilter";
+import { useLocation, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { eventService, type Event } from "@/features/concerts/services/eventService";
+import { categoryService, type Category } from "@/features/concerts/services/categoryService";
 import ChatBot from "@/components/ChatBot";
+
+type EventProps = {
+  id: number;
+  title: string;
+  imageUrl: string;
+  minPrice: number;
+  date: string;
+  category?: string;
+};
 
 export default function HomePage() {
   const location = useLocation();
-  const [events, setEvents] = useState<EventProps[]>([]);
+  const navigate = useNavigate();
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [eventsByCategory, setEventsByCategory] = useState<
+    Record<number, EventProps[]>
+  >({});
   const [isLoading, setIsLoading] = useState(true);
   const searchResults = location.state?.searchResults;
-  const searchQuery = location.state?.searchQuery;
 
   useEffect(() => {
-    // Nếu có kết quả tìm kiếm thì set luôn, không gọi API
-    if (searchResults) {
-      setEvents(searchResults);
-      setIsLoading(false);
-      return;
-    }
-    const fetchEvents = async () => {
+    const fetchData = async () => {
+      setIsLoading(true);
       try {
-        const data: Event[] = await eventService.getAll();
-        const transformedEvents: EventProps[] = data.map((item: Event) => {
-          let minPrice = 0;
-          const allPrices: number[] = [];
-          if (item.showings && item.showings.length > 0) {
-            item.showings.forEach(show => {
-              if (show.types && show.types.length > 0) {
-                show.types.forEach(ticket => allPrices.push(ticket.price));
-              }
-            });
-          }
-          if (allPrices.length > 0) {
-            minPrice = Math.min(...allPrices);
-          }
-          const firstDate = item.showings && item.showings.length > 0
-            ? item.showings[0].startTime
-            : new Date().toISOString();
-          const image = item.files && item.files.length > 0 && item.files[0].thumbUrl
-            ? item.files[0].thumbUrl
-            : "https://images.unsplash.com/photo-1459749411177-334811adbced?q=80&w=800&auto=format&fit=crop";
-          return {
+        const cats = await categoryService.getAll();
+        setCategories(cats);
+
+        const data: Event[] = searchResults
+          ? searchResults
+          : await eventService.getAll();
+
+        const grouped: Record<number, EventProps[]> = {};
+
+        data.forEach((item) => {
+          const prices: number[] = [];
+          item.showings?.forEach((s) =>
+            s.types?.forEach((t) => prices.push(t.price))
+          );
+
+          const eventObj: EventProps = {
             id: item.id,
             title: item.title,
-            imageUrl: image,
-            minPrice: minPrice,
-            date: firstDate,
+            minPrice: prices.length ? Math.min(...prices) : 0,
+            date:
+              item.showings?.[0]?.startTime ??
+              new Date().toISOString(),
+            imageUrl:
+              item.files?.[0]?.thumbUrl ??
+              "https://images.unsplash.com/photo-1459749411177-334811adbced?q=80&w=800",
             category: item.categoryName
           };
+
+          if (!grouped[item.categoryId]) grouped[item.categoryId] = [];
+          grouped[item.categoryId].push(eventObj);
         });
-        setEvents(transformedEvents);
-      } catch (error) {
-        console.error("Failed to fetch events:", error);
+
+        setEventsByCategory(grouped);
+      } catch (e) {
+        console.error(e);
       } finally {
         setIsLoading(false);
       }
     };
-    fetchEvents();
+
+    fetchData();
   }, [searchResults]);
 
+  const allEvents = Object.values(eventsByCategory).flat();
+
   return (
-    <div className="container mx-auto px-4 py-8 space-y-12">
+    <div className="bg-gray-900 min-h-screen w-full">
+      <div className="container mx-auto px-4 py-8 space-y-14">
+        {!isLoading && allEvents.length > 0 && (
+          <EventSlider events={allEvents} />
+        )}
 
-      {/* SECTION: Danh mục sự kiện */}
-      <CategoryFilter />
-
-      {/* SECTION: Sự kiện nổi bật hoặc kết quả tìm kiếm */}
-      <section>
-        <div className="flex items-center justify-between mb-6">
-          <h2 className="text-3xl font-bold text-secondary">
-            {searchQuery
-              ? `Kết quả tìm kiếm cho "${searchQuery}"`
-              : "Sự kiện mới nhất"}
-            <span className="block w-16 h-1.5 bg-primary mt-2 rounded-full"></span>
-          </h2>
-          {!searchQuery && (
-            <Button variant="ghost" className="text-primary hover:text-primary/80 hover:bg-primary/5">
-              Xem tất cả &rarr;
-            </Button>
-          )}
-        </div>
-
-        {/* LOADING STATE */}
-        {isLoading && (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            {[1, 2, 3, 4].map((i) => (
-              <div key={i} className="space-y-3">
-                <Skeleton className="h-[200px] w-full rounded-2xl" />
-                <Skeleton className="h-4 w-3/4" />
-                <Skeleton className="h-4 w-1/2" />
+        {isLoading ? (
+          <div className="space-y-10">
+            {[1, 2, 3].map((i) => (
+              <div key={i}>
+                <Skeleton className="h-7 w-48 mb-4" />
+                <div className="flex gap-6">
+                  {[1, 2, 3].map((j) => (
+                    <Skeleton
+                      key={j}
+                      className="w-[320px] h-[280px] rounded-xl"
+                    />
+                  ))}
+                </div>
               </div>
             ))}
           </div>
-        )}
-
-        {/* DATA LIST */}
-        {!isLoading && events.length > 0 ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            {events.map((event) => (
-              <EventCard key={event.id} {...event} />
-            ))}
-          </div>
         ) : (
-          !isLoading && (
-            <div className="text-center py-20 text-gray-500">
-              Hiện chưa có sự kiện nào.
-            </div>
-          )
-        )}
-      </section>
+          categories
+            .filter((c) => c.active)
+            .map((cat) => (
+              <section key={cat.id} className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <h2 className="text-2xl font-bold text-white">
+                    {cat.name}
+                  </h2>
+                  <Button
+                    variant="ghost"
+                    className="text-primary"
+                    onClick={() => navigate(`/category/${cat.id}`)}
+                  >
+                    Xem tất cả →
+                  </Button>
+                </div>
 
-      <ChatBot />
+                {eventsByCategory[cat.id]?.length ? (
+                  <div className="flex gap-6 overflow-x-auto pb-3">
+                    {eventsByCategory[cat.id].slice(0, 6).map((event) => (
+                      <div
+                        key={event.id}
+                        className="min-w-[320px] w-[320px] bg-gray-800 rounded-xl overflow-hidden cursor-pointer hover:shadow-xl transition"
+                        onClick={() =>
+                          navigate(`/event/${event.id}`)
+                        }
+                      >
+                        {/* IMAGE */}
+                        <div className="aspect-[16/9] w-full overflow-hidden">
+                          <img
+                            src={event.imageUrl}
+                            alt={event.title}
+                            className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
+                            onError={(e) => {
+                              e.currentTarget.src =
+                                "https://images.unsplash.com/photo-1459749411177-334811adbced?q=80&w=800";
+                            }}
+                          />
+                        </div>
+
+                        {/* CONTENT */}
+                        <div className="p-4 space-y-1">
+                          <span className="text-xs text-gray-400 uppercase">
+                            {event.category ?? "EVENT"}
+                          </span>
+
+                          <h3 className="text-white font-semibold text-base line-clamp-2">
+                            {event.title}
+                          </h3>
+
+                          <p className="text-green-400 font-semibold text-sm">
+                            From{" "}
+                            {new Intl.NumberFormat("vi-VN", {
+                              style: "currency",
+                              currency: "VND",
+                              maximumFractionDigits: 0
+                            }).format(event.minPrice)}
+                          </p>
+
+                          <div className="flex items-center gap-1 text-gray-400 text-xs">
+                            <svg
+                              width="14"
+                              height="14"
+                              viewBox="0 0 16 16"
+                              fill="currentColor"
+                            >
+                              <path d="M5 1a.75.75 0 0 1 .75.75V3h4.5V1.75a.75.75 0 0 1 1.5 0V3H13a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h1.25V1.75A.75.75 0 0 1 5 1z" />
+                            </svg>
+                            <span>
+                              {new Date(event.date).toLocaleDateString(
+                                "en-GB",
+                                {
+                                  day: "2-digit",
+                                  month: "short",
+                                  year: "numeric"
+                                }
+                              )}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-gray-400 italic py-6">
+                    Chưa có sự kiện nào
+                  </div>
+                )}
+              </section>
+            ))
+        )}
+
+        <ChatBot />
+      </div>
     </div>
   );
 }

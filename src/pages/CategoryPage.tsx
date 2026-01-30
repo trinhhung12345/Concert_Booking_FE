@@ -105,7 +105,8 @@ export default function CategoryPage() {
   }, [slug, location]);
 
   return (
-    <div className="container mx-auto px-4 py-8 space-y-12">
+    <div className="bg-gray-900 min-h-screen w-full">
+      <div className="container mx-auto px-4 py-8 space-y-12">
       {/* HEADER */}
       <section>
         <div className="flex items-center justify-between mb-6">
@@ -162,6 +163,7 @@ export default function CategoryPage() {
           </p>
         </section>
       ) : null}
+      </div>
     </div>
   );
 }
