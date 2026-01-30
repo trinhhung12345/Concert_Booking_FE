@@ -49,6 +49,7 @@ export interface Event {
   categoryName: string;
   files: EventFile[];
   showings: Showing[];
+  youtubeUrl?: string; // Optional YouTube URL field
 }
 
 // 3. Service gọi API
@@ -81,5 +82,38 @@ export const eventService = {
   // Tìm kiếm sự kiện theo keyword
   search: async (keyword: string): Promise<Event[]> => {
     return apiClient.get(`/events/search?keyword=${encodeURIComponent(keyword)}`);
+  },
+
+  // API Tạo sự kiện (FormData)
+  create: async (formData: FormData) => {
+    return apiClient.post<any, Event>("/events", formData, {
+      headers: {
+        "Content-Type": "multipart/form-data",
+      },
+    });
+  },
+
+  // API Tạo Suất diễn
+  createShowing: async (payload: any): Promise<{ id: number }> => {
+    return apiClient.post("/showings", payload);
+  },
+
+  // API Cập nhật Suất diễn
+  updateShowing: async (payload: Partial<Showing>): Promise<Showing> => {
+    return apiClient.put("/showings", payload);
+  },
+
+  // API Tạo Loại vé
+  createTicketType: async (payload: any): Promise<{ id: number }> => {
+    return apiClient.post("/ticket-types", payload);
+  },
+
+  // API Cập nhật sự kiện (FormData)
+  update: async (formData: FormData) => {
+    return apiClient.put<any, Event>("/events", formData, {
+      headers: {
+        "Content-Type": "multipart/form-data",
+      },
+    });
   },
 };

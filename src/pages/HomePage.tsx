@@ -6,6 +6,61 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { eventService, type Event } from "@/features/concerts/services/eventService";
 import { categoryService, type Category } from "@/features/concerts/services/categoryService";
 import ChatBot from "@/components/ChatBot";
+import { Link } from "react-router-dom";
+import { categoryService, type Category } from "@/features/concerts/services/categoryService";
+import { cleanImageUrl } from "@/lib/utils";
+
+// Component to handle events for each category
+function CategoryEvents({ categoryId, transformEvents }: { categoryId: number; transformEvents: (events: Event[]) => EventProps[] }) {
+  const [categoryEvents, setCategoryEvents] = useState<EventProps[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchCategoryEvents = async () => {
+      try {
+        const data: Event[] = await eventService.getByCategory(categoryId);
+        const transformed = transformEvents(data).slice(0, 4); // Limit to 4 events
+        setCategoryEvents(transformed);
+      } catch (error) {
+        console.error("Failed to fetch category events:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchCategoryEvents();
+  }, [categoryId, transformEvents]);
+
+  if (loading) {
+    return (
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+        {[1, 2, 3, 4].map((i) => (
+          <div key={i} className="space-y-3">
+            <Skeleton className="h-[200px] w-full rounded-2xl" />
+            <Skeleton className="h-4 w-3/4" />
+            <Skeleton className="h-4 w-1/2" />
+          </div>
+        ))}
+      </div>
+    );
+  }
+
+  if (categoryEvents.length === 0) {
+    return (
+      <div className="text-center py-10 text-gray-500">
+        Chưa có sự kiện nào trong danh mục này.
+      </div>
+    );
+  }
+
+  return (
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+      {categoryEvents.map((event) => (
+        <EventCard key={event.id} {...event} />
+      ))}
+    </div>
+  );
+}
 
 type EventProps = {
   id: number;
