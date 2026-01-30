@@ -1,6 +1,6 @@
 export interface SeatMapElement {
   id: number;
-  type: 'rect' | 'circle';
+  type: string; // Có thể là 'rect', 'circle', 'string', v.v.
   x: number;
   y: number;
   width: number;
@@ -36,10 +36,12 @@ export interface Section {
   ticketTypeId: number;
   createdAt?: string;
   updatedAt?: string;
+  elements?: SeatMapElement[];
+  attribute?: SectionAttribute;
+  seats?: Seat[];
 }
 
 export interface SectionAttribute {
-  id: number;
   x: number;
   y: number;
   width: number;
@@ -47,8 +49,8 @@ export interface SectionAttribute {
   scaleX: number;
   scaleY: number;
  rotate: number;
- fill: string;
-  sectionId: number;
+  fill: string;
+  section?: Section | null;
   createdAt?: string;
   updatedAt?: string;
 }
@@ -56,11 +58,11 @@ export interface SectionAttribute {
 export interface Seat {
   id: number;
   code: string;
-  row: number;
-  col: number;
-  status: 'AVAILABLE' | 'BOOKED' | 'SELECTED';
+  rowIndex: number;
+ colIndex: number;
+  status: 'AVAILABLE' | 'BOOKED' | 'SELECTED' | 'SOLD';
   isSalable: boolean;
-  price: number;
+  price: number | null;
   sectionId: number;
   createdAt?: string;
   updatedAt?: string;

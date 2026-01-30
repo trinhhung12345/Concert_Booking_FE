@@ -243,16 +243,21 @@ export default function SeatMapEditor({ showingId, onSave }: SeatMapEditorProps)
   // 5. XUẤT JSON CHO BACKEND
   const handleExport = () => {
     const sections = shapes.map(shape => {
+      // Xác định nếu đây là stage (khi không có ticketTypeId)
+      const isStage = shape.ticketTypeId === null;
       const seats = [];
       
-      for (let r = 1; r <= shape.rows; r++) {
-        for (let c = 1; c <= shape.cols; c++) {
-          seats.push({
-            code: `${String.fromCharCode(64 + r)}${c}`,
-            rowIndex: r,
-            colIndex: c,
-            status: "AVAILABLE",
-          });
+      // Chỉ tạo ghế nếu không phải là stage
+      if (!isStage) {
+        for (let r = 1; r <= shape.rows; r++) {
+          for (let c = 1; c <= shape.cols; c++) {
+            seats.push({
+              code: `${String.fromCharCode(64 + r)}${c}`,
+              rowIndex: r,
+              colIndex: c,
+              status: "AVAILABLE",
+            });
+          }
         }
       }
 
@@ -262,13 +267,13 @@ export default function SeatMapEditor({ showingId, onSave }: SeatMapEditorProps)
           type: "rect",
           width: shape.width,
           height: shape.height,
-          fill: shape.color,
-          data: "default-section-element",
+          fill: isStage ? "#808080" : shape.color, // Màu xám cho stage
+          data: isStage ? "stage-area-element" : "default-section-element",
           display: 1,
           sectionId: Math.floor(Math.random() * 10000) // Temporary ID, sẽ được thay thế khi lưu
         },
-        // Element cho ghế trống
-        {
+        // Element cho ghế trống (chỉ thêm nếu không phải là stage)
+        ...(!isStage ? [{
           type: "rect",
           width: 20,
           height: 20,
@@ -276,9 +281,9 @@ export default function SeatMapEditor({ showingId, onSave }: SeatMapEditorProps)
           data: "available-seat-element",
           display: 1,
           sectionId: Math.floor(Math.random() * 10000)
-        },
-        // Element cho ghế đang chọn
-        {
+        }] : []),
+        // Element cho ghế đang chọn (chỉ thêm nếu không phải là stage)
+        ...(!isStage ? [{
           type: "rect",
           width: 20,
           height: 20,
@@ -286,9 +291,9 @@ export default function SeatMapEditor({ showingId, onSave }: SeatMapEditorProps)
           data: "selected-seat-element",
           display: 1,
           sectionId: Math.floor(Math.random() * 10000)
-        },
-        // Element cho ghế đã bán
-        {
+        }] : []),
+        // Element cho ghế đã bán (chỉ thêm nếu không phải là stage)
+        ...(!isStage ? [{
           type: "rect",
           width: 20,
           height: 20,
@@ -296,7 +301,7 @@ export default function SeatMapEditor({ showingId, onSave }: SeatMapEditorProps)
           data: "booked-seat-element",
           display: 1,
           sectionId: Math.floor(Math.random() * 10000)
-        }
+        }] : [])
       ];
 
       return {
@@ -308,11 +313,12 @@ export default function SeatMapEditor({ showingId, onSave }: SeatMapEditorProps)
           width: shape.width,
           height: shape.height,
           rotation: shape.rotation,
-          fill: shape.color
+          fill: isStage ? "#808080" : shape.color // Màu xám cho stage
         },
         elements: elements,
         seats: seats,
-        ticketTypeId: shape.ticketTypeId // Add ticketTypeId to export data
+        ticketTypeId: shape.ticketTypeId, // Add ticketTypeId to export data
+        isStage: isStage // Thêm thuộc tính isStage để backend biết
       };
     });
 
@@ -343,6 +349,11 @@ export default function SeatMapEditor({ showingId, onSave }: SeatMapEditorProps)
       }
     }, [isSelected]);
 
+    // Xác định nếu đây là stage (khi không có ticketTypeId)
+    const isStage = shape.ticketTypeId === null;
+    const sectionColor = isStage ? "#808080" : shape.color; // Màu xám cho stage
+    const opacity = isStage ? 0.5 : 0.3; // Độ trong suốt khác nhau cho stage
+
     return (
       <>
         <Group
@@ -364,27 +375,27 @@ export default function SeatMapEditor({ showingId, onSave }: SeatMapEditorProps)
           <Rect
             width={shape.width}
             height={shape.height}
-            fill={shape.color}
-            opacity={0.3}
-            stroke={isSelected ? "#009688" : "black"}
+            fill={sectionColor}
+            opacity={opacity}
+            stroke={isSelected ? "#009688" : isStage ? "#666" : "black"} // Viền đậm hơn cho stage
             strokeWidth={isSelected ? 2 : 1}
             cornerRadius={4}
           />
 
           {/* 2. Label Tên Khu Vực */}
           <Text
-            text={`${shape.name}\n(${shape.rows}x${shape.cols})`}
+            text={`${shape.name}\n(${shape.rows}x${shape.cols})${isStage ? '\n(STAGE)' : ''}`}
             width={shape.width}
             height={shape.height}
             align="center"
             verticalAlign="middle"
             fontSize={14}
-            fontStyle="bold"
-            fill="#000"
+            fontStyle={isStage ? "italic bold" : "bold"}
+            fill={isStage ? "#ffffff" : "#00"}
           />
 
-          {/* 3. Lưới Ghế (Visual giả lập để user dễ hình dung) */}
-          {Array.from({ length: shape.rows }).map((_, r) =>
+          {/* 3. Lưới Ghế (Visual giả lập để user dễ hình dung) - Không hiển thị nếu là stage */}
+          {!isStage && Array.from({ length: shape.rows }).map((_, r) =>
             Array.from({ length: shape.cols }).map((_, c) => {
               const w = shape.width / shape.cols;
               const h = shape.height / shape.rows;

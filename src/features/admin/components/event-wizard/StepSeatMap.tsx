@@ -52,6 +52,11 @@ const StepSeatMap: React.FC<StepSeatMapProps> = ({ eventId, showingsData }) => {
       // For now, we'll create a new one
       const createdSeatMap = await seatMapService.createSeatMap(seatMapPayload);
 
+      // Check if createdSeatMap exists and has an id
+      if (!createdSeatMap || !createdSeatMap.id) {
+        throw new Error('Failed to create seat map: Invalid response from server');
+      }
+
         // Process sections
       for (const section of data.sections) {
         const sectionPayload = {
@@ -66,6 +71,11 @@ const StepSeatMap: React.FC<StepSeatMapProps> = ({ eventId, showingsData }) => {
         };
 
         const createdSection = await seatMapService.createSection(sectionPayload);
+
+        // Check if createdSection exists and has an id
+        if (!createdSection || !createdSection.id) {
+          throw new Error(`Failed to create section: ${section.name}. Invalid response from server`);
+        }
 
         // Create section attributes
         const attributePayload = {
