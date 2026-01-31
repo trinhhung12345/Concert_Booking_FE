@@ -105,11 +105,15 @@ const StepEventInfo = forwardRef(({ initialData }: StepEventInfoProps, ref) => {
       }
       return isValid;
     },
-    getData: () => ({
-      ...getValues(),
-      thumbnailFile,
-      coverFile
-    })
+    getData: () => {
+      const data = {
+        ...getValues(),
+        thumbnailFile,
+        coverFile
+      };
+      console.log("StepEventInfo - getData:", data);
+      return data;
+    }
   }));
 
   return (

@@ -328,19 +328,42 @@ export default function EventWizardPage() {
 
   // HÀM LƯU DỮ LIỆU (Tùy bước mà gọi API khác nhau)
   const handleSave = async (andNext: boolean = false) => {
+    console.log("Handle Save called for step", currentStep, "andNext =", andNext);
     setLoading(true);
     try {
         if (currentStep === 1) {
             // Validate Step 1
-            const isValid = await step1Ref.current?.validate();
+            console.log("step1Ref.current exists:", !!step1Ref.current);
+            // Wait for the ref to be properly set if it's not available yet
+            if (!step1Ref.current) {
+                // Small delay to allow rendering to complete
+                await new Promise(resolve => setTimeout(resolve, 100));
+                console.log("step1Ref.current after delay:", !!step1Ref.current);
+            }
+            
+            if (!step1Ref.current) {
+                console.error("step1Ref.current is still null or undefined after delay");
+                setLoading(false);
+                alert("Component chưa sẵn sàng, vui lòng thử lại sau");
+                return;
+            }
+
+            // Store the ref in a local variable to prevent changes during processing
+            const currentStep1Ref = step1Ref.current;
+            
+            const isValid = await currentStep1Ref.validate();
+            console.log("Validation result:", isValid);
             if (!isValid) {
                 setLoading(false);
                 return;
             }
 
-            // Get data from step component
-            const eventData = step1Ref.current?.getData();
+            // Get data from step component using the stored ref
+            const eventData = currentStep1Ref.getData();
+            console.log("Event data retrieved:", !!eventData);
             if (!eventData) return;
+
+            console.log("EventWizardPage - Step 1 eventData before sending:", eventData);
 
             // Prepare Form Data
             const formData = new FormData();
@@ -356,29 +379,77 @@ export default function EventWizardPage() {
             if (eventData.thumbnailFile) formData.append("files", eventData.thumbnailFile);
             if (eventData.coverFile) formData.append("files", eventData.coverFile);
 
+            // Log the form data entries for debugging
+            console.log("EventWizardPage - FormData entries:");
+            for (let [key, value] of formData.entries()) {
+              console.log(`${key}:`, value);
+            }
+
             // API Call
-            let res;
+            let res: Event;
             if (createdEventId) {
                 // Update existing event - append ID to FormData as required by API
                 formData.append("id", String(createdEventId));
+                console.log("EventWizardPage - Calling update API with eventId:", createdEventId);
                 res = await eventService.update(formData);
+                console.log("EventWizardPage - Update API response:", res);
+                
+                // Update loadedEventData with new values to reflect changes in UI
+                const updatedData = {
+                  title: res.title,
+                  venue: res.venue,
+                  address: res.address,
+                  description: res.description,
+                  categoryId: res.categoryId.toString(),
+                  ...(res.files ? {
+                    existingThumbnailUrl: res.files.find((f: any) => f.type === 0)?.thumbUrl || res.files.find((f: any) => f.type === 0)?.originUrl,
+                    existingCoverUrl: res.files.find((f: any) => f.type === 0 && f.id !== res.files[0].id)?.thumbUrl || res.files.find((f: any) => f.type === 0 && f.id !== res.files[0].id)?.originUrl
+                  } : {}),
+                  ...(res.files.find((f: any) => f.type === 1) ? { YoutubeUrl: res.files.find((f: any) => f.type === 1)?.originUrl } : {})
+                };
+                
+                setLoadedEventData(updatedData);
+                // Also update step1Data to ensure the form gets the latest values
+                setStep1Data(updatedData);
             } else {
                 // Create New
+                console.log("EventWizardPage - Calling create API");
                 res = await eventService.create(formData);
+                console.log("EventWizardPage - Create API response:", res);
                 setCreatedEventId(res.id); // Lưu ID lại để dùng cho bước sau
             }
 
             console.log("Step 1 Saved:", res);
         } else if (currentStep === 2) {
             // Validate Step 2
-            const isValid = step2Ref.current?.validate();
+            console.log("step2Ref.current exists:", !!step2Ref.current);
+            // Wait for the ref to be properly set if it's not available yet
+            if (!step2Ref.current) {
+                // Small delay to allow rendering to complete
+                await new Promise(resolve => setTimeout(resolve, 100));
+                console.log("step2Ref.current after delay:", !!step2Ref.current);
+            }
+            
+            if (!step2Ref.current) {
+                console.error("step2Ref.current is still null or undefined after delay");
+                setLoading(false);
+                alert("Component chưa sẵn sàng, vui lòng thử lại sau");
+                return;
+            }
+
+            // Store the ref in a local variable to prevent changes during processing
+            const currentStep2Ref = step2Ref.current;
+            
+            const isValid = currentStep2Ref.validate();
+            console.log("Step 2 validation result:", isValid);
             if (!isValid) {
                 setLoading(false);
                 return;
             }
 
-            // Get data from step component
-            const showingsData = step2Ref.current?.getData();
+            // Get data from step component using the stored ref
+            const showingsData = currentStep2Ref.getData();
+            console.log("Step 2 data retrieved:", !!showingsData);
             if (!showingsData) {
                 throw new Error("Không có dữ liệu suất diễn");
             }

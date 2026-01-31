@@ -7,7 +7,7 @@ import { eventService, type Event } from "@/features/concerts/services/eventServ
 import { categoryService, type Category } from "@/features/concerts/services/categoryService";
 import ChatBot from "@/components/ChatBot";
 import { Link } from "react-router-dom";
-import { categoryService, type Category } from "@/features/concerts/services/categoryService";
+// import { categoryService, type Category } from "@/features/concerts/services/categoryService";
 import { cleanImageUrl } from "@/lib/utils";
 
 // Component to handle events for each category
