@@ -387,10 +387,6 @@ export default function EventWizardPage() {
             formData.append("address", eventData.address.trim());
             formData.append("description", eventData.description);
             formData.append("categoryId", String(Number(eventData.categoryId))); // Đảm bảo là số
-            // Chỉ gửi YoutubeUrl nếu có giá trị (không rỗng)
-            if (eventData.YoutubeUrl && eventData.YoutubeUrl.trim() !== "") {
-                formData.append("youtubeUrl", eventData.YoutubeUrl.trim());
-            }
 
             // XỬ LÝ FILE THEO THỨ TỰ ĐÚNG CHO BACKEND
             // Backend xử lý file ảnh theo thứ tự: file đầu tiên là thumbnail (type 0), các file sau là các ảnh khác
@@ -416,20 +412,27 @@ export default function EventWizardPage() {
                     formData.append("existingCoverUrl", loadedEventData.existingCoverUrl);
                 }
 
-                // Xử lý YouTube URL riêng biệt
+                // Xử lý YouTube URL riêng biệt (chỉ thêm một lần duy nhất)
                 if (eventData.YoutubeUrl && eventData.YoutubeUrl.trim() !== "") {
+                    // Người dùng đã nhập URL mới, sử dụng URL mới
                     formData.append("youtubeUrl", eventData.YoutubeUrl.trim());
                 } else if (!eventData.YoutubeUrl || eventData.YoutubeUrl.trim() === "") {
-                    // Nếu người dùng xóa URL, cần thông báo cho server biết để xóa file YouTube
+                    // Người dùng xóa URL, gửi chuỗi rỗng để xóa file YouTube
                     formData.append("youtubeUrl", "");
-                } else if (loadedEventData?.YoutubeUrl && !eventData.YoutubeUrl) {
-                    // Nếu trước đó có YouTube URL nhưng người dùng không nhập gì mới, gửi lại URL cũ
+                } else if (loadedEventData?.YoutubeUrl && (!eventData.YoutubeUrl || eventData.YoutubeUrl.trim() === "")) {
+                    // Trường hợp này sẽ không xảy ra do điều kiện đầu tiên đã xử lý
+                    // Nhưng giữ lại để đảm bảo logic hoàn chỉnh trong trường hợp cần khôi phục URL cũ
                     formData.append("youtubeUrl", loadedEventData.YoutubeUrl);
                 }
             } else {
                 // CHẾ ĐỘ CREATE: Gửi file theo thứ tự thumbnail trước, cover sau
                 if (eventData.thumbnailFile) formData.append("files", eventData.thumbnailFile);
                 if (eventData.coverFile) formData.append("files", eventData.coverFile);
+                
+                // Thêm YouTube URL cho chế độ tạo mới
+                if (eventData.YoutubeUrl && eventData.YoutubeUrl.trim() !== "") {
+                    formData.append("youtubeUrl", eventData.YoutubeUrl.trim());
+                }
             }
 
             // Log the form data entries for debugging
