@@ -37,9 +37,23 @@ export default function EventWizardPage() {
   const transformEventToFormValues = (event: Event): EventInfoFormValues => {
     console.log("Transforming event data:", event);
 
-    // Extract image files (type 0) and YouTube (type 1)
-    const imageFiles = event.files.filter(f => f.type === 0);
-    const youtubeFile = event.files.find(f => f.type === 1);
+    // Extract image files by type: type 0 for thumbnails, type 1 for covers, type 2 for YouTube
+    const imageFiles = event.files.filter(f => f.type === 0);  // All image files (thumbnails and covers)
+    const youtubeFiles = event.files.filter(f => f.type === 1); // YouTube files (type 1)
+
+    // Clean YouTube URL if it contains duplicates
+    let cleanYoutubeUrl = "";
+    if (youtubeFiles.length > 0) {
+      const originalUrl = youtubeFiles[0].originUrl || "";
+      // Check if URL contains duplicate parts (e.g., "url,url")
+      if (originalUrl.includes(',')) {
+        // Split by comma and take the first unique URL
+        const urls = originalUrl.split(',');
+        cleanYoutubeUrl = urls[0]; // Take first URL to avoid duplication
+      } else {
+        cleanYoutubeUrl = originalUrl;
+      }
+    }
 
     return {
       title: event.title,
@@ -47,10 +61,11 @@ export default function EventWizardPage() {
       address: event.address,
       description: event.description,
       categoryId: event.categoryId.toString(),
-      YoutubeUrl: youtubeFile?.originUrl || "",
+      YoutubeUrl: cleanYoutubeUrl, // Use cleaned YouTube URL to avoid duplication
       // Existing images for display in edit mode
+      // File ảnh đầu tiên trong mảng là thumbnail, file ảnh thứ hai (nếu có) là cover
       existingThumbnailUrl: imageFiles[0]?.thumbUrl || imageFiles[0]?.originUrl,
-      existingCoverUrl: imageFiles[1]?.thumbUrl || imageFiles[1]?.originUrl,
+      existingCoverUrl: imageFiles[1]?.thumbUrl || imageFiles[1]?.originUrl, // File ảnh thứ hai là cover (nếu có)
       // Note: thumbnailFile and coverFile are for new uploads only
     };
   };
@@ -376,8 +391,46 @@ export default function EventWizardPage() {
             if (eventData.YoutubeUrl && eventData.YoutubeUrl.trim() !== "") {
                 formData.append("youtubeUrl", eventData.YoutubeUrl.trim());
             }
-            if (eventData.thumbnailFile) formData.append("files", eventData.thumbnailFile);
-            if (eventData.coverFile) formData.append("files", eventData.coverFile);
+
+            // XỬ LÝ FILE THEO THỨ TỰ ĐÚNG CHO BACKEND
+            // Backend xử lý file ảnh theo thứ tự: file đầu tiên là thumbnail (type 0), các file sau là các ảnh khác
+            // Vì vậy, chúng ta cần đảm bảo thứ tự file được gửi đúng: thumbnail trước, sau đó là cover
+            
+            if (createdEventId) {
+                // CHẾ ĐỘ EDIT: Cần giữ nguyên thứ tự file để đảm bảo thumbnail luôn là file đầu tiên
+                // Nếu có thumbnail mới, gửi thumbnail mới trước
+                if (eventData.thumbnailFile) {
+                    formData.append("files", eventData.thumbnailFile);
+                } else if (loadedEventData?.existingThumbnailUrl) {
+                    // Nếu không có thumbnail mới nhưng có thumbnail cũ, cần gửi thumbnail cũ để đảm bảo nó vẫn là file đầu tiên
+                    // Tuy nhiên, FormData không thể gửi URL như file, nên cần xử lý đặc biệt ở backend
+                    // Gửi thumbnail như một file đặc biệt để giữ vị trí đầu tiên
+                    formData.append("existingThumbnailUrl", loadedEventData.existingThumbnailUrl);
+                }
+
+                // Sau đó gửi cover (nếu có thay đổi)
+                if (eventData.coverFile) {
+                    formData.append("files", eventData.coverFile);
+                } else if (loadedEventData?.existingCoverUrl) {
+                    // Nếu không có cover mới nhưng có cover cũ, gửi URL để backend biết cần giữ lại
+                    formData.append("existingCoverUrl", loadedEventData.existingCoverUrl);
+                }
+
+                // Xử lý YouTube URL riêng biệt
+                if (eventData.YoutubeUrl && eventData.YoutubeUrl.trim() !== "") {
+                    formData.append("youtubeUrl", eventData.YoutubeUrl.trim());
+                } else if (!eventData.YoutubeUrl || eventData.YoutubeUrl.trim() === "") {
+                    // Nếu người dùng xóa URL, cần thông báo cho server biết để xóa file YouTube
+                    formData.append("youtubeUrl", "");
+                } else if (loadedEventData?.YoutubeUrl && !eventData.YoutubeUrl) {
+                    // Nếu trước đó có YouTube URL nhưng người dùng không nhập gì mới, gửi lại URL cũ
+                    formData.append("youtubeUrl", loadedEventData.YoutubeUrl);
+                }
+            } else {
+                // CHẾ ĐỘ CREATE: Gửi file theo thứ tự thumbnail trước, cover sau
+                if (eventData.thumbnailFile) formData.append("files", eventData.thumbnailFile);
+                if (eventData.coverFile) formData.append("files", eventData.coverFile);
+            }
 
             // Log the form data entries for debugging
             console.log("EventWizardPage - FormData entries:");
@@ -401,13 +454,19 @@ export default function EventWizardPage() {
                   address: res.address,
                   description: res.description,
                   categoryId: res.categoryId.toString(),
+                  // Cập nhật lại các URL dựa trên thứ tự của file trong response từ server
+                  // Backend xử lý file ảnh theo thứ tự: file đầu tiên là thumbnail (type 0), các file sau là các ảnh khác (cũng type 0)
+                  // File type 1 là YouTube URL
                   ...(res.files ? {
-                    existingThumbnailUrl: res.files.find((f: any) => f.type === 0)?.thumbUrl || res.files.find((f: any) => f.type === 0)?.originUrl,
-                    existingCoverUrl: res.files.find((f: any) => f.type === 0 && f.id !== res.files[0].id)?.thumbUrl || res.files.find((f: any) => f.type === 0 && f.id !== res.files[0].id)?.originUrl
+                    // Lọc các file ảnh (type 0) để lấy thumbnail và cover
+                    // File ảnh đầu tiên trong danh sách là thumbnail
+                    existingThumbnailUrl: res.files.filter((f: any) => f.type === 0)[0]?.thumbUrl || res.files.filter((f: any) => f.type === 0)[0]?.originUrl,
+                    // File ảnh thứ hai trong danh sách là cover (nếu có)
+                    existingCoverUrl: res.files.filter((f: any) => f.type === 0)[1]?.thumbUrl || res.files.filter((f: any) => f.type === 0)[1]?.originUrl,
                   } : {}),
-                  ...(res.files.find((f: any) => f.type === 1) ? { YoutubeUrl: res.files.find((f: any) => f.type === 1)?.originUrl } : {})
+                  // Cập nhật YouTube URL từ file type 1 nếu có
+                  ...(res.files.some((f: any) => f.type === 1) ? { YoutubeUrl: res.files.find((f: any) => f.type === 1)?.originUrl } : {})
                 };
-                
                 setLoadedEventData(updatedData);
                 // Also update step1Data to ensure the form gets the latest values
                 setStep1Data(updatedData);
