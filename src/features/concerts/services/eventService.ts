@@ -157,6 +157,33 @@ export const eventService = {
     }
   },
 
+  // API Xóa mềm Suất diễn
+  softDeleteShowing: async (id: number): Promise<Showing> => {
+    console.log("EventService - Soft deleting showing with id:", id);
+    const payload = {
+      id,
+      deleted: "true"
+    };
+    const response = await apiClient.put("/showings", payload);
+    console.log("EventService - SoftDeleteShowing API raw response:", response);
+    // Due to interceptor returning response.data, we need to handle both direct and wrapped formats
+    if (response && typeof response === 'object' && 'id' in response) {
+      console.log("EventService - SoftDeleteShowing API returned direct response:", response);
+      return response as unknown as Showing; // Direct response (already processed by interceptor)
+    } else if (response && typeof response === 'object' && 'data' in response && response.data && typeof response.data === 'object' && 'id' in response.data) {
+      console.log("EventService - SoftDeleteShowing API returned wrapped response:", response.data);
+      return response.data as unknown as Showing; // Wrapped response (processed by interceptor)
+    } else {
+      // Fallback to response if it looks like a valid Showing object
+      if (response && typeof response === 'object' && 'id' in response) {
+        console.log("EventService - SoftDeleteShowing API returned valid showing object:", response);
+        return response as unknown as Showing;
+      }
+      console.error("EventService - SoftDeleteShowing API returned invalid response:", response);
+      throw new Error('Invalid response format from server when soft deleting showing');
+    }
+  },
+
   // API Tạo Loại vé
   createTicketType: async (payload: any): Promise<{ id: number }> => {
     console.log("EventService - Creating ticket type with payload:", payload);
@@ -177,6 +204,56 @@ export const eventService = {
       }
       console.error("EventService - CreateTicketType API returned invalid response:", response);
       throw new Error('Invalid response format from server when creating ticket type');
+    }
+  },
+
+  // API Cập nhật Loại vé
+  updateTicketType: async (payload: any): Promise<TicketType> => {
+    console.log("EventService - Updating ticket type with payload:", payload);
+    const response = await apiClient.put("/ticket-types", payload);
+    console.log("EventService - UpdateTicketType API raw response:", response);
+    // Due to interceptor returning response.data, we need to handle both direct and wrapped formats
+    if (response && typeof response === 'object' && 'id' in response) {
+      console.log("EventService - UpdateTicketType API returned direct response:", response);
+      return response as unknown as TicketType; // Direct response (already processed by interceptor)
+    } else if (response && typeof response === 'object' && 'data' in response && response.data && typeof response.data === 'object' && 'id' in response.data) {
+      console.log("EventService - UpdateTicketType API returned wrapped response:", response.data);
+      return response.data as unknown as TicketType; // Wrapped response (processed by interceptor)
+    } else {
+      // Fallback to response if it looks like a valid TicketType object
+      if (response && typeof response === 'object' && 'id' in response) {
+        console.log("EventService - UpdateTicketType API returned valid ticket type object:", response);
+        return response as unknown as TicketType;
+      }
+      console.error("EventService - UpdateTicketType API returned invalid response:", response);
+      throw new Error('Invalid response format from server when updating ticket type');
+    }
+  },
+
+  // API Ẩn Loại vé (xóa mềm)
+  hideTicketType: async (id: number): Promise<TicketType> => {
+    console.log("EventService - Hiding ticket type with id:", id);
+    const payload = {
+      id,
+      status: 0 // 0: ẩn ticket đi (xóa mềm)
+    };
+    const response = await apiClient.put("/ticket-types", payload);
+    console.log("EventService - HideTicketType API raw response:", response);
+    // Due to interceptor returning response.data, we need to handle both direct and wrapped formats
+    if (response && typeof response === 'object' && 'id' in response) {
+      console.log("EventService - HideTicketType API returned direct response:", response);
+      return response as unknown as TicketType; // Direct response (already processed by interceptor)
+    } else if (response && typeof response === 'object' && 'data' in response && response.data && typeof response.data === 'object' && 'id' in response.data) {
+      console.log("EventService - HideTicketType API returned wrapped response:", response.data);
+      return response.data as unknown as TicketType; // Wrapped response (processed by interceptor)
+    } else {
+      // Fallback to response if it looks like a valid TicketType object
+      if (response && typeof response === 'object' && 'id' in response) {
+        console.log("EventService - HideTicketType API returned valid ticket type object:", response);
+        return response as unknown as TicketType;
+      }
+      console.error("EventService - HideTicketType API returned invalid response:", response);
+      throw new Error('Invalid response format from server when hiding ticket type');
     }
   },
 
