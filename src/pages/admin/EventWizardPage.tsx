@@ -583,7 +583,13 @@ export default function EventWizardPage() {
 
         // Chuyển bước nếu cần
         if (andNext) {
-            setCurrentStep((prev) => prev + 1);
+            // Nếu đang ở bước 3, hoàn tất wizard và quay lại trang quản lý sự kiện
+            if (currentStep === 3) {
+                alert("Tạo sự kiện thành công!");
+                navigate('/admin/events'); // Quay lại trang quản lý sự kiện
+            } else {
+                setCurrentStep((prev) => prev + 1);
+            }
         } else {
             alert("Lưu thành công!");
         }
@@ -644,12 +650,6 @@ export default function EventWizardPage() {
                         />
                     )}
 
-                    {currentStep === 4 && (
-                        <div className="text-center py-20 bg-card rounded-xl border border-border">
-                            <h3 className="text-xl font-bold text-foreground">Thanh toán & Publish</h3>
-                            <p className="text-muted-foreground mt-2">Tính năng đang phát triển...</p>
-                        </div>
-                    )}
                 </>
             )}
         </div>

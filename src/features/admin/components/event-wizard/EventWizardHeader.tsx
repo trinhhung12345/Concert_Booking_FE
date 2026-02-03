@@ -16,7 +16,6 @@ const STEPS = [
   { id: 1, label: "Thông tin sự kiện" },
   { id: 2, label: "Thời gian & Loại vé" },
   { id: 3, label: "Sơ đồ ghế" },
-  { id: 4, label: "Thanh toán & Publish" },
 ];
 
 export default function EventWizardHeader({
@@ -95,7 +94,7 @@ export default function EventWizardHeader({
                 onClick={onNext}
                 disabled={loading}
             >
-                {currentStep === 4 ? "Hoàn tất" : "Tiếp tục"}
+                {currentStep === 3 ? "Hoàn tất" : "Tiếp tục"}
             </Button>
         </div>
       </div>
