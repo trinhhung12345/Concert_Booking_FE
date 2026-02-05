@@ -985,7 +985,8 @@ export default function SeatMapEditor({ showingId, onSave }: SeatMapEditorProps)
             </div>
 
             <div className="flex flex-col gap-2 pt-4">
-              {/* <Button
+              {false && (
+              <Button
                 variant="destructive"
                 className="w-full"
                 onClick={() => {
@@ -994,7 +995,8 @@ export default function SeatMapEditor({ showingId, onSave }: SeatMapEditorProps)
                 }}
               >
                 <FontAwesomeIcon icon={faTrash} className="mr-2" /> Xóa khu vực
-              </Button> */}
+              </Button>
+              )}
               <Button
                 variant="outline"
                 className="w-full"
