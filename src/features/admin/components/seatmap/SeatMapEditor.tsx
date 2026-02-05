@@ -10,6 +10,7 @@ import { faPlus, faSave, faTrash, faMousePointer, faRefresh, faEyeSlash } from "
 import Konva from "konva";
 import { eventService } from "@/features/concerts/services/eventService";
 import { seatMapService } from "@/features/admin/services/seatMapService";
+import type { SectionAttribute } from "@/features/admin/types/seatmap";
 
 // --- TYPES ---
 interface TicketType {
@@ -509,6 +510,79 @@ export default function SeatMapEditor({ showingId, onSave }: SeatMapEditorProps)
         
         const result = await seatMapService.updateSeatMap(seatMapToUpdate.id, updatedSeatMap);
         console.log("Cập nhật seatmap thành công:", result);
+        
+        // Sau khi cập nhật seatmap, tiến hành cập nhật section attributes cho các section đã tồn tại
+        for (const section of existingSectionsForUpdate) {
+          const existingSection = existingSections.find((s: any) => s.id === section.id);
+          if (existingSection && existingSection.attribute) {
+            // Kiểm tra xem attribute có id không trước khi cập nhật
+            // Vì dữ liệu từ API có thể có cấu trúc khác, nên cần kiểm tra runtime
+            if ('id' in existingSection.attribute && existingSection.attribute.id) {
+              // Cast attribute về đúng kiểu SectionAttribute để đảm bảo có thể sử dụng các thuộc tính khác
+              const attribute = existingSection.attribute as SectionAttribute;
+              
+              // So sánh các thuộc tính để xác định có cần cập nhật không
+              const hasChanges = 
+                attribute.x !== section.attribute.x ||
+                attribute.y !== section.attribute.y ||
+                attribute.width !== section.attribute.width ||
+                attribute.height !== section.attribute.height ||
+                attribute.rotate !== section.attribute.rotate ||
+                attribute.fill !== section.attribute.fill;
+
+              if (hasChanges) {
+                // Cập nhật section attribute với các thông tin mới
+                const updatedAttribute = {
+                  ...attribute,
+                  x: section.attribute.x,
+                  y: section.attribute.y,
+                  width: section.attribute.width,
+                  height: section.attribute.height,
+                  rotate: section.attribute.rotate,
+                  fill: section.attribute.fill,
+                };
+                
+                // Đảm bảo attribute.id tồn tại trước khi gọi API
+                if ('id' in attribute && attribute.id) {
+                  await seatMapService.updateSectionAttribute(Number(attribute.id), updatedAttribute);
+                  console.log(`Cập nhật attribute cho section ${section.id}`);
+                }
+              }
+            } else {
+              // Nếu attribute không có id, có thể là attribute chưa được lưu, ta cần tạo mới
+              const newAttribute = {
+                x: section.attribute.x,
+                y: section.attribute.y,
+                width: section.attribute.width,
+                height: section.attribute.height,
+                scaleX: 1,
+                scaleY: 1,
+                rotate: section.attribute.rotate,
+                fill: section.attribute.fill,
+                sectionId: existingSection.id
+              };
+              await seatMapService.createSectionAttribute(newAttribute);
+              console.log(`Tạo mới attribute cho section ${section.id}`);
+            }
+          } else if (existingSection) {
+            // Nếu section tồn tại nhưng chưa có attribute, tạo mới attribute
+            const newAttribute = {
+              x: section.attribute.x,
+              y: section.attribute.y,
+              width: section.attribute.width,
+              height: section.attribute.height,
+              scaleX: 1,
+              scaleY: 1,
+              rotate: section.attribute.rotate,
+              fill: section.attribute.fill,
+              sectionId: existingSection.id
+            };
+            
+            await seatMapService.createSectionAttribute(newAttribute);
+            console.log(`Tạo mới attribute cho section ${section.id}`);
+          }
+        }
+        
         alert("Cập nhật sơ đồ ghế thành công!");
       } else {
         // Tạo mới seatmap
@@ -911,7 +985,7 @@ export default function SeatMapEditor({ showingId, onSave }: SeatMapEditorProps)
             </div>
 
             <div className="flex flex-col gap-2 pt-4">
-              <Button
+              {/* <Button
                 variant="destructive"
                 className="w-full"
                 onClick={() => {
@@ -920,7 +994,7 @@ export default function SeatMapEditor({ showingId, onSave }: SeatMapEditorProps)
                 }}
               >
                 <FontAwesomeIcon icon={faTrash} className="mr-2" /> Xóa khu vực
-              </Button>
+              </Button> */}
               <Button
                 variant="outline"
                 className="w-full"
