@@ -36,12 +36,33 @@ interface ShapeData {
   width: number;
   height: number;
   rotation: number;
-  name: string;
+ name: string;
   rows: number;
   cols: number;
   price: number;
   color: string;
   ticketTypeId: number | null;
+}
+
+// Interface mở rộng cho mục đích tạo section mới, bao gồm các thuộc tính bổ sung
+interface ExtendedSection {
+  _tempId?: string;
+  id?: number;
+  name: string;
+  seatMapId: number;
+  status: number;
+  isStage: boolean;
+  isSalable: boolean;
+  isReservingSeat: boolean;
+  message: string;
+  ticketTypeId: number;
+  elements?: any[];
+  attribute?: any;
+  seats?: any[];
+  // Các thuộc tính bổ sung để sử dụng trong quá trình tạo section
+  price?: number;
+  rows?: number;
+  cols?: number;
 }
 
 interface SeatMapEditorProps {
@@ -381,7 +402,11 @@ export default function SeatMapEditor({ showingId, onSave }: SeatMapEditorProps)
             ticketTypeId: shape.ticketTypeId || 0, // Sử dụng 0 thay cho null để phù hợp với interface
             elements: elements,
             attribute: sectionAttribute,
-            seats: seats
+            seats: seats,
+            // Thêm các thuộc tính bổ sung để sử dụng trong quá trình tạo section
+            price: shape.price,
+            rows: shape.rows,
+            cols: shape.cols
           };
         }
       });
@@ -389,7 +414,7 @@ export default function SeatMapEditor({ showingId, onSave }: SeatMapEditorProps)
       // Tạo mảng các section mới chỉ chứa các section đã tồn tại (có id)
       const existingSectionsForUpdate = editorSections.filter(section => 'id' in section && section.id !== undefined);
       // Tạo mảng các section mới (không có id)
-      const newSectionsForCreate = editorSections.filter(section => !('id' in section) || section.id === undefined);
+      const newSectionsForCreate = editorSections.filter(section => '_tempId' in section && section._tempId !== undefined);
 
       // Kiểm tra xem có seatmap hiện tại không
       if (existingSeatMaps && existingSeatMaps.length > 0) {
@@ -402,7 +427,8 @@ export default function SeatMapEditor({ showingId, onSave }: SeatMapEditorProps)
           name: seatMapToUpdate.name || "Sơ đồ sự kiện",
           viewbox: seatMapToUpdate.viewbox || "0 0 1200 800",
           showingId: showingId,
-          sections: existingSectionsForUpdate // Chỉ gửi các section đã tồn tại để cập nhật
+          // Ép kiểu để TypeScript hiểu đúng
+          sections: existingSectionsForUpdate as any // Chỉ gửi các section đã tồn tại để cập nhật
         };
         
         const result = await seatMapService.updateSeatMap(seatMapToUpdate.id, updatedSeatMap);
@@ -427,34 +453,39 @@ export default function SeatMapEditor({ showingId, onSave }: SeatMapEditorProps)
       // Sau khi tạo hoặc cập nhật seatmap, thực hiện tạo các section mới nếu có
       if (newSectionsForCreate.length > 0) {
         // Gọi API để tạo các section mới
-        for (const newSection of newSectionsForCreate) {
-          // Trích xuất các thuộc tính để sử dụng riêng, giữ lại các thuộc tính khác trong sectionToSend
-          const { _tempId, elements, attribute, seats, price, rows, cols, name, ...sectionToSend } = newSection;
+        for (const rawNewSection of newSectionsForCreate) {
+          // Ép kiểu để TypeScript hiểu đây là ExtendedSection có _tempId
+          const newSection = rawNewSection as ExtendedSection;
           
-          // Đảm bảo sectionToSend có đầy đủ các trường cần thiết cho việc tạo section
-          // Trong trường hợp các trường bị loại bỏ do destructuring, chúng ta cần bổ sung lại
-          const sectionToCreate = {
-            ...sectionToSend,
-            name: name // Đảm bảo trường name được giữ lại trong section để gửi tới API
+          // Tạo section object để gửi đến API, chỉ giữ lại các trường cần thiết cho việc tạo section
+          const sectionToSend = {
+            name: newSection.name,
+            seatMapId: newSection.seatMapId,
+            status: newSection.status,
+            isStage: newSection.isStage,
+            isSalable: newSection.isSalable,
+            isReservingSeat: newSection.isReservingSeat,
+            message: newSection.message,
+            ticketTypeId: newSection.ticketTypeId
           };
 
           try {
-            const createdSection = await seatMapService.createSection(sectionToCreate);
+            const createdSection = await seatMapService.createSection(sectionToSend);
             
             // Kiểm tra nếu section được tạo thành công
             if (createdSection && createdSection.id) {
               // Tạo section attribute nếu có
-              if (attribute) {
+              if (newSection.attribute) {
                 const attributePayload = {
-                  ...attribute,
+                  ...newSection.attribute,
                   sectionId: createdSection.id
                 };
                 await seatMapService.createSectionAttribute(attributePayload);
               }
 
               // Tạo các seat map elements nếu có
-              if (elements && elements.length > 0) {
-                for (const element of elements) {
+              if (newSection.elements && newSection.elements.length > 0) {
+                for (const element of newSection.elements) {
                   const elementPayload = {
                     ...element,
                     sectionId: createdSection.id
@@ -464,18 +495,19 @@ export default function SeatMapEditor({ showingId, onSave }: SeatMapEditorProps)
               }
 
               // Tạo các seats nếu có
-              if (seats && seats.length > 0) {
+              if (newSection.seats && newSection.seats.length > 0) {
                 // Sử dụng batch API để tạo nhiều seats cùng lúc
+                // Lấy trực tiếp dữ liệu từ newSection để đảm bảo đúng giá trị
                 await seatMapService.createSeatsBatch({
                   sectionId: createdSection.id,
-                  price: price,
+                  price: newSection.price!,
                   status: 'AVAILABLE',
                   isSalable: true,
-                  rows: rows,
-                  cols: cols,
+                  rows: newSection.rows!,
+                  cols: newSection.cols!,
                   startRow: 1,
                   startCol: 1,
-                  codePrefix: name.charAt(0),
+                  codePrefix: newSection.name.charAt(0),
                   overwrite: true
                 });
               }
