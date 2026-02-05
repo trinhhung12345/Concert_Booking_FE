@@ -227,113 +227,270 @@ export default function SeatMapEditor({ showingId, onSave }: SeatMapEditorProps)
   // 4. CẬP NHẬT DỮ LIỆU TỪ FORM (Sidebar phải)
   const updateSelectedShape = (field: keyof ShapeData, value: any) => {
     // If updating ticketTypeId, check constraint
-    if (field === 'ticketTypeId') {
+    /* if (field === 'ticketTypeId') {
       const ticketTypeId = value === 'none' ? null : Number(value);
       
       // Check if this ticket type is already used in another section
-      if (ticketTypeId !== null && shapes.some(s => s.id !== selectedId && s.ticketTypeId === ticketTypeId)) {
+      // Chỉ kiểm tra ràng buộc nếu section hiện tại không phải là section mới (chưa có id thật)
+      const currentShape = shapes.find(s => s.id === selectedId);
+      if (ticketTypeId !== null && currentShape && shapes.some(s => s.id !== selectedId && s.ticketTypeId === ticketType)) {
         alert('Loại vé này đã được sử dụng cho khu vực khác. Mỗi loại vé chỉ được dùng cho một khu vực.');
         return;
       }
-    }
+    } */
     
     setShapes(shapes.map(s => s.id === selectedId ? { ...s, [field]: value === 'none' ? null : value } : s));
   };
 
-  // 5. XUẤT JSON CHO BACKEND
-  const handleExport = () => {
-    const sections = shapes.map(shape => {
-      // Xác định nếu đây là stage (khi không có ticketTypeId)
-      const isStage = shape.ticketTypeId === null;
-      const seats = [];
-      
-      // Chỉ tạo ghế nếu không phải là stage
-      if (!isStage) {
-        for (let r = 1; r <= shape.rows; r++) {
-          for (let c = 1; c <= shape.cols; c++) {
-            seats.push({
-              code: `${String.fromCharCode(64 + r)}${c}`,
-              rowIndex: r,
-              colIndex: c,
-              status: "AVAILABLE",
-            });
+  // 5. HÀM LƯU SƠ ĐỒ GHẾ VỚI LOGIC KIỂM TRA SECTION ĐÃ TỒN TẠI
+  const handleSaveWithExistingCheck = async () => {
+    if (!showingId) {
+      alert("Không có showingId để lưu sơ đồ ghế!");
+      return;
+    }
+
+    try {
+      // Trước tiên, lấy danh sách seatmap hiện tại để kiểm tra section đã tồn tại
+      const existingSeatMaps = await seatMapService.getSeatMapsByShowingId(showingId);
+      const existingSections = existingSeatMaps && existingSeatMaps.length > 0 
+        ? existingSeatMaps[0].sections || []
+        : [];
+
+      // Tạo danh sách các section từ editor
+      const editorSections = shapes.map(shape => {
+        // Lấy ID của section đã tồn tại nếu có (so sánh theo tên)
+        const existingSection = existingSections.find((section: any) => section.name === shape.name);
+        
+        // Xác định nếu đây là stage (khi không có ticketTypeId)
+        const isStage = shape.ticketTypeId === null;
+        const seats = [];
+        
+        // Chỉ tạo ghế nếu không phải là stage
+        if (!isStage) {
+          for (let r = 1; r <= shape.rows; r++) {
+            for (let c = 1; c <= shape.cols; c++) {
+              seats.push({
+                id: Math.floor(Math.random() * 1000000), // ID duy nhất cho mỗi ghế
+                code: `${String.fromCharCode(64 + r)}${c}`,
+                rowIndex: r,
+                colIndex: c,
+                status: "AVAILABLE" as const, // Giá trị cụ thể trong union type
+                isSalable: true, // Ghế có thể bán
+                price: shape.price, // Giá từ shape
+                sectionId: existingSection?.id || Math.floor(Math.random() * 10000) // ID section, sẽ được cập nhật sau
+              });
+            }
           }
         }
-      }
 
-      // Tạo các elements mặc định cho trạng thái ghế
-      const elements = [
-        {
-          type: "rect",
-          width: shape.width,
-          height: shape.height,
-          fill: isStage ? "#808080" : shape.color, // Màu xám cho stage
-          data: isStage ? "stage-area-element" : "default-section-element",
-          display: 1,
-          sectionId: Math.floor(Math.random() * 10000) // Temporary ID, sẽ được thay thế khi lưu
-        },
-        // Element cho ghế trống (chỉ thêm nếu không phải là stage)
-        ...(!isStage ? [{
-          type: "rect",
-          width: 20,
-          height: 20,
-          fill: "#808080", // màu xám cho ghế trống
-          data: "available-seat-element",
-          display: 1,
-          sectionId: Math.floor(Math.random() * 10000)
-        }] : []),
-        // Element cho ghế đang chọn (chỉ thêm nếu không phải là stage)
-        ...(!isStage ? [{
-          type: "rect",
-          width: 20,
-          height: 20,
-          fill: "#FF69B4", // màu hồng cho ghế đang chọn
-          data: "selected-seat-element",
-          display: 1,
-          sectionId: Math.floor(Math.random() * 10000)
-        }] : []),
-        // Element cho ghế đã bán (chỉ thêm nếu không phải là stage)
-        ...(!isStage ? [{
-          type: "rect",
-          width: 20,
-          height: 20,
-          fill: "#000000", // màu đen cho ghế đã bán
-          data: "booked-seat-element",
-          display: 1,
-          sectionId: Math.floor(Math.random() * 10000)
-        }] : [])
-      ];
+        // Tạo các elements mặc định cho trạng thái ghế
+        const elements = [
+          {
+            id: Math.floor(Math.random() * 1000000), // ID duy nhất cho mỗi element
+            type: "rect",
+            x: shape.x,
+            y: shape.y,
+            width: shape.width,
+            height: shape.height,
+            fill: isStage ? "#808080" : shape.color, // Màu xám cho stage
+            data: isStage ? "stage-area-element" : "default-section-element",
+            display: 1,
+            sectionId: Math.floor(Math.random() * 10000) // Temporary ID, sẽ được thay thế khi lưu
+          },
+          // Element cho ghế trống (chỉ thêm nếu không phải là stage)
+          ...(!isStage ? [{
+            id: Math.floor(Math.random() * 1000000), // ID duy nhất cho mỗi element
+            type: "rect",
+            x: shape.x,
+            y: shape.y,
+            width: 20,
+            height: 20,
+            fill: "#8080", // màu xám cho ghế trống
+            data: "available-seat-element",
+            display: 1,
+            sectionId: Math.floor(Math.random() * 10000)
+          }] : []),
+          // Element cho ghế đang chọn (chỉ thêm nếu không phải là stage)
+          ...(!isStage ? [{
+            id: Math.floor(Math.random() * 1000000), // ID duy nhất cho mỗi element
+            type: "rect",
+            x: shape.x,
+            y: shape.y,
+            width: 20,
+            height: 20,
+            fill: "#FF69B4", // màu hồng cho ghế đang chọn
+            data: "selected-seat-element",
+            display: 1,
+            sectionId: Math.floor(Math.random() * 10000)
+          }] : []),
+          // Element cho ghế đã bán (chỉ thêm nếu không phải là stage)
+          ...(!isStage ? [{
+            id: Math.floor(Math.random() * 1000000), // ID duy nhất cho mỗi element
+            type: "rect",
+            x: shape.x,
+            y: shape.y,
+            width: 20,
+            height: 20,
+            fill: "#000000", // màu đen cho ghế đã bán
+            data: "booked-seat-element",
+            display: 1,
+            sectionId: Math.floor(Math.random() * 10000)
+          }] : [])
+        ];
 
-      return {
-        id: Math.floor(Math.random() * 10000),
-        name: shape.name,
-        attribute: {
+        // Trả về section object với đầy đủ các trường theo interface Section
+        const sectionAttribute = {
           x: shape.x,
           y: shape.y,
           width: shape.width,
           height: shape.height,
-          rotation: shape.rotation,
-          fill: isStage ? "#808080" : shape.color // Màu xám cho stage
-        },
-        elements: elements,
-        seats: seats,
-        ticketTypeId: shape.ticketTypeId, // Add ticketTypeId to export data
-        isStage: isStage // Thêm thuộc tính isStage để backend biết
-      };
-    });
+          scaleX: 1,
+          scaleY: 1,
+          rotate: shape.rotation, // Theo interface SectionAttribute
+          fill: isStage ? "#808080" : shape.color,
+        };
 
-    const finalData = {
-      name: "Sơ đồ sự kiện mới",
-      viewbox: "0 0 1200 800",
-      showingId: showingId,
-      sections: sections
-    };
+        if (existingSection && existingSection.id) {
+          // Section đã tồn tại, giữ nguyên ID
+          return {
+            id: existingSection.id,
+            name: shape.name,
+            seatMapId: existingSeatMaps && existingSeatMaps.length > 0 ? existingSeatMaps[0].id : 0,
+            status: existingSection.status || 1,
+            isStage: isStage,
+            isSalable: !isStage,
+            isReservingSeat: existingSection.isReservingSeat || false,
+            message: existingSection.message || "",
+            ticketTypeId: shape.ticketTypeId || 0, // Sử dụng 0 thay cho null để phù hợp với interface
+            elements: elements,
+            attribute: sectionAttribute,
+            seats: seats
+          };
+        } else {
+          // Section mới, không có ID
+          // Trả về một đối tượng không có trường id để phân biệt với section đã tồn tại
+          return {
+            _tempId: `new_${Date.now()}_${Math.random()}`, // ID tạm thời để theo dõi
+            name: shape.name,
+            seatMapId: existingSeatMaps && existingSeatMaps.length > 0 ? existingSeatMaps[0].id : 0,
+            status: 1,
+            isStage: isStage,
+            isSalable: !isStage,
+            isReservingSeat: false,
+            message: "",
+            ticketTypeId: shape.ticketTypeId || 0, // Sử dụng 0 thay cho null để phù hợp với interface
+            elements: elements,
+            attribute: sectionAttribute,
+            seats: seats
+          };
+        }
+      });
 
-    console.log("JSON to Save:", finalData);
-    if (onSave) {
-      onSave(finalData);
-    } else {
-      alert("Đã xuất dữ liệu Map ra console!");
+      // Tạo mảng các section mới chỉ chứa các section đã tồn tại (có id)
+      const existingSectionsForUpdate = editorSections.filter(section => 'id' in section && section.id !== undefined);
+      // Tạo mảng các section mới (không có id)
+      const newSectionsForCreate = editorSections.filter(section => !('id' in section) || section.id === undefined);
+
+      // Kiểm tra xem có seatmap hiện tại không
+      if (existingSeatMaps && existingSeatMaps.length > 0) {
+        // Cập nhật seatmap hiện tại
+        const seatMapToUpdate = existingSeatMaps[0];
+        // Tạo một seatmap mới với các section đã được lọc
+        const updatedSeatMap = {
+          ...seatMapToUpdate,
+          // Cập nhật các trường có thể thay đổi
+          name: seatMapToUpdate.name || "Sơ đồ sự kiện",
+          viewbox: seatMapToUpdate.viewbox || "0 0 1200 800",
+          showingId: showingId,
+          sections: existingSectionsForUpdate // Chỉ gửi các section đã tồn tại để cập nhật
+        };
+        
+        const result = await seatMapService.updateSeatMap(seatMapToUpdate.id, updatedSeatMap);
+        console.log("Cập nhật seatmap thành công:", result);
+        alert("Cập nhật sơ đồ ghế thành công!");
+      } else {
+        // Tạo mới seatmap
+        // Không gửi các section mới ở đây vì chúng chưa có id, nên chỉ gửi các section có id
+        const newSeatMap = {
+          name: "Sơ đồ sự kiện mới",
+          status: 1, // Active
+          viewbox: "0 0 1200 800",
+          showingId: showingId,
+          sections: [] // Ban đầu không có section nào vì tất cả đều là mới
+        };
+
+        const result = await seatMapService.createSeatMap(newSeatMap);
+        console.log("Tạo mới seatmap thành công:", result);
+        alert("Tạo mới sơ đồ ghế thành công!");
+      }
+
+      // Sau khi tạo hoặc cập nhật seatmap, thực hiện tạo các section mới nếu có
+      if (newSectionsForCreate.length > 0) {
+        // Gọi API để tạo các section mới
+        for (const newSection of newSectionsForCreate) {
+          // Trích xuất các thuộc tính để sử dụng riêng, giữ lại các thuộc tính khác trong sectionToSend
+          const { _tempId, elements, attribute, seats, price, rows, cols, name, ...sectionToSend } = newSection;
+          
+          // Đảm bảo sectionToSend có đầy đủ các trường cần thiết cho việc tạo section
+          // Trong trường hợp các trường bị loại bỏ do destructuring, chúng ta cần bổ sung lại
+          const sectionToCreate = {
+            ...sectionToSend,
+            name: name // Đảm bảo trường name được giữ lại trong section để gửi tới API
+          };
+
+          try {
+            const createdSection = await seatMapService.createSection(sectionToCreate);
+            
+            // Kiểm tra nếu section được tạo thành công
+            if (createdSection && createdSection.id) {
+              // Tạo section attribute nếu có
+              if (attribute) {
+                const attributePayload = {
+                  ...attribute,
+                  sectionId: createdSection.id
+                };
+                await seatMapService.createSectionAttribute(attributePayload);
+              }
+
+              // Tạo các seat map elements nếu có
+              if (elements && elements.length > 0) {
+                for (const element of elements) {
+                  const elementPayload = {
+                    ...element,
+                    sectionId: createdSection.id
+                  };
+                  await seatMapService.createSeatMapElement(elementPayload);
+                }
+              }
+
+              // Tạo các seats nếu có
+              if (seats && seats.length > 0) {
+                // Sử dụng batch API để tạo nhiều seats cùng lúc
+                await seatMapService.createSeatsBatch({
+                  sectionId: createdSection.id,
+                  price: price,
+                  status: 'AVAILABLE',
+                  isSalable: true,
+                  rows: rows,
+                  cols: cols,
+                  startRow: 1,
+                  startCol: 1,
+                  codePrefix: name.charAt(0),
+                  overwrite: true
+                });
+              }
+            }
+          } catch (error) {
+            console.error("Lỗi khi tạo section mới:", error);
+          }
+        }
+      }
+
+      // Làm mới dữ liệu sau khi lưu
+      refreshSeatMap();
+    } catch (error) {
+      console.error("Lỗi khi lưu sơ đồ ghế:", error);
+      alert("Lỗi khi lưu sơ đồ ghế: " + (error as Error).message);
     }
   };
 
@@ -532,7 +689,7 @@ export default function SeatMapEditor({ showingId, onSave }: SeatMapEditorProps)
                 onSelect={handleSelect}
                 onChange={(newAttrs: any) => {
                   const newShapes = shapes.map(s =>
-                    s.id === shape.id ? newAttrs : s
+                    s.id === shape.id ? { ...s, ...newAttrs } : s
                   );
                   setShapes(newShapes);
                 }}
@@ -546,7 +703,7 @@ export default function SeatMapEditor({ showingId, onSave }: SeatMapEditorProps)
       <div className="w-72 border-l border-border bg-card p-4 text-foreground overflow-y-auto">
         <div className="flex justify-between items-center mb-6">
           <h3 className="font-bold">Thuộc tính</h3>
-          <Button size="sm" onClick={handleExport} className="bg-primary hover:bg-primary/90">
+          <Button size="sm" onClick={handleSaveWithExistingCheck} className="bg-primary hover:bg-primary/90">
             <FontAwesomeIcon icon={faSave} className="mr-2" /> Lưu
           </Button>
         </div>
@@ -619,18 +776,26 @@ export default function SeatMapEditor({ showingId, onSave }: SeatMapEditorProps)
                   <SelectTrigger className="bg-background border-input">
                     <SelectValue placeholder="Chọn loại vé" />
                   </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="none">Không chọn</SelectItem>
-                    {ticketTypes.map((ticketType) => (
-                      <SelectItem 
-                        key={ticketType.id} 
-                        value={ticketType.id.toString()}
-                        disabled={shapes.some(s => s.id !== selectedId && s.ticketTypeId === ticketType.id)}
-                      >
-                        {ticketType.name} - {new Intl.NumberFormat('vi-VN').format(ticketType.price)}đ
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
+            <SelectContent>
+              <SelectItem value="none">Không chọn</SelectItem>
+              {ticketTypes.map((ticketType) => {
+                // Kiểm tra xem loại vé này đã được sử dụng ở section khác chưa
+                // Bỏ qua kiểm tra nếu section hiện tại là section mới (chưa có id thật)
+                /* const currentShape = shapes.find(s => s.id === selectedId);
+                const isCurrentShapeNew = currentShape && currentShape.id.startsWith('section-'); // Section mới sẽ có id dạng 'section-timestamp'
+                const isDisabled = !isCurrentShapeNew && shapes.some(s => s.id !== selectedId && s.ticketTypeId === ticketType.id); */
+                
+                return (
+                  <SelectItem 
+                    key={ticketType.id} 
+                    value={ticketType.id.toString()}
+                    /* disabled={isDisabled} */
+                  >
+                    {ticketType.name} - {new Intl.NumberFormat('vi-VN').format(ticketType.price)}đ
+                  </SelectItem>
+                );
+              })}
+            </SelectContent>
                 </Select>
               ) : (
                 <div className="text-muted-foreground text-sm">Chưa có loại vé nào</div>
