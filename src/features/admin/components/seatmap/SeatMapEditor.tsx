@@ -4,8 +4,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faPlus, faSave, faTrash, faMousePointer, faRefresh } from "@fortawesome/free-solid-svg-icons";
+import { faPlus, faSave, faTrash, faMousePointer, faRefresh, faEyeSlash } from "@fortawesome/free-solid-svg-icons";
 import Konva from "konva";
 import { eventService } from "@/features/concerts/services/eventService";
 import { seatMapService } from "@/features/admin/services/seatMapService";
@@ -36,12 +37,13 @@ interface ShapeData {
   width: number;
   height: number;
   rotation: number;
- name: string;
+  name: string;
   rows: number;
   cols: number;
   price: number;
   color: string;
   ticketTypeId: number | null;
+  status?: number; // Thêm trường status để theo dõi trạng thái của section
 }
 
 // Interface mở rộng cho mục đích tạo section mới, bao gồm các thuộc tính bổ sung
@@ -77,6 +79,74 @@ export default function SeatMapEditor({ showingId, onSave }: SeatMapEditorProps)
   const [loadingTicketTypes, setLoadingTicketTypes] = useState(false);
   const [loadingSeatMap, setLoadingSeatMap] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [dialogType, setDialogType] = useState<'delete' | 'soft-delete'>('delete');
+  const [dialogAction, setDialogAction] = useState<(() => void) | null>(null);
+
+  // Hàm xử lý xóa mềm section
+  const softDeleteSection = async (sectionId: string) => {
+    try {
+      // Extract the numeric ID from the sectionId string (format: "section-{id}")
+      const numericId = parseInt(sectionId.replace('section-', ''));
+      if (isNaN(numericId)) {
+        throw new Error("Invalid section ID format");
+      }
+
+      await seatMapService.softDeleteSection(numericId);
+      // Remove the section from the UI after soft delete
+      setShapes(shapes.filter(s => s.id !== sectionId));
+      setSelectedId(null);
+      alert("Xóa mềm khu vực thành công!");
+    } catch (error) {
+      console.error("Lỗi khi xóa mềm khu vực:", error);
+      alert("Lỗi khi xóa mềm khu vực: " + (error as Error).message);
+    }
+  };
+
+  // Hàm xử lý xóa mềm seat
+  const softDeleteSeat = async (seatId: number) => {
+    try {
+      await seatMapService.softDeleteSeat(seatId);
+      alert("Xóa mềm ghế thành công!");
+      // Refresh the seatmap after soft delete
+      if (showingId) {
+        refreshSeatMap();
+      }
+    } catch (error) {
+      console.error("Lỗi khi xóa mềm ghế:", error);
+      alert("Lỗi khi xóa mềm ghế: " + (error as Error).message);
+    }
+  };
+
+  // Hàm xử lý xóa mềm element
+  const softDeleteElement = async (elementId: number) => {
+    try {
+      await seatMapService.softDeleteSeatMapElement(elementId);
+      alert("Ẩn phần tử thành công!");
+      // Refresh the seatmap after soft delete
+      if (showingId) {
+        refreshSeatMap();
+      }
+    } catch (error) {
+      console.error("Lỗi khi ẩn phần tử:", error);
+      alert("Lỗi khi ẩn phần tử: " + (error as Error).message);
+    }
+  };
+
+  // Hàm mở dialog xác nhận hành động
+  const openDialog = (action: 'delete' | 'soft-delete', actionFn: () => void) => {
+    setDialogType(action);
+    setDialogAction(() => actionFn);
+    setDialogOpen(true);
+  };
+
+  // Hàm đóng dialog và thực hiện hành động
+  const handleDialogConfirm = () => {
+    if (dialogAction) {
+      dialogAction();
+    }
+    setDialogOpen(false);
+  };
 
   // Load ticket types and seatmap when component mounts and has showingId
   useEffect(() => {
@@ -95,36 +165,39 @@ export default function SeatMapEditor({ showingId, onSave }: SeatMapEditorProps)
           // Fetch existing seatmap for the showing
           const seatMaps = await seatMapService.getSeatMapsByShowingId(showingId);
           if (seatMaps && seatMaps.length > 0) {
-        // Convert seatmap data to ShapeData format
-        const convertedShapes: ShapeData[] = (seatMaps[0].sections || [])?.map((section: any) => {
-              // Find the first seat to determine rows and cols if possible
-              let rows = 5, cols = 8; // default values
-              
-              if (section.seats && section.seats.length > 0) {
-                const maxRowIndex = Math.max(...section.seats.map((seat: any) => seat.rowIndex));
-                const maxColIndex = Math.max(...section.seats.map((seat: any) => seat.colIndex));
-                rows = maxRowIndex;
-                cols = maxColIndex;
-              }
-              
-              // Get attribute values if available
-              const attr = section.attribute || {};
-              
-              return {
-                id: `section-${section.id}`,
-                x: (attr && attr.x) || 50,
-                y: (attr && attr.y) || 50,
-                width: (attr && attr.width) || 200,
-                height: (attr && attr.height) || 150,
-                rotation: (attr && attr.rotate) || 0,
-                name: section.name || `Khu vực ${section.id}`,
-                rows: rows,
-                cols: cols,
-                price: section.price || 100000,
-                color: (attr && attr.fill) || "#FF0082",
-                ticketTypeId: section.ticketTypeId || null
-              };
-            });
+            // Convert seatmap data to ShapeData format
+            const convertedShapes: ShapeData[] = (seatMaps[0].sections || [])
+              .filter(section => section.status === 1) // Chỉ hiển thị các section có status = 1 (đang hoạt động)
+              .map((section: any) => {
+                // Find the first seat to determine rows and cols if possible
+                let rows = 5, cols = 8; // default values
+                
+                if (section.seats && section.seats.length > 0) {
+                  const maxRowIndex = Math.max(...section.seats.map((seat: any) => seat.rowIndex));
+                  const maxColIndex = Math.max(...section.seats.map((seat: any) => seat.colIndex));
+                  rows = maxRowIndex;
+                  cols = maxColIndex;
+                }
+                
+                // Get attribute values if available
+                const attr = section.attribute || {};
+                
+                return {
+                  id: `section-${section.id}`,
+                  x: (attr && attr.x) || 50,
+                  y: (attr && attr.y) || 50,
+                  width: (attr && attr.width) || 200,
+                  height: (attr && attr.height) || 150,
+                  rotation: (attr && attr.rotate) || 0,
+                  name: section.name || `Khu vực ${section.id}`,
+                  rows: rows,
+                  cols: cols,
+                  price: section.price || 100000,
+                  color: (attr && attr.fill) || "#FF0082",
+                  ticketTypeId: section.ticketTypeId || null,
+                  status: section.status // Thêm status vào ShapeData để theo dõi trạng thái
+                };
+              });
             
             setShapes(convertedShapes);
           }
@@ -154,35 +227,38 @@ export default function SeatMapEditor({ showingId, onSave }: SeatMapEditorProps)
       const seatMaps = await seatMapService.getSeatMapsByShowingId(showingId);
       if (seatMaps && seatMaps.length > 0) {
         // Convert seatmap data to ShapeData format
-        const convertedShapes: ShapeData[] = (seatMaps[0].sections || [])?.map((section: any) => {
-          // Find the first seat to determine rows and cols if possible
-          let rows = 5, cols = 8; // default values
-          
-          if (section.seats && section.seats.length > 0) {
-            const maxRowIndex = Math.max(...section.seats.map((seat: any) => seat.rowIndex));
-            const maxColIndex = Math.max(...section.seats.map((seat: any) => seat.colIndex));
-            rows = maxRowIndex;
-            cols = maxColIndex;
-          }
-          
-          // Get attribute values if available
-          const attr = section.attribute || {};
-          
-          return {
-            id: `section-${section.id}`,
-            x: (attr && attr.x) || 50,
-            y: (attr && attr.y) || 50,
-            width: (attr && attr.width) || 200,
-            height: (attr && attr.height) || 150,
-            rotation: (attr && attr.rotate) || 0,
-            name: section.name || `Khu vực ${section.id}`,
-            rows: rows,
-            cols: cols,
-            price: section.price || 100000,
-            color: (attr && attr.fill) || "#FF0082",
-            ticketTypeId: section.ticketTypeId || null
-          };
-        });
+        const convertedShapes: ShapeData[] = (seatMaps[0].sections || [])
+          .filter(section => section.status === 1) // Chỉ hiển thị các section có status = 1 (đang hoạt động)
+          .map((section: any) => {
+            // Find the first seat to determine rows and cols if possible
+            let rows = 5, cols = 8; // default values
+            
+            if (section.seats && section.seats.length > 0) {
+              const maxRowIndex = Math.max(...section.seats.map((seat: any) => seat.rowIndex));
+              const maxColIndex = Math.max(...section.seats.map((seat: any) => seat.colIndex));
+              rows = maxRowIndex;
+              cols = maxColIndex;
+            }
+            
+            // Get attribute values if available
+            const attr = section.attribute || {};
+            
+            return {
+              id: `section-${section.id}`,
+              x: (attr && attr.x) || 50,
+              y: (attr && attr.y) || 50,
+              width: (attr && attr.width) || 200,
+              height: (attr && attr.height) || 150,
+              rotation: (attr && attr.rotate) || 0,
+              name: section.name || `Khu vực ${section.id}`,
+              rows: rows,
+              cols: cols,
+              price: section.price || 100000,
+              color: (attr && attr.fill) || "#FF0082",
+              ticketTypeId: section.ticketTypeId || null,
+              status: section.status // Thêm status vào ShapeData để theo dõi trạng thái
+            };
+          });
         
         setShapes(convertedShapes);
       }
@@ -195,7 +271,7 @@ export default function SeatMapEditor({ showingId, onSave }: SeatMapEditorProps)
   };
 
   // 1. HÀM THÊM KHU VỰC MỚI
- const addSection = () => {
+  const addSection = () => {
     const newShape: ShapeData = {
       id: `section-${Date.now()}`,
       x: 50,
@@ -808,42 +884,51 @@ export default function SeatMapEditor({ showingId, onSave }: SeatMapEditorProps)
                   <SelectTrigger className="bg-background border-input">
                     <SelectValue placeholder="Chọn loại vé" />
                   </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="none">Không chọn</SelectItem>
-              {ticketTypes.map((ticketType) => {
-                // Kiểm tra xem loại vé này đã được sử dụng ở section khác chưa
-                // Bỏ qua kiểm tra nếu section hiện tại là section mới (chưa có id thật)
-                /* const currentShape = shapes.find(s => s.id === selectedId);
-                const isCurrentShapeNew = currentShape && currentShape.id.startsWith('section-'); // Section mới sẽ có id dạng 'section-timestamp'
-                const isDisabled = !isCurrentShapeNew && shapes.some(s => s.id !== selectedId && s.ticketTypeId === ticketType.id); */
-                
-                return (
-                  <SelectItem 
-                    key={ticketType.id} 
-                    value={ticketType.id.toString()}
-                    /* disabled={isDisabled} */
-                  >
-                    {ticketType.name} - {new Intl.NumberFormat('vi-VN').format(ticketType.price)}đ
-                  </SelectItem>
-                );
-              })}
-            </SelectContent>
+                  <SelectContent>
+                    <SelectItem value="none">Không chọn</SelectItem>
+                    {ticketTypes.map((ticketType) => {
+                      // Kiểm tra xem loại vé này đã được sử dụng ở section khác chưa
+                      // Bỏ qua kiểm tra nếu section hiện tại là section mới (chưa có id thật)
+                      /* const currentShape = shapes.find(s => s.id === selectedId);
+                      const isCurrentShapeNew = currentShape && currentShape.id.startsWith('section-'); // Section mới sẽ có id dạng 'section-timestamp'
+                      const isDisabled = !isCurrentShapeNew && shapes.some(s => s.id !== selectedId && s.ticketTypeId === ticketType.id); */
+                      
+                      return (
+                        <SelectItem 
+                          key={ticketType.id} 
+                          value={ticketType.id.toString()}
+                          /* disabled={isDisabled} */
+                        >
+                          {ticketType.name} - {new Intl.NumberFormat('vi-VN').format(ticketType.price)}đ
+                        </SelectItem>
+                      );
+                    })}
+                  </SelectContent>
                 </Select>
               ) : (
                 <div className="text-muted-foreground text-sm">Chưa có loại vé nào</div>
               )}
             </div>
 
-            <Button
-              variant="destructive"
-              className="w-full mt-4"
-              onClick={() => {
-                setShapes(shapes.filter(s => s.id !== selectedId));
-                setSelectedId(null);
-              }}
-            >
-              <FontAwesomeIcon icon={faTrash} className="mr-2" /> Xóa khu vực
-            </Button>
+            <div className="flex flex-col gap-2 pt-4">
+              <Button
+                variant="destructive"
+                className="w-full"
+                onClick={() => {
+                  setShapes(shapes.filter(s => s.id !== selectedId));
+                  setSelectedId(null);
+                }}
+              >
+                <FontAwesomeIcon icon={faTrash} className="mr-2" /> Xóa khu vực
+              </Button>
+              <Button
+                variant="outline"
+                className="w-full"
+                onClick={() => openDialog('soft-delete', () => softDeleteSection(selectedId!))}
+              >
+                <FontAwesomeIcon icon={faEyeSlash} className="mr-2" /> Ẩn khu vực
+              </Button>
+            </div>
           </div>
         ) : (
           <div className="text-muted-foreground text-sm text-center mt-10">
@@ -854,6 +939,26 @@ export default function SeatMapEditor({ showingId, onSave }: SeatMapEditorProps)
           </div>
         )}
       </div>
+
+      {/* Dialog xác nhận xóa mềm */}
+      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{dialogType === 'soft-delete' ? 'Xác nhận ẩn khu vực' : 'Xác nhận xóa khu vực'}</DialogTitle>
+          </DialogHeader>
+          <DialogDescription>
+            {dialogType === 'soft-delete' 
+              ? 'Bạn có chắc chắn muốn ẩn khu vực này? Khu vực sẽ vẫn tồn tại trong hệ thống nhưng sẽ không hiển thị.'
+              : 'Bạn có chắc chắn muốn xóa khu vực này? Hành động này không thể hoàn tác.'}
+          </DialogDescription>
+          <DialogFooter className="gap-2">
+            <Button variant="outline" onClick={() => setDialogOpen(false)}>Hủy</Button>
+            <Button variant="destructive" onClick={handleDialogConfirm}>
+              {dialogType === 'soft-delete' ? 'Ẩn khu vực' : 'Xóa khu vực'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
