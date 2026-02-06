@@ -11,10 +11,13 @@ export default function EventSlider({ events }: Props) {
   const sorted = [...events].sort(
     (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
   );
- 
   
   const newestEvents = sorted.slice(0, 2);
-  const specialEvents = sorted.slice(2);
+
+  // Luôn hiển thị "Sự kiện đặc sắc" dù có ít event,
+  // nhưng tối đa 4 sự kiện trong slider.
+  const specialEvents =
+    sorted.length <= 2 ? sorted : sorted.slice(2, 6);
 
   return (
     <div className="space-y-10">
@@ -102,22 +105,37 @@ export default function EventSlider({ events }: Props) {
             1024: { slidesPerView: 4 },
           }}
         >
-          {specialEvents.map((event) => (
-            <SwiperSlide key={event.id}>
-              <Link
-                to={`/event/${event.id}`}
-                className="block cursor-pointer group"
-              >
-                <div className="relative aspect-[2/3] rounded-xl overflow-hidden bg-black">
-                  <img
-                    src={event.imageUrl}
-                    alt={event.title}
-                    className="absolute inset-0 w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
-                  />
-                </div>
-              </Link>
-            </SwiperSlide>
-          ))}
+          {specialEvents.map((event) => {
+            // Ưu tiên chọn ảnh poster dọc cho khu special
+            const imageFiles = event.files?.filter((f) => f.type === 0) ?? [];
+            const portraitFile = imageFiles.find(
+              (f) =>
+                f.width &&
+                f.height &&
+                f.height >= f.width
+            );
+            const bannerFile = portraitFile || imageFiles[0];
+            const bannerUrl =
+              bannerFile?.thumbUrl || bannerFile?.originUrl || event.imageUrl;
+
+            return (
+              <SwiperSlide key={event.id}>
+                <Link
+                  to={`/event/${event.id}`}
+                  className="block cursor-pointer group"
+                >
+                  {/* Khung poster tỉ lệ dọc */}
+                  <div className="relative aspect-[2/3] rounded-xl overflow-hidden bg-black">
+                    <img
+                      src={bannerUrl}
+                      alt={event.title}
+                      className="absolute inset-0 w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                    />
+                  </div>
+                </Link>
+              </SwiperSlide>
+            );
+          })}
         </Swiper>
       </div>
     </div>

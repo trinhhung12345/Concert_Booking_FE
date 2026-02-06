@@ -45,44 +45,44 @@ export default function Header() {
   const [showDropdown, setShowDropdown] = useState(false);
   const inputRef = useRef<HTMLInputElement | null>(null);
   const dropdownRef = useRef<HTMLDivElement | null>(null);
-    // Xử lý debounce cho search
-    useEffect(() => {
-      if (!searchQuery.trim()) {
+  // Xử lý debounce cho search
+  useEffect(() => {
+    if (!searchQuery.trim()) {
+      setSuggestions([]);
+      setShowDropdown(false);
+      return;
+    }
+    const handler = setTimeout(async () => {
+      setSearchLoading(true);
+      try {
+        const events = await eventService.search(searchQuery.trim());
+        setSuggestions(events.slice(0, 6)); // Hiện tối đa 6 gợi ý
+        setShowDropdown(true);
+      } catch (e) {
         setSuggestions([]);
         setShowDropdown(false);
-        return;
+      } finally {
+        setSearchLoading(false);
       }
-      const handler = setTimeout(async () => {
-        setSearchLoading(true);
-        try {
-          const events = await eventService.search(searchQuery.trim());
-          setSuggestions(events.slice(0, 6)); // Hiện tối đa 6 gợi ý
-          setShowDropdown(true);
-        } catch (e) {
-          setSuggestions([]);
-          setShowDropdown(false);
-        } finally {
-          setSearchLoading(false);
-        }
-      }, 350); // debounce 350ms
-      return () => clearTimeout(handler);
-    }, [searchQuery]);
+    }, 350); // debounce 350ms
+    return () => clearTimeout(handler);
+  }, [searchQuery]);
 
-    // Đóng dropdown khi click ra ngoài
-    useEffect(() => {
-      const handleClickOutside = (event: MouseEvent) => {
-        if (
-          dropdownRef.current &&
-          !dropdownRef.current.contains(event.target as Node) &&
-          inputRef.current &&
-          !inputRef.current.contains(event.target as Node)
-        ) {
-          setShowDropdown(false);
-        }
-      };
-      document.addEventListener("mousedown", handleClickOutside);
-      return () => document.removeEventListener("mousedown", handleClickOutside);
-    }, []);
+  // Đóng dropdown khi click ra ngoài
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        dropdownRef.current &&
+        !dropdownRef.current.contains(event.target as Node) &&
+        inputRef.current &&
+        !inputRef.current.contains(event.target as Node)
+      ) {
+        setShowDropdown(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
   // Hàm xử lý tìm kiếm
   const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -194,30 +194,30 @@ export default function Header() {
               <>
                 {/* NÚT CHUYỂN ĐỔI TRANG QUẢN LÝ (Chỉ hiện cho Admin) */}
                 {isAdmin && (
-                    isAdminPage ? (
-                        <Link to="/">
-                            <Button variant="outline" className="gap-2 border-primary text-primary hover:bg-primary hover:text-white transition-colors">
-                                <FontAwesomeIcon icon={faGlobe} />
-                                Về Website
-                            </Button>
-                        </Link>
-                    ) : (
-                        <Link to="/admin">
-                            <Button className="gap-2 bg-gray-800 text-white hover:bg-gray-900">
-                                <FontAwesomeIcon icon={faChartPie} />
-                                Trang Quản Lý
-                            </Button>
-                        </Link>
-                    )
+                  isAdminPage ? (
+                    <Link to="/">
+                      <Button variant="outline" className="gap-2 border-primary text-primary hover:bg-primary hover:text-white transition-colors">
+                        <FontAwesomeIcon icon={faGlobe} />
+                        Về Website
+                      </Button>
+                    </Link>
+                  ) : (
+                    <Link to="/admin">
+                      <Button className="gap-2 bg-gray-800 text-white hover:bg-gray-900">
+                        <FontAwesomeIcon icon={faChartPie} />
+                        Trang Quản Lý
+                      </Button>
+                    </Link>
+                  )
                 )}
 
                 {/* Nút Lịch sử vé (Ẩn ở trang admin cho đỡ rối) */}
                 {!isAdminPage && (
                   <Link to="/tickets">
-                      <Button variant="ghost" className="text-gray-600 hover:text-primary hover:bg-pink-50 gap-2">
+                    <Button variant="ghost" className="text-gray-600 hover:text-primary hover:bg-pink-50 gap-2">
                       <FontAwesomeIcon icon={faHistory} />
                       <span>Vé của tôi</span>
-                      </Button>
+                    </Button>
                   </Link>
                 )}
 
@@ -245,17 +245,20 @@ export default function Header() {
                       </div>
                     </DropdownMenuLabel>
                     <DropdownMenuSeparator />
-                    <DropdownMenuItem className="cursor-pointer">
+                    <DropdownMenuItem
+                      className="cursor-pointer"
+                      onClick={() => navigate("/profile")}
+                    >
                       <FontAwesomeIcon icon={faUser} className="mr-2 h-4 w-4" />
                       <span>Cá nhân</span>
                     </DropdownMenuItem>
 
                     {/* Mục menu chuyển trang cho Mobile */}
                     {isAdmin && (
-                         <DropdownMenuItem className="cursor-pointer md:hidden" onClick={() => navigate(isAdminPage ? "/" : "/admin")}>
-                            <FontAwesomeIcon icon={isAdminPage ? faGlobe : faChartPie} className="mr-2 h-4 w-4" />
-                            <span>{isAdminPage ? "Về Website" : "Trang Quản Lý"}</span>
-                         </DropdownMenuItem>
+                      <DropdownMenuItem className="cursor-pointer md:hidden" onClick={() => navigate(isAdminPage ? "/" : "/admin")}>
+                        <FontAwesomeIcon icon={isAdminPage ? faGlobe : faChartPie} className="mr-2 h-4 w-4" />
+                        <span>{isAdminPage ? "Về Website" : "Trang Quản Lý"}</span>
+                      </DropdownMenuItem>
                     )}
 
                     <DropdownMenuItem className="cursor-pointer md:hidden">
@@ -283,79 +286,79 @@ export default function Header() {
 
           {/* MOBILE MENU (Hamburger) - Chỉ hiện trên Mobile */}
           <div className="md:hidden flex items-center gap-2">
-             {/* Icon search nhỏ cho mobile */}
-             <Button variant="ghost" size="icon" className="text-gray-600">
-                <FontAwesomeIcon icon={faSearch} className="h-5 w-5" />
-             </Button>
+            {/* Icon search nhỏ cho mobile */}
+            <Button variant="ghost" size="icon" className="text-gray-600">
+              <FontAwesomeIcon icon={faSearch} className="h-5 w-5" />
+            </Button>
 
-             <Sheet>
-                <SheetTrigger asChild>
-                    <Button variant="ghost" size="icon">
-                        <FontAwesomeIcon icon={faBars} className="h-6 w-6 text-gray-700" />
-                    </Button>
-                </SheetTrigger>
-                <SheetContent side="right" className="w-[300px] sm:w-[400px]">
-                    <div className="flex flex-col gap-6 mt-6">
-                        <Logo />
+            <Sheet>
+              <SheetTrigger asChild>
+                <Button variant="ghost" size="icon">
+                  <FontAwesomeIcon icon={faBars} className="h-6 w-6 text-gray-700" />
+                </Button>
+              </SheetTrigger>
+              <SheetContent side="right" className="w-[300px] sm:w-[400px]">
+                <div className="flex flex-col gap-6 mt-6">
+                  <Logo />
 
-                        {isAuthenticated ? (
-                            <div className="flex flex-col gap-4">
-                                <div className="flex items-center gap-4 p-4 bg-gray-50 rounded-xl">
-                                    <Avatar>
-                                        <AvatarFallback className="bg-primary text-white">
-                                            {user?.name?.charAt(0)}
-                                        </AvatarFallback>
-                                    </Avatar>
-                                    <div>
-                                        <p className="font-semibold">{user?.name}</p>
-                                        <p className="text-xs text-gray-500">{user?.email}</p>
-                                    </div>
-                                </div>
-                                <nav className="flex flex-col gap-2">
-                                    {/* Link chuyển trang quản lý cho Mobile */}
-                                    {isAdmin && (
-                                        <Button
-                                            variant="outline"
-                                            className="w-full justify-start gap-3 border-gray-300"
-                                            onClick={() => navigate(isAdminPage ? "/" : "/admin")}
-                                        >
-                                            <FontAwesomeIcon icon={isAdminPage ? faGlobe : faChartPie} />
-                                            {isAdminPage ? "Về Website" : "Trang Quản Lý"}
-                                        </Button>
-                                    )}
-
-                                    <Link to="/profile">
-                                        <Button variant="ghost" className="w-full justify-start gap-3">
-                                            <FontAwesomeIcon icon={faUser} /> Cá nhân
-                                        </Button>
-                                    </Link>
-
-                                    <Link to="/tickets">
-                                        <Button variant="ghost" className="w-full justify-start gap-3">
-                                            <FontAwesomeIcon icon={faHistory} /> Vé của tôi
-                                        </Button>
-                                    </Link>
-
-                                    <Button
-                                        variant="ghost"
-                                        className="w-full justify-start gap-3 text-red-600 hover:text-red-600 hover:bg-red-50"
-                                        onClick={handleLogout}
-                                    >
-                                        <FontAwesomeIcon icon={faRightFromBracket} /> Đăng xuất
-                                    </Button>
-                                </nav>
-                            </div>
-                        ) : (
-                            <Link to="/login" className="w-full">
-                                <Button variant="secondary" className="w-full gap-2">
-                                    <FontAwesomeIcon icon={faSignInAlt} />
-                                    <span>Đăng nhập</span>
-                                </Button>
-                            </Link>
+                  {isAuthenticated ? (
+                    <div className="flex flex-col gap-4">
+                      <div className="flex items-center gap-4 p-4 bg-gray-50 rounded-xl">
+                        <Avatar>
+                          <AvatarFallback className="bg-primary text-white">
+                            {user?.name?.charAt(0)}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div>
+                          <p className="font-semibold">{user?.name}</p>
+                          <p className="text-xs text-gray-500">{user?.email}</p>
+                        </div>
+                      </div>
+                      <nav className="flex flex-col gap-2">
+                        {/* Link chuyển trang quản lý cho Mobile */}
+                        {isAdmin && (
+                          <Button
+                            variant="outline"
+                            className="w-full justify-start gap-3 border-gray-300"
+                            onClick={() => navigate(isAdminPage ? "/" : "/admin")}
+                          >
+                            <FontAwesomeIcon icon={isAdminPage ? faGlobe : faChartPie} />
+                            {isAdminPage ? "Về Website" : "Trang Quản Lý"}
+                          </Button>
                         )}
+
+                        <Link to="/profile">
+                          <Button variant="ghost" className="w-full justify-start gap-3">
+                            <FontAwesomeIcon icon={faUser} /> Cá nhân
+                          </Button>
+                        </Link>
+
+                        <Link to="/tickets">
+                          <Button variant="ghost" className="w-full justify-start gap-3">
+                            <FontAwesomeIcon icon={faHistory} /> Vé của tôi
+                          </Button>
+                        </Link>
+
+                        <Button
+                          variant="ghost"
+                          className="w-full justify-start gap-3 text-red-600 hover:text-red-600 hover:bg-red-50"
+                          onClick={handleLogout}
+                        >
+                          <FontAwesomeIcon icon={faRightFromBracket} /> Đăng xuất
+                        </Button>
+                      </nav>
                     </div>
-                </SheetContent>
-             </Sheet>
+                  ) : (
+                    <Link to="/login" className="w-full">
+                      <Button variant="secondary" className="w-full gap-2">
+                        <FontAwesomeIcon icon={faSignInAlt} />
+                        <span>Đăng nhập</span>
+                      </Button>
+                    </Link>
+                  )}
+                </div>
+              </SheetContent>
+            </Sheet>
           </div>
 
         </div>
