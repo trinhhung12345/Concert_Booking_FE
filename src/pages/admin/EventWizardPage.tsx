@@ -471,6 +471,7 @@ export default function EventWizardPage() {
             onNext={() => handleSave(true)}
             onCancel={handleCancel}
             loading={loading}
+            onStepClick={handleStepChange}
         />
 
         <div className="max-w-6xl mx-auto px-4 py-8">

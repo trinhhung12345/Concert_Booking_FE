@@ -245,7 +245,10 @@ export default function Header() {
                       </div>
                     </DropdownMenuLabel>
                     <DropdownMenuSeparator />
-                    <DropdownMenuItem className="cursor-pointer">
+                    <DropdownMenuItem
+                      className="cursor-pointer"
+                      onClick={() => navigate("/profile")}
+                    >
                       <FontAwesomeIcon icon={faUser} className="mr-2 h-4 w-4" />
                       <span>Cá nhân</span>
                     </DropdownMenuItem>

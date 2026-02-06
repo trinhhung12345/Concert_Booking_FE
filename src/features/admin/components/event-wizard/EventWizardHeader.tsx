@@ -8,6 +8,7 @@ interface EventWizardHeaderProps {
   onSave: () => void;
   onNext: () => void;
   onCancel: () => void;
+  onStepClick?: (step: number) => void;
   loading?: boolean;
 }
 
@@ -22,6 +23,7 @@ export default function EventWizardHeader({
   onSave,
   onNext,
   onCancel,
+  onStepClick,
   loading
 }: EventWizardHeaderProps) {
   return (
@@ -37,7 +39,7 @@ export default function EventWizardHeader({
             return (
               <div
                 key={step.id}
-             
+                onClick={() => onStepClick && onStepClick(step.id)}
                 className={cn(
                   "flex items-center gap-2 cursor-pointer group transition-all duration-200 px-2 py-1 rounded-lg",
                   isActive ? "text-foreground" : "text-muted-foreground hover:text-foreground"
