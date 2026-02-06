@@ -171,7 +171,7 @@ const StepSeatMap: React.FC<StepSeatMapProps> = ({ eventId, showingsData }) => {
           </div>
 
           {selectedShowingId ? (
-            <SeatMapEditor showingId={selectedShowingId} onSave={handleSaveSeatMap} />
+            <SeatMapEditor key={selectedShowingId} showingId={selectedShowingId} onSave={handleSaveSeatMap} />
           ) : error ? (
             <div className="h-[60vh] flex flex-col items-center justify-center border border-dashed border-gray-300 rounded-lg bg-gray-50">
               <div className="text-center text-muted-foreground p-6">
