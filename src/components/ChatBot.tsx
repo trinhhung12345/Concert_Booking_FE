@@ -8,6 +8,7 @@ import {
 	DialogHeader,
 	DialogTitle,
 } from './ui/dialog';
+import { Bot } from "lucide-react";
 
 interface Message {
 	sender: 'user' | 'bot';
@@ -103,10 +104,22 @@ const ChatBot: React.FC = () => {
 	return (
 		<Dialog>
 			<DialogTrigger asChild>
-				<button className="fixed right-4 bottom-6 z-50 h-12 w-12 rounded-full bg-primary text-white">
-					💬
+				<button
+					aria-label="Chat bot"
+					className="
+      fixed right-6 bottom-6 z-50
+      w-14 h-14 rounded-full
+      bg-primary text-white
+      flex items-center justify-center
+      shadow-lg
+      hover:scale-110 hover:shadow-xl
+      transition-all duration-300
+    "
+				>
+					<Bot className="w-7 h-7" />
 				</button>
 			</DialogTrigger>
+
 
 			<DialogContent className="w-full max-w-sm p-4">
 				<DialogHeader>

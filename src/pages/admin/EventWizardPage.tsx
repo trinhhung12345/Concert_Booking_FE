@@ -37,23 +37,9 @@ export default function EventWizardPage() {
   const transformEventToFormValues = (event: Event): EventInfoFormValues => {
     console.log("Transforming event data:", event);
 
-    // Extract image files by type: type 0 for thumbnails, type 1 for covers, type 2 for YouTube
-    const imageFiles = event.files.filter(f => f.type === 0);  // All image files (thumbnails and covers)
-    const youtubeFiles = event.files.filter(f => f.type === 1); // YouTube files (type 1)
-
-    // Clean YouTube URL if it contains duplicates
-    let cleanYoutubeUrl = "";
-    if (youtubeFiles.length > 0) {
-      const originalUrl = youtubeFiles[0].originUrl || "";
-      // Check if URL contains duplicate parts (e.g., "url,url")
-      if (originalUrl.includes(',')) {
-        // Split by comma and take the first unique URL
-        const urls = originalUrl.split(',');
-        cleanYoutubeUrl = urls[0]; // Take first URL to avoid duplication
-      } else {
-        cleanYoutubeUrl = originalUrl;
-      }
-    }
+    // Extract image files (type 0) and YouTube (type 1)
+    const imageFiles = event.files.filter(f => f.type === 0);
+    const youtubeFile = event.files.find(f => f.type === 1);
 
     return {
       title: event.title,
@@ -61,11 +47,10 @@ export default function EventWizardPage() {
       address: event.address,
       description: event.description,
       categoryId: event.categoryId.toString(),
-      YoutubeUrl: cleanYoutubeUrl, // Use cleaned YouTube URL to avoid duplication
+      YoutubeUrl: youtubeFile?.originUrl || "",
       // Existing images for display in edit mode
-      // File ảnh đầu tiên trong mảng là thumbnail, file ảnh thứ hai (nếu có) là cover
       existingThumbnailUrl: imageFiles[0]?.thumbUrl || imageFiles[0]?.originUrl,
-      existingCoverUrl: imageFiles[1]?.thumbUrl || imageFiles[1]?.originUrl, // File ảnh thứ hai là cover (nếu có)
+      existingCoverUrl: imageFiles[1]?.thumbUrl || imageFiles[1]?.originUrl,
       // Note: thumbnailFile and coverFile are for new uploads only
     };
   };
@@ -149,7 +134,7 @@ export default function EventWizardPage() {
       const data = step2Ref.current.getData();
       setStep2Data(data);
       console.log("Saved step 2 data:", data);
-
+      
       // Nếu chuyển từ step 2 sang step 3 và đã có eventId, load fresh data từ API
       if (newStep === 3 && createdEventId) {
         try {
@@ -168,7 +153,7 @@ export default function EventWizardPage() {
     setCurrentStep(newStep);
   };
 
-  // --- NAVIGATION DATA LOADING (fallback for create mode) ---
+   // --- NAVIGATION DATA LOADING (fallback for create mode) ---
   useEffect(() => {
     const loadStepData = async () => {
       // Skip if we're in edit mode and data is already loaded (but not when transitioning between steps)
@@ -320,7 +305,7 @@ export default function EventWizardPage() {
     };
 
     window.addEventListener('beforeunload', handleBeforeUnload);
-
+    
     return () => {
       window.removeEventListener('beforeunload', handleBeforeUnload);
     };
@@ -341,444 +326,220 @@ export default function EventWizardPage() {
     navigate(-1);
   };
 
-  // Helper function to convert date format for backend
-  const convertDateTimeFormat = (dateTimeStr: string): string => {
-    // Convert to backend format: yyyy-MM-dd HH:mm:ss
-    if (!dateTimeStr) return dateTimeStr;
-
-    const date = new Date(dateTimeStr);
-    const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, '0'); // Month is 0-indexed
-    const day = String(date.getDate()).padStart(2, '0');
-    const hours = String(date.getHours()).padStart(2, '0');
-    const minutes = String(date.getMinutes()).padStart(2, '0');
-    const seconds = String(date.getSeconds()).padStart(2, '0');
-
-    return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
-  };
-
   // HÀM LƯU DỮ LIỆU (Tùy bước mà gọi API khác nhau)
   const handleSave = async (andNext: boolean = false) => {
-    console.log("Handle Save called for step", currentStep, "andNext =", andNext);
     setLoading(true);
     try {
-      if (currentStep === 1) {
-        // Validate Step 1
-        console.log("step1Ref.current exists:", !!step1Ref.current);
-        // Wait for the ref to be properly set if it's not available yet
-        if (!step1Ref.current) {
-          // Small delay to allow rendering to complete
-          await new Promise(resolve => setTimeout(resolve, 100));
-          console.log("step1Ref.current after delay:", !!step1Ref.current);
-        }
-
-        if (!step1Ref.current) {
-          console.error("step1Ref.current is still null or undefined after delay");
-          setLoading(false);
-          alert("Component chưa sẵn sàng, vui lòng thử lại sau");
-          return;
-        }
-
-        // Store the ref in a local variable to prevent changes during processing
-        const currentStep1Ref = step1Ref.current;
-
-        const isValid = await currentStep1Ref.validate();
-        console.log("Validation result:", isValid);
-        if (!isValid) {
-          setLoading(false);
-          return;
-        }
-
-        // Get data from step component using the stored ref
-        const eventData = currentStep1Ref.getData();
-        console.log("Event data retrieved:", !!eventData);
-        if (!eventData) return;
-
-        console.log("EventWizardPage - Step 1 eventData before sending:", eventData);
-
-        // Prepare Form Data
-        const formData = new FormData();
-        formData.append("title", eventData.title.trim());
-        formData.append("venue", eventData.venue.trim());
-        formData.append("address", eventData.address.trim());
-        formData.append("description", eventData.description);
-        formData.append("categoryId", String(Number(eventData.categoryId))); // Đảm bảo là số
-
-        // XỬ LÝ FILE THEO THỨ TỰ ĐÚNG CHO BACKEND
-        // Backend xử lý file ảnh theo thứ tự: file đầu tiên là thumbnail (type 0), các file sau là các ảnh khác
-        // Vì vậy, chúng ta cần đảm bảo thứ tự file được gửi đúng: thumbnail trước, sau đó là cover
-
-        if (createdEventId) {
-          // CHẾ ĐỘ EDIT: Cần giữ nguyên thứ tự file để đảm bảo thumbnail luôn là file đầu tiên
-          // Nếu có thumbnail mới, gửi thumbnail mới trước
-          if (eventData.thumbnailFile) {
-            formData.append("files", eventData.thumbnailFile);
-          } else if (loadedEventData?.existingThumbnailUrl) {
-            // Nếu không có thumbnail mới nhưng có thumbnail cũ, cần gửi thumbnail cũ để đảm bảo nó vẫn là file đầu tiên
-            // Tuy nhiên, FormData không thể gửi URL như file, nên cần xử lý đặc biệt ở backend
-            // Gửi thumbnail như một file đặc biệt để giữ vị trí đầu tiên
-            formData.append("existingThumbnailUrl", loadedEventData.existingThumbnailUrl);
-          }
-
-          // Sau đó gửi cover (nếu có thay đổi)
-          if (eventData.coverFile) {
-            formData.append("files", eventData.coverFile);
-          } else if (loadedEventData?.existingCoverUrl) {
-            // Nếu không có cover mới nhưng có cover cũ, gửi URL để backend biết cần giữ lại
-            formData.append("existingCoverUrl", loadedEventData.existingCoverUrl);
-          }
-
-          // Xử lý YouTube URL riêng biệt (chỉ thêm một lần duy nhất)
-          if (eventData.YoutubeUrl && eventData.YoutubeUrl.trim() !== "") {
-            // Người dùng đã nhập URL mới, sử dụng URL mới
-            formData.append("youtubeUrl", eventData.YoutubeUrl.trim());
-          } else if (!eventData.YoutubeUrl || eventData.YoutubeUrl.trim() === "") {
-            // Người dùng xóa URL, gửi chuỗi rỗng để xóa file YouTube
-            formData.append("youtubeUrl", "");
-          } else if (loadedEventData?.YoutubeUrl && (!eventData.YoutubeUrl || eventData.YoutubeUrl.trim() === "")) {
-            // Trường hợp này sẽ không xảy ra do điều kiện đầu tiên đã xử lý
-            // Nhưng giữ lại để đảm bảo logic hoàn chỉnh trong trường hợp cần khôi phục URL cũ
-            formData.append("youtubeUrl", loadedEventData.YoutubeUrl);
-          }
-        } else {
-          // CHẾ ĐỘ CREATE: Gửi file theo thứ tự thumbnail trước, cover sau
-          if (eventData.thumbnailFile) formData.append("files", eventData.thumbnailFile);
-          if (eventData.coverFile) formData.append("files", eventData.coverFile);
-
-          // Thêm YouTube URL cho chế độ tạo mới
-          if (eventData.YoutubeUrl && eventData.YoutubeUrl.trim() !== "") {
-            formData.append("youtubeUrl", eventData.YoutubeUrl.trim());
-          }
-        }
-
-        // Log the form data entries for debugging
-        console.log("EventWizardPage - FormData entries:");
-        for (let [key, value] of formData.entries()) {
-          console.log(`${key}:`, value);
-        }
-
-        // API Call
-        let res: Event;
-        if (createdEventId) {
-          // Update existing event - append ID to FormData as required by API
-          formData.append("id", String(createdEventId));
-          console.log("EventWizardPage - Calling update API with eventId:", createdEventId);
-          res = await eventService.update(formData);
-          console.log("EventWizardPage - Update API response:", res);
-
-          // Update loadedEventData with new values to reflect changes in UI
-          const updatedData = {
-            title: res.title,
-            venue: res.venue,
-            address: res.address,
-            description: res.description,
-            categoryId: res.categoryId.toString(),
-            // Cập nhật lại các URL dựa trên thứ tự của file trong response từ server
-            // Backend xử lý file ảnh theo thứ tự: file đầu tiên là thumbnail (type 0), các file sau là các ảnh khác (cũng type 0)
-            // File type 1 là YouTube URL
-            ...(res.files ? {
-              // Lọc các file ảnh (type 0) để lấy thumbnail và cover
-              // File ảnh đầu tiên trong danh sách là thumbnail
-              existingThumbnailUrl: res.files.filter((f: any) => f.type === 0)[0]?.thumbUrl || res.files.filter((f: any) => f.type === 0)[0]?.originUrl,
-              // File ảnh thứ hai trong danh sách là cover (nếu có)
-              existingCoverUrl: res.files.filter((f: any) => f.type === 0)[1]?.thumbUrl || res.files.filter((f: any) => f.type === 0)[1]?.originUrl,
-            } : {}),
-            // Cập nhật YouTube URL từ file type 1 nếu có
-            ...(res.files.some((f: any) => f.type === 1) ? { YoutubeUrl: res.files.find((f: any) => f.type === 1)?.originUrl } : {})
-          };
-          setLoadedEventData(updatedData);
-          // Also update step1Data to ensure the form gets the latest values
-          setStep1Data(updatedData);
-        } else {
-          // Create New
-          console.log("EventWizardPage - Calling create API");
-          res = await eventService.create(formData);
-          console.log("EventWizardPage - Create API response:", res);
-          setCreatedEventId(res.id); // Lưu ID lại để dùng cho bước sau
-        }
-
-        console.log("Step 1 Saved:", res);
-      } else if (currentStep === 2) {
-        // Validate Step 2
-        console.log("step2Ref.current exists:", !!step2Ref.current);
-        // Wait for the ref to be properly set if it's not available yet
-        if (!step2Ref.current) {
-          // Small delay to allow rendering to complete
-          await new Promise(resolve => setTimeout(resolve, 100));
-          console.log("step2Ref.current after delay:", !!step2Ref.current);
-        }
-
-        if (!step2Ref.current) {
-          console.error("step2Ref.current is still null or undefined after delay");
-          setLoading(false);
-          alert("Component chưa sẵn sàng, vui lòng thử lại sau");
-          return;
-        }
-
-        // Store the ref in a local variable to prevent changes during processing
-        const currentStep2Ref = step2Ref.current;
-
-        const isValid = currentStep2Ref.validate();
-        console.log("Step 2 validation result:", isValid);
-        if (!isValid) {
-          setLoading(false);
-          return;
-        }
-
-        // Get data from step component using the stored ref
-        const showingsData = currentStep2Ref.getData();
-        console.log("Step 2 data retrieved:", !!showingsData);
-        if (!showingsData) {
-          throw new Error("Không có dữ liệu suất diễn");
-        }
-        console.log("Step 2 Data:", showingsData);
-
-        // NEW LOGIC: GET CURRENT DATA FROM SERVER TO COMPARE
-        const currentShowingsFromServer = createdEventId ? await eventService.getShowingsByEventId(createdEventId) : [];
-        const currentTicketsByShowing: Record<number, TicketType[]> = {};
-
-        // Get tickets for each showing
-        for (const showing of currentShowingsFromServer) {
-          const tickets = await eventService.getTicketTypesByShowingId(showing.id);
-          currentTicketsByShowing[showing.id] = tickets;
-        }
-
-        // PROCESS SHOWINGS AND TICKETS
-        // Get IDs of existing showings from server for comparison
-        const existingShowingIds = new Set(currentShowingsFromServer.map((s: Showing) => s.id));
-
-        for (const show of showingsData) {
-          let showingId;
-
-          // Check if this showing already exists by comparing with server data
-          const isExistingShowing = existingShowingIds.has(show.id as number);
-
-          if (isExistingShowing) {
-            // This is an existing showing, update it
-            const updatePayload = {
-              id: show.id as number, // Use the actual showing ID from server
-              eventId: createdEventId!, // ID sự kiện lấy từ bước 1 (đảm bảo có giá trị do được kiểm tra ở trên)
-              status: "ACTIVE",
-              isSalable: true,
-              // Convert to backend format
-              startTime: convertDateTimeFormat(show.startTime.length === 16 ? show.startTime + ":00" : show.startTime),
-              endTime: convertDateTimeFormat(show.endTime.length === 16 ? show.endTime + ":00" : show.endTime),
-              deleted: "false" // Ensure showing is not soft-deleted
-            };
-
-            const updatedShowing = await eventService.updateShowing(updatePayload);
-            showingId = updatedShowing.id;
-          } else {
-            // This is a new showing, create it
-            const showingPayload = {
-              eventId: createdEventId!, // ID sự kiện lấy từ bước 1 (đảm bảo có giá trị do được kiểm tra ở trên)
-              status: "ACTIVE",
-              isSalable: true,
-              // Convert to backend format
-              startTime: convertDateTimeFormat(show.startTime.length === 16 ? show.startTime + ":00" : show.startTime),
-              endTime: convertDateTimeFormat(show.endTime.length === 16 ? show.endTime + ":00" : show.endTime),
-            };
-
-            console.log("Creating Showing...", showingPayload);
-            const showingRes = await eventService.createShowing(showingPayload);
-
-            // Backend trả về object có field `id`
-            showingId = showingRes.id;
-
-            if (!showingId) {
-              throw new Error("Không lấy được ID của suất diễn vừa tạo");
+        if (currentStep === 1) {
+            // Validate Step 1
+            const isValid = await step1Ref.current?.validate();
+            if (!isValid) {
+                setLoading(false);
+                return;
             }
-            console.log("Created Showing ID:", showingId);
-          }
 
-          // Process tickets for this showing
-          const currentTickets = currentTicketsByShowing[showingId] || [];
-          const ticketIdsOnServer = currentTickets.map((t: TicketType) => t.id);
+            // Get data from step component
+            const eventData = step1Ref.current?.getData();
+            if (!eventData) return;
 
-          for (const ticket of show.tickets) {
-            // Check if ticket exists by checking if it has an ID that exists on the server
-            const isExistingTicket = typeof ticket.id === 'number' && ticketIdsOnServer.includes(ticket.id);
+            // Prepare Form Data
+            const formData = new FormData();
+            formData.append("title", eventData.title.trim());
+            formData.append("venue", eventData.venue.trim());
+            formData.append("address", eventData.address.trim());
+            formData.append("description", eventData.description);
+            formData.append("categoryId", String(Number(eventData.categoryId))); // Đảm bảo là số
+            // Chỉ gửi YoutubeUrl nếu có giá trị (không rỗng)
+            if (eventData.YoutubeUrl && eventData.YoutubeUrl.trim() !== "") {
+                formData.append("youtubeUrl", eventData.YoutubeUrl.trim());
+            }
+            if (eventData.thumbnailFile) formData.append("files", eventData.thumbnailFile);
+            if (eventData.coverFile) formData.append("files", eventData.coverFile);
 
-            if (isExistingTicket) {
-              // This is an existing ticket, update it
-              const updatePayload = {
-                id: ticket.id as number,
-                showingId,
-                name: ticket.name,
-                description: ticket.description || ticket.name, // Fallback nếu rỗng
-                color: ticket.color || "#FF0082",
-                isFree: false,
-                price: Number(ticket.price),
-                originalPrice: Number(ticket.price), // Giả sử giá gốc bằng giá bán
-                maxQtyPerOrder: 4, // Mặc định
-                minQtyPerOrder: 1, // Mặc định
-                status: "1", // Active ticket
-                position: 1,
-                imageUrl: "https://placehold.co/100x100?text=Ticket", // Placeholder vì chưa có upload ảnh vé
-
-                // Thời gian bán vé:
-                // Mặc định cho bán ngay bây giờ đến lúc hết sự kiện
-                startTime: convertDateTimeFormat(new Date().toISOString().slice(0, 19)),
-                endTime: convertDateTimeFormat(show.endTime.length === 16 ? show.endTime + ":00" : show.endTime),
-              };
-
-              await eventService.updateTicketType(updatePayload);
+            // API Call
+            let res;
+            if (createdEventId) {
+                // Update existing event - append ID to FormData as required by API
+                formData.append("id", String(createdEventId));
+                res = await eventService.update(formData);
             } else {
-              // This is a new ticket, create it
-              const ticketPayload = {
-                showingId,
-                name: ticket.name,
-                description: ticket.description || ticket.name, // Fallback nếu rỗng
-                color: ticket.color || "#FF0082",
-                isFree: false,
-                price: Number(ticket.price),
-                originalPrice: Number(ticket.price), // Giả sử giá gốc bằng giá bán
-                maxQtyPerOrder: 4, // Mặc định
-                minQtyPerOrder: 1, // Mặc định
-                status: "1", // Active ticket
-                position: 1,
-                imageUrl: "https://placehold.co/100x100?text=Ticket", // Placeholder vì chưa có upload ảnh vé
-
-                // Thời gian bán vé:
-                // Mặc định cho bán ngay bây giờ đến lúc hết sự kiện
-                startTime: convertDateTimeFormat(new Date().toISOString().slice(0, 19)),
-                endTime: convertDateTimeFormat(show.endTime.length === 16 ? show.endTime + ":00" : show.endTime),
-              };
-
-              console.log("Creating Ticket...", ticketPayload);
-              await eventService.createTicketType(ticketPayload);
+                // Create New
+                res = await eventService.create(formData);
+                setCreatedEventId(res.id); // Lưu ID lại để dùng cho bước sau
             }
-          }
 
-          // Hide tickets that no longer exist in the sent data (soft delete)
-          const ticketIdsToSend = show.tickets
-            .filter((t: any) => typeof t.id === 'number') // Only take tickets that already existed
-            .map((t: any) => t.id as number);
+            console.log("Step 1 Saved:", res);
+        } else if (currentStep === 2) {
+            // Validate Step 2
+            const isValid = step2Ref.current?.validate();
+            if (!isValid) {
+                setLoading(false);
+                return;
+            }
 
-          const ticketsToHide = ticketIdsOnServer.filter(id => !ticketIdsToSend.includes(id));
-          for (const ticketId of ticketsToHide) {
-            // Soft delete ticket by hiding it
-            await eventService.hideTicketType(ticketId);
-          }
+            // Get data from step component
+            const showingsData = step2Ref.current?.getData();
+            if (!showingsData) {
+                throw new Error("Không có dữ liệu suất diễn");
+            }
+            console.log("Step 2 Data:", showingsData);
+
+            // 2. Duyệt qua từng suất diễn để lưu
+            // Dùng for...of để chạy tuần tự (async/await hoạt động tốt hơn forEach)
+            for (const show of showingsData) {
+
+                // A. TẠO SHOWING
+                const showingPayload = {
+                    eventId: createdEventId, // ID sự kiện lấy từ bước 1
+                    status: "ACTIVE",
+                    isSalable: true,
+                    // Thêm giây vào cuối cho đúng format Backend
+                    startTime: show.startTime.length === 16 ? show.startTime + ":00" : show.startTime,
+                    endTime: show.endTime.length === 16 ? show.endTime + ":00" : show.endTime,
+                };
+
+                console.log("Creating Showing...", showingPayload);
+                const showingRes = await eventService.createShowing(showingPayload);
+
+                // Backend trả về object có field `id`
+                const newShowingId = showingRes.id;
+
+                if (!newShowingId) {
+                    throw new Error("Không lấy được ID của suất diễn vừa tạo");
+                }
+                console.log("Created Showing ID:", newShowingId);
+
+                // B. TẠO CÁC LOẠI VÉ CHO SHOWING NÀY
+                for (const ticket of show.tickets) {
+                    const ticketPayload = {
+                        showingId: newShowingId,
+                        name: ticket.name,
+                        description: ticket.description || ticket.name, // Fallback nếu rỗng
+                        color: ticket.color || "#FF0082",
+                        isFree: false,
+                        price: Number(ticket.price),
+                        originalPrice: Number(ticket.price), // Giả sử giá gốc bằng giá bán
+                        maxQtyPerOrder: 4, // Mặc định
+                        minQtyPerOrder: 1, // Mặc định
+                        status: "ACTIVE",
+                        position: 1,
+                        imageUrl: "https://placehold.co/100x100?text=Ticket", // Placeholder vì chưa có upload ảnh vé
+
+                        // Thời gian bán vé:
+                        // Mặc định cho bán ngay bây giờ đến lúc hết sự kiện
+                        startTime: new Date().toISOString().slice(0, 19),
+                        endTime: show.endTime.length === 16 ? show.endTime + ":00" : show.endTime,
+                    };
+
+                    console.log("Creating Ticket...", ticketPayload);
+                    await eventService.createTicketType(ticketPayload);
+                }
+            }
+
+                alert("Đã lưu thành công tất cả Suất diễn & Vé!");
+
+                // Load lại dữ liệu showings từ API để cập nhật cho bước tiếp theo
+                if (createdEventId) {
+                    const freshShowings = await eventService.getShowingsByEventId(createdEventId);
+                    const transformedData = await transformShowingsToFormValues(freshShowings, createdEventId);
+                    setLoadedShowingsData(transformedData);
+                    setStep2Data(transformedData);
+                    console.log("Updated showings data after save:", transformedData);
+                }
         }
 
-        // Soft delete showings that no longer exist in the sent data
-        const showingIdsOnServer = currentShowingsFromServer.map(s => s.id);
-        const showingIdsInFormData = showingsData
-          .map(s => s.id as number) // Get IDs from form data
-          .filter(id => existingShowingIds.has(id)); // Only include IDs that existed on server originally
-
-        const showingsToDelete = showingIdsOnServer.filter(id => !showingIdsInFormData.includes(id));
-        for (const showingId of showingsToDelete) {
-          // Soft delete showing
-          await eventService.softDeleteShowing(showingId);
-        }
-
-        alert("Đã lưu thành công tất cả Suất diễn & Vé!");
-
-        // Load lại dữ liệu showings từ API để cập nhật cho bước tiếp theo
-        if (createdEventId) {
-          const freshShowings = await eventService.getShowingsByEventId(createdEventId);
-          const transformedData = await transformShowingsToFormValues(freshShowings, createdEventId);
-          setLoadedShowingsData(transformedData);
-          setStep2Data(transformedData);
-          console.log("Updated showings data after save:", transformedData);
-        }
-      }
-
-      // Chuyển bước nếu cần
-      if (andNext) {
-        // Nếu đang ở bước 3, hoàn tất wizard và quay lại trang quản lý sự kiện
-        if (currentStep === 3) {
-          alert("Tạo sự kiện thành công!");
-          navigate('/admin/events'); // Quay lại trang quản lý sự kiện
+        // Chuyển bước nếu cần
+        if (andNext) {
+            setCurrentStep((prev) => prev + 1);
         } else {
-          setCurrentStep((prev) => prev + 1);
+            alert("Lưu thành công!");
         }
-      } else {
-        alert("Lưu thành công!");
-      }
 
     } catch (error) {
-      console.error(error);
-      alert("Có lỗi xảy ra");
+        console.error(error);
+        alert("Có lỗi xảy ra");
     } finally {
-      setLoading(false);
+        setLoading(false);
     }
   };
 
   return (
     <div className="min-h-screen bg-background text-foreground pb-20">
-      <EventWizardHeader
-        currentStep={currentStep}
-        onStepChange={handleStepChange}
-        onSave={() => handleSave(false)}
-        onNext={() => handleSave(true)}
-        onCancel={handleCancel}
-        loading={loading}
-      />
+        <EventWizardHeader
+            currentStep={currentStep}
+            onSave={() => handleSave(false)}
+            onNext={() => handleSave(true)}
+            onCancel={handleCancel}
+            loading={loading}
+        />
 
-      <div className="max-w-6xl mx-auto px-4 py-8">
-        {/* LOADING INDICATOR FOR EDIT MODE */}
-        {loading && createdEventId && (
-          <div className="text-center py-12">
-            <div className="inline-flex items-center gap-3 text-primary">
-              <div className="animate-spin rounded-full h-6 w-6 border-2 border-primary border-t-transparent"></div>
-              <span className="text-lg font-medium">Đang tải dữ liệu sự kiện...</span>
-            </div>
-            <p className="text-muted-foreground mt-2">Vui lòng đợi trong giây lát</p>
-          </div>
-        )}
-
-        {/* RENDER STEP CONTENT */}
-        {(!loading || !createdEventId) && (
-          <>
-            {currentStep === 1 && (
-              <StepEventInfo
-                ref={step1Ref}
-                initialData={step1Data || loadedEventData || undefined}
-              />
+        <div className="max-w-6xl mx-auto px-4 py-8">
+            {/* LOADING INDICATOR FOR EDIT MODE */}
+            {loading && createdEventId && (
+                <div className="text-center py-12">
+                    <div className="inline-flex items-center gap-3 text-primary">
+                        <div className="animate-spin rounded-full h-6 w-6 border-2 border-primary border-t-transparent"></div>
+                        <span className="text-lg font-medium">Đang tải dữ liệu sự kiện...</span>
+                    </div>
+                    <p className="text-muted-foreground mt-2">Vui lòng đợi trong giây lát</p>
+                </div>
             )}
 
-            {currentStep === 2 && (
-              <StepTimeTickets
-                ref={step2Ref}
-                eventId={createdEventId}
-                initialData={step2Data || loadedShowingsData}
-              />
+            {/* RENDER STEP CONTENT */}
+            {(!loading || !createdEventId) && (
+                <>
+                    {currentStep === 1 && (
+                        <StepEventInfo
+                            ref={step1Ref}
+                            initialData={step1Data || loadedEventData || undefined}
+                        />
+                    )}
+
+                    {currentStep === 2 && (
+                        <StepTimeTickets
+                            ref={step2Ref}
+                            eventId={createdEventId}
+                            initialData={step2Data || loadedShowingsData}
+                        />
+                    )}
+
+                    {currentStep === 3 && (
+                        <StepSeatMap 
+                          eventId={createdEventId || undefined} 
+                          showingsData={step2Data || loadedShowingsData}
+                        />
+                    )}
+
+                    {currentStep === 4 && (
+                        <div className="text-center py-20 bg-card rounded-xl border border-border">
+                            <h3 className="text-xl font-bold text-foreground">Thanh toán & Publish</h3>
+                            <p className="text-muted-foreground mt-2">Tính năng đang phát triển...</p>
+                        </div>
+                    )}
+                </>
             )}
+        </div>
 
-            {currentStep === 3 && (
-              <StepSeatMap
-                eventId={createdEventId || undefined}
-                showingsData={step2Data || loadedShowingsData}
-              />
-            )}
-
-          </>
-        )}
-      </div>
-
-      {/* CANCEL CONFIRMATION DIALOG */}
-      <Dialog open={showCancelDialog} onOpenChange={setShowCancelDialog}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Xác nhận hủy</DialogTitle>
-            <DialogDescription>
-              Bạn có thay đổi chưa lưu. Nếu hủy bây giờ, tất cả dữ liệu sẽ bị mất.
-              Bạn có chắc muốn hủy không?
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setShowCancelDialog(false)}>
-              Tiếp tục chỉnh sửa
-            </Button>
-            <Button variant="destructive" onClick={confirmCancel}>
-              Hủy và thoát
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+        {/* CANCEL CONFIRMATION DIALOG */}
+        <Dialog open={showCancelDialog} onOpenChange={setShowCancelDialog}>
+            <DialogContent>
+                <DialogHeader>
+                    <DialogTitle>Xác nhận hủy</DialogTitle>
+                    <DialogDescription>
+                        Bạn có thay đổi chưa lưu. Nếu hủy bây giờ, tất cả dữ liệu sẽ bị mất.
+                        Bạn có chắc muốn hủy không?
+                    </DialogDescription>
+                </DialogHeader>
+                <DialogFooter>
+                    <Button variant="outline" onClick={() => setShowCancelDialog(false)}>
+                        Tiếp tục chỉnh sửa
+                    </Button>
+                    <Button variant="destructive" onClick={confirmCancel}>
+                        Hủy và thoát
+                    </Button>
+                </DialogFooter>
+            </DialogContent>
+        </Dialog>
     </div>
   );
 }

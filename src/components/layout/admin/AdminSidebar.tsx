@@ -10,6 +10,7 @@ import { cn } from "@/lib/utils";
 
 const MENU_ITEMS = [
   { path: "/admin/events", icon: faCalendarAlt, label: "Sự kiện của tôi" },
+  { path: "/admin/users", icon: faTicket, label: "Quản lý người dùng" },
   { path: "/admin/reports", icon: faChartLine, label: "Quản lý báo cáo" },
   { path: "/admin/policies", icon: faFileContract, label: "Điều khoản tổ chức" },
 ];

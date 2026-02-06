@@ -5,7 +5,6 @@ import { faCheck } from "@fortawesome/free-solid-svg-icons";
 
 interface EventWizardHeaderProps {
   currentStep: number;
-  onStepChange: (step: number) => void;
   onSave: () => void;
   onNext: () => void;
   onCancel: () => void;
@@ -20,7 +19,6 @@ const STEPS = [
 
 export default function EventWizardHeader({
   currentStep,
-  onStepChange,
   onSave,
   onNext,
   onCancel,
@@ -39,10 +37,7 @@ export default function EventWizardHeader({
             return (
               <div
                 key={step.id}
-                onClick={() => {
-                   // Cho phép quay lại bước cũ, bước hiện tại, hoặc bước tiếp theo (Logic chặn nhảy cóc)
-                   if (step.id <= currentStep + 1) onStepChange(step.id)
-                }}
+             
                 className={cn(
                   "flex items-center gap-2 cursor-pointer group transition-all duration-200 px-2 py-1 rounded-lg",
                   isActive ? "text-foreground" : "text-muted-foreground hover:text-foreground"

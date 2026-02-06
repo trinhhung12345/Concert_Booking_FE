@@ -4,7 +4,7 @@ import apiClient from "@/lib/axios";
 export interface EventFile {
   id: number;
   originUrl: string;
-  thumbUrl: string;
+  thumbUrl: string | null;
   type: number;
   width: number | null;
   height: number | null;

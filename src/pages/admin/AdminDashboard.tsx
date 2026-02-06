@@ -12,14 +12,17 @@ export default function AdminDashboard() {
           </p>
 
           <div className="flex justify-center gap-4 mt-6">
-             <div className="h-32 w-32 bg-gray-200 rounded-xl animate-pulse"></div>
-             <div className="h-32 w-32 bg-gray-200 rounded-xl animate-pulse"></div>
-             <div className="h-32 w-32 bg-gray-200 rounded-xl animate-pulse"></div>
+            <div className="h-32 w-32 bg-gray-200 rounded-xl animate-pulse"></div>
+            <div className="h-32 w-32 bg-gray-200 rounded-xl animate-pulse"></div>
+            <div className="h-32 w-32 bg-gray-200 rounded-xl animate-pulse"></div>
           </div>
 
-          <div className="pt-8">
+          <div className="pt-8 flex flex-col gap-2 items-center">
+            <Link to="/admin/users">
+              <Button variant="default">Quản lý người dùng</Button>
+            </Link>
             <Link to="/">
-                <Button variant="outline">Quay về Trang chủ</Button>
+              <Button variant="outline">Quay về Trang chủ</Button>
             </Link>
           </div>
         </div>

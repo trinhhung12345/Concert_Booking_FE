@@ -1,5 +1,7 @@
-import React, { useState } from 'react';
+import { useEffect, useState } from 'react';
 import type { SeatMapData, Section, Seat } from '../types/seatmap';
+
+/* ================= SEAT ITEM ================= */
 
 const SeatItem = ({
   seat,
@@ -11,21 +13,27 @@ const SeatItem = ({
   selected: boolean;
 }) => (
   <button
-    className={`w-7 h-7 m-1 rounded text-xs font-bold border
+    className={`
+      w-7 h-7 m-1 rounded-full text-[10px] font-semibold
+      flex items-center justify-center
+      border
       ${
         seat.status === 'BOOKED' || seat.status === 'LOCKED'
-          ? 'bg-gray-400 cursor-not-allowed'
+          ? 'bg-gray-500 cursor-not-allowed text-gray-800'
           : selected
-          ? 'bg-green-400'
-          : 'bg-white hover:bg-blue-200'
-      }`}
+          ? 'bg-green-500 text-black'
+          : 'bg-white text-black hover:bg-blue-300'
+      }
+    `}
     disabled={seat.status === 'BOOKED' || seat.status === 'LOCKED'}
     onClick={() => onSelect(seat)}
     title={seat.code}
   >
-    {seat.code}
+    {seat.colIndex}
   </button>
 );
+
+/* ================= MAIN ================= */
 
 interface SeatMapProps {
   data: SeatMapData;
@@ -38,10 +46,18 @@ export default function SeatMap({
   selectedSeats,
   onSeatClick,
 }: SeatMapProps) {
-  const [expanded, setExpanded] = useState(false);
   const [selectedSection, setSelectedSection] = useState<Section | null>(null);
+  const [activeZoneId, setActiveZoneId] = useState<number | null>(null);
 
-  /* ===== LOGIC ===== */
+  /* ===== RESET ZONE KHI BỎ HẾT GHẾ ===== */
+  useEffect(() => {
+    if (selectedSeats.length === 0) {
+      setActiveZoneId(null);
+      setSelectedSection(null);
+    }
+  }, [selectedSeats]);
+
+  /* ===== DATA ===== */
 
   const stageSection = data.sections.find((s: any) => s.isStage);
   const seatSections = data.sections.filter((s: any) => !s.isStage);
@@ -54,7 +70,6 @@ export default function SeatMap({
 
   const canvasW = 800;
   const canvasH = 600;
-
   const scale = Math.min(canvasW / vbW, canvasH / vbH);
 
   /* ===== RENDER ===== */
@@ -84,18 +99,27 @@ export default function SeatMap({
           </div>
         )}
 
-        {/* SECTIONS */}
+        {/* SECTIONS (ZONES) */}
         {seatSections.map(
           (section) =>
             section.attribute && (
               <div
                 key={section.id}
-                className={`absolute flex flex-col items-center justify-center border-2 rounded-lg cursor-pointer transition
+                className={`
+                  absolute flex flex-col items-center justify-center
+                  border-2 rounded-lg cursor-pointer transition
+                  ${
+                    activeZoneId !== null &&
+                    activeZoneId !== section.id
+                      ? 'opacity-40 cursor-not-allowed'
+                      : ''
+                  }
                   ${
                     selectedSection?.id === section.id
                       ? 'ring-4 ring-green-400'
                       : ''
-                  }`}
+                  }
+                `}
                 style={{
                   left: section.attribute.x * scale,
                   top: section.attribute.y * scale,
@@ -104,8 +128,13 @@ export default function SeatMap({
                   background: section.attribute.fill || '#666',
                 }}
                 onClick={() => {
+                  if (
+                    activeZoneId !== null &&
+                    activeZoneId !== section.id
+                  ) {
+                    return;
+                  }
                   setSelectedSection(section);
-                  setExpanded(false);
                 }}
               >
                 <div className="font-bold">{section.name}</div>
@@ -118,54 +147,55 @@ export default function SeatMap({
 
         {/* SEATS POPUP */}
         {selectedSection && (
-          <div className="absolute left-1/2 top-1/2 z-50 -translate-x-1/2 -translate-y-1/2 bg-gray-800 p-5 rounded-lg shadow-xl">
-            <div className="mb-3 font-bold text-green-400">
+          <div className="absolute left-1/2 top-1/2 z-50 -translate-x-1/2 -translate-y-1/2 bg-gray-800 p-5 rounded-xl shadow-2xl max-h-[80vh] overflow-auto">
+            <div className="mb-3 font-bold text-green-400 text-center">
               {selectedSection.name}
             </div>
 
-            {!expanded ? (
-              <div className="flex flex-col items-center">
-                <button
-                  className="mt-2 px-4 py-2 bg-green-500 rounded hover:bg-green-600 transition"
-                  onClick={() => setExpanded(true)}
+            {/* SEAT GRID */}
+            {Array.from(
+              new Set(selectedSection.seats.map((s) => s.rowIndex))
+            )
+              .sort((a, b) => a - b)
+              .map((row) => (
+                <div
+                  key={row}
+                  className="flex items-center justify-center"
                 >
-                  Phóng to để chọn ghế
-                </button>
-              </div>
-            ) : (
-              <>
-                {Array.from(
-                  new Set(selectedSection.seats.map((s) => s.rowIndex))
-                )
-                  .sort((a, b) => a - b)
-                  .map((row) => (
-                    <div key={row} className="flex items-center">
-                      <span className="w-6 text-xs text-gray-300">
-                        {row <= 26 ? String.fromCharCode(64 + row) : row}
-                      </span>
+                  <span className="w-6 text-xs text-gray-400 mr-2">
+                    {row <= 26 ? String.fromCharCode(64 + row) : row}
+                  </span>
 
-                      {selectedSection.seats
-                        .filter((s) => s.rowIndex === row)
-                        .sort((a, b) => a.colIndex - b.colIndex)
-                        .map((seat) => (
-                          <SeatItem
-                            key={seat.id}
-                            seat={seat}
-                            onSelect={onSeatClick}
-                            selected={selectedSeats.some(
-                              (s) => s.id === seat.id
-                            )}
-                          />
-                        ))}
-                    </div>
-                  ))}
-
-                <div className="mt-3 text-sm">
-                  Selected:{' '}
-                  {selectedSeats.map((s) => s.code).join(', ') || 'None'}
+                  <div className="flex flex-wrap justify-center">
+                    {selectedSection.seats
+                      .filter((s) => s.rowIndex === row)
+                      .sort((a, b) => a.colIndex - b.colIndex)
+                      .map((seat) => (
+                        <SeatItem
+                          key={seat.id}
+                          seat={seat}
+                          selected={selectedSeats.some(
+                            (s) => s.id === seat.id
+                          )}
+                          onSelect={(seat) => {
+                            // LẦN ĐẦU CHỌN GHẾ → KHÓA ZONE
+                            if (activeZoneId === null) {
+                              setActiveZoneId(selectedSection.id);
+                            }
+                            onSeatClick(seat);
+                          }}
+                        />
+                      ))}
+                  </div>
                 </div>
-              </>
-            )}
+              ))}
+
+            <div className="mt-4 text-sm text-center text-gray-300">
+              Ghế đã chọn:{' '}
+              <span className="text-green-400">
+                {selectedSeats.map((s) => s.code).join(', ') || 'Chưa chọn'}
+              </span>
+            </div>
           </div>
         )}
       </div>
