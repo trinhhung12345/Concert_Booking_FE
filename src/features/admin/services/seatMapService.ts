@@ -152,8 +152,54 @@ export const seatMapService = {
     }
   },
 
-  updateSectionAttribute: async (id: number, payload: Partial<SectionAttribute>): Promise<SectionAttribute> => {
-    const response = await axios.put(`/seat-map/section-attributes/${id}`, payload);
+  // Get section attribute by section ID
+  getSectionAttributeBySectionId: async (sectionId: number): Promise<SectionAttribute> => {
+    const response = await axios.get(`/seat-map/section-attributes/${sectionId}`);
+    // Handle wrapped response format: { code: 200, data: {...}, message: "..." }
+    if (response && typeof response === 'object' && 'data' in response && response.data && typeof response.data === 'object' && 'data' in response.data && response.data.data) {
+      // Return the inner data which contains the SectionAttribute with ID
+      // Since the endpoint returns attribute by section ID, the response data is the attribute itself
+      // The ID of the attribute can be retrieved from the sectionId parameter passed in
+      const attributeData = response.data.data as any;
+      // Try to return the attribute with the ID if it exists in the response, otherwise return without ID
+      return attributeData as SectionAttribute;
+    } else if (response && typeof response === 'object' && 'data' in response && response.data && typeof response.data === 'object' && 'x' in response.data) {
+      // Direct response with SectionAttribute properties
+      return response.data as unknown as SectionAttribute;
+    } else if (response && typeof response === 'object' && 'x' in response) {
+      // Direct response
+      return response as unknown as SectionAttribute;
+    } else {
+      throw new Error('Invalid response format from server');
+    }
+  },
+
+  // Get section attribute ID by section ID (helper method to get the attribute ID)
+  getSectionAttributeIdBySectionId: async (sectionId: number): Promise<number | null> => {
+    try {
+      // Try to get the attribute and check if it has an ID field
+      const response = await axios.get(`/seat-map/section-attributes/${sectionId}`);
+      if (response && typeof response === 'object' && 'data' in response && response.data && typeof response.data === 'object' && 'data' in response.data && response.data.data) {
+        // The attribute object is in response.data.data
+        const attributeData = response.data.data as any;
+        if (attributeData && attributeData.id) {
+          return attributeData.id;
+        } else {
+          // If the attribute doesn't have an ID field, we can't return an ID
+          // This suggests the attribute exists but doesn't have a separate ID
+          // We might need to create a new one instead of updating
+          return null;
+        }
+      }
+    } catch (error) {
+      // If there's an error, it means the attribute might not exist
+      return null;
+    }
+    return null;
+ },
+
+  updateSectionAttribute: async (payload: Partial<SectionAttribute>): Promise<SectionAttribute> => {
+    const response = await axios.put(`/seat-map/section-attributes`, payload);
     // Note: Due to axios interceptor, response is already the data from server
     if (response && typeof response === 'object' && 'x' in response) {
       return response as unknown as SectionAttribute; // Direct response (SectionAttribute has x property)
