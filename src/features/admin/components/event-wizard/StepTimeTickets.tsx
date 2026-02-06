@@ -14,15 +14,26 @@ import {
   faTimes
 } from "@fortawesome/free-solid-svg-icons";
 import { cn } from "@/lib/utils";
-import TicketModal, { type TicketFormValues } from "./TicketModal";
+import TicketModal, { type TicketFormValues as TicketFormValuesModal } from "./TicketModal";
 
 // --- TYPES ---
+export interface TicketFormValues {
+  id?: number | string; // ID có thể là string (ID tạm) hoặc number (ID thật từ DB)
+  name: string;
+  price: number;
+  quantity: number;
+  description: string;
+  color: string;
+  isDeleted?: boolean; // Trạng thái xóa mềm
+}
+
 export interface ShowingFormValues {
-  id: number | string; // ID tạm (timestamp) hoặc ID thật
+ id?: number | string; // ID có thể là string (ID tạm) hoặc number (ID thật từ DB)
   startTime: string;
   endTime: string;
   tickets: TicketFormValues[];
   isOpen?: boolean; // Trạng thái đóng mở accordion UI
+  isDeleted?: boolean; // Trạng thái xóa mềm
 }
 
 interface StepTimeTicketsProps {

@@ -42,14 +42,16 @@ export interface Section {
 }
 
 export interface SectionAttribute {
+  id?: number;
   x: number;
   y: number;
   width: number;
   height: number;
   scaleX: number;
   scaleY: number;
- rotate: number;
+  rotate: number;
   fill: string;
+  sectionId?: number;
   section?: Section | null;
   createdAt?: string;
   updatedAt?: string;
