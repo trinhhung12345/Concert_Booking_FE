@@ -107,17 +107,17 @@ const TicketsPage = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center bg-gray-900 text-slate-100">
         <div className="text-center">
           <FontAwesomeIcon icon={faSpinner} spin className="text-4xl text-primary mb-4" />
-          <p className="text-gray-500">Đang tải vé của bạn...</p>
+          <p className="text-slate-300">Đang tải vé của bạn...</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-900 text-slate-100">
       {/* Header */}
       <div className="bg-gradient-to-r from-primary to-pink-600 text-white">
         <div className="max-w-6xl mx-auto px-4 py-8">
@@ -133,16 +133,16 @@ const TicketsPage = () => {
 
       <div className="max-w-6xl mx-auto px-4 py-8">
         {error && (
-          <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg text-red-600">
+          <div className="mb-6 p-4 bg-red-950/40 border border-red-500/60 rounded-lg text-red-300">
             {error}
           </div>
         )}
 
         {orders.length === 0 ? (
-          <div className="text-center py-16 bg-white rounded-2xl shadow-sm">
-            <FontAwesomeIcon icon={faTicketAlt} className="text-7xl text-gray-200 mb-6" />
-            <h2 className="text-2xl font-bold text-gray-600 mb-3">Chưa có đơn hàng nào</h2>
-            <p className="text-gray-400 mb-8 max-w-md mx-auto">
+          <div className="text-center py-16 bg-slate-900 rounded-2xl shadow-sm border border-slate-700">
+            <FontAwesomeIcon icon={faTicketAlt} className="text-7xl text-slate-600 mb-6" />
+            <h2 className="text-2xl font-bold text-slate-100 mb-3">Chưa có đơn hàng nào</h2>
+            <p className="text-slate-400 mb-8 max-w-md mx-auto">
               Bạn chưa đặt vé nào. Hãy đặt vé để tham gia các sự kiện thú vị!
             </p>
             <Button onClick={() => navigate("/")} size="lg">
@@ -154,28 +154,28 @@ const TicketsPage = () => {
           <>
             {/* Stats */}
             <div className="grid grid-cols-1 sm:grid-cols-4 gap-4 mb-8">
-              <div className="bg-white rounded-xl p-6 shadow-sm border">
+              <div className="bg-slate-900 rounded-xl p-6 shadow-sm border border-slate-700">
                 <div className="text-3xl font-bold text-primary">{orders.length}</div>
-                <div className="text-gray-500 text-sm">Tổng đơn hàng</div>
+                <div className="text-slate-400 text-sm">Tổng đơn hàng</div>
               </div>
-              <div className="bg-white rounded-xl p-6 shadow-sm border">
-                <div className="text-3xl font-bold text-blue-600">{totalTickets}</div>
-                <div className="text-gray-500 text-sm">Tổng số vé</div>
+              <div className="bg-slate-900 rounded-xl p-6 shadow-sm border border-slate-700">
+                <div className="text-3xl font-bold text-blue-400">{totalTickets}</div>
+                <div className="text-slate-400 text-sm">Tổng số vé</div>
               </div>
-              <div className="bg-white rounded-xl p-6 shadow-sm border">
-                <div className="text-3xl font-bold text-green-600">{paidOrders.length}</div>
-                <div className="text-gray-500 text-sm">Đơn đã thanh toán</div>
+              <div className="bg-slate-900 rounded-xl p-6 shadow-sm border border-slate-700">
+                <div className="text-3xl font-bold text-green-400">{paidOrders.length}</div>
+                <div className="text-slate-400 text-sm">Đơn đã thanh toán</div>
               </div>
-              <div className="bg-white rounded-xl p-6 shadow-sm border">
-                <div className="text-3xl font-bold text-orange-500">{unpaidOrders.length}</div>
-                <div className="text-gray-500 text-sm">Đơn chờ thanh toán</div>
+              <div className="bg-slate-900 rounded-xl p-6 shadow-sm border border-slate-700">
+                <div className="text-3xl font-bold text-orange-400">{unpaidOrders.length}</div>
+                <div className="text-slate-400 text-sm">Đơn chờ thanh toán</div>
               </div>
             </div>
 
             {/* Filter */}
-            <div className="bg-white rounded-xl p-4 shadow-sm border mb-6">
+            <div className="bg-slate-900 rounded-xl p-4 shadow-sm border border-slate-700 mb-6">
               <div className="flex items-center gap-3 flex-wrap">
-                <span className="text-gray-500 flex items-center gap-2">
+                <span className="text-slate-400 flex items-center gap-2">
                   <FontAwesomeIcon icon={faFilter} />
                   Lọc theo:
                 </span>
@@ -220,8 +220,8 @@ const TicketsPage = () => {
 
             {/* Orders List */}
             {filteredOrders.length === 0 ? (
-              <div className="text-center py-12 bg-white rounded-xl">
-                <p className="text-gray-400">Không có đơn hàng nào trong danh mục này</p>
+              <div className="text-center py-12 bg-slate-900 rounded-xl border border-slate-700">
+                <p className="text-slate-400">Không có đơn hàng nào trong danh mục này</p>
               </div>
             ) : (
               <div className="space-y-4">
@@ -229,14 +229,14 @@ const TicketsPage = () => {
                   <div 
                     key={order.id}
                     onClick={() => navigate(`/tickets/${order.id}`)}
-                    className={`bg-white rounded-xl shadow-sm border overflow-hidden hover:shadow-md transition-all duration-300 cursor-pointer ${
+                    className={`bg-slate-900 rounded-xl shadow-sm border border-slate-700 overflow-hidden hover:shadow-md transition-all duration-300 cursor-pointer ${
                       order.status === "CANCELLED" ? "opacity-60" : ""
                     }`}
                   >
                     <div className="p-4 sm:p-6">
                       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                         {/* Left: Order info */}
-                        <div className="flex items-center gap-4">
+                            <div className="flex items-center gap-4">
                           {/* Order icon */}
                           <div className={`w-14 h-14 rounded-xl flex items-center justify-center ${
                             order.status === "PAID" 
@@ -249,15 +249,15 @@ const TicketsPage = () => {
                           </div>
                           
                           <div>
-                            <h3 className="font-bold text-lg">{order.code}</h3>
-                            <p className="text-sm text-gray-500">
+                            <h3 className="font-bold text-lg text-slate-100">{order.code}</h3>
+                            <p className="text-sm text-slate-400">
                               {order.totalQuantity} vé • {formatDate(order.paymentAt)}
                             </p>
                             <div className="mt-2 flex flex-wrap gap-1">
                               {order.orderDetails.slice(0, 3).map((detail) => (
                                 <span 
                                   key={detail.id}
-                                  className="inline-flex items-center px-2 py-0.5 rounded bg-gray-100 text-xs font-medium"
+                                  className="inline-flex items-center px-2 py-0.5 rounded bg-slate-800 text-xs font-medium text-slate-100"
                                 >
                                   <FontAwesomeIcon icon={faChair} className="mr-1 text-gray-400" />
                                   {detail.seatCode}

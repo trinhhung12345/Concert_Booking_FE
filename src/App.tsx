@@ -1,3 +1,4 @@
+import React from "react";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import MainLayout from "./components/layout/MainLayout";
 import HomePage from "./pages/HomePage";
@@ -18,6 +19,7 @@ import EventWizardPage from "@/pages/admin/EventWizardPage";
 import LoginPromptModal from "./features/auth/components/LoginPromptModal";
 import { useModalStore } from "./store/useModalStore";
 import AdminSeatMapPage from "./pages/admin/AdminSeatMapPage";
+import UserManagerPage from "./pages/admin/UserManagerPage";
 
 function App() {
   const { isLoginPromptOpen, closeLoginPrompt } = useModalStore();
@@ -53,18 +55,20 @@ function App() {
 
         {/* --- ROUTE ADMIN (MỚI) --- */}
         <Route path="/admin" element={<AdminLayout />}>
-            {/* Mặc định vào /admin sẽ redirect hoặc render trang events */}
-            <Route index element={<EventManagerPage />} />
+          {/* Mặc định vào /admin sẽ redirect hoặc render trang events */}
+          <Route index element={<EventManagerPage />} />
 
-            <Route path="events" element={<EventManagerPage />} />
-            <Route path="events/create" element={<EventWizardPage />} />
+          <Route path="events" element={<EventManagerPage />} />
+          <Route path="events/create" element={<EventWizardPage />} />
 
-            {/* Thêm các route placeholder này */}
-            <Route path="events/:id/edit" element={<EventWizardPage />} />
-            <Route path="events/:id/seatmap" element={<AdminSeatMapPage />} />
+          {/* Thêm các route placeholder này */}
+          <Route path="events/:id/edit" element={<EventWizardPage />} />
+          <Route path="events/:id/seatmap" element={<AdminSeatMapPage />} />
 
-            <Route path="reports" element={<div className="text-white p-4">Trang Báo Cáo (Đang phát triển)</div>} />
-            <Route path="policies" element={<div className="text-white p-4">Trang Điều Khoản (Đang phát triển)</div>} />
+          <Route path="users" element={<UserManagerPage />} />
+
+          <Route path="reports" element={<div className="text-white p-4">Trang Báo Cáo (Đang phát triển)</div>} />
+          <Route path="policies" element={<div className="text-white p-4">Trang Điều Khoản (Đang phát triển)</div>} />
         </Route>
       </Routes>
     </BrowserRouter>

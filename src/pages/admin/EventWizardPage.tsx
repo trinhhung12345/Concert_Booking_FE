@@ -467,7 +467,6 @@ export default function EventWizardPage() {
     <div className="min-h-screen bg-background text-foreground pb-20">
         <EventWizardHeader
             currentStep={currentStep}
-            onStepChange={handleStepChange}
             onSave={() => handleSave(false)}
             onNext={() => handleSave(true)}
             onCancel={handleCancel}

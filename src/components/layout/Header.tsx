@@ -41,10 +41,10 @@ export default function Header() {
   const { user, isAuthenticated, logout } = useAuthStore();
   const [searchQuery, setSearchQuery] = useState("");
   const [searchLoading, setSearchLoading] = useState(false);
-  const [suggestions, setSuggestions] = useState([]);
+  const [suggestions, setSuggestions] = useState<Event[]>([]);
   const [showDropdown, setShowDropdown] = useState(false);
-  const inputRef = useRef(null);
-  const dropdownRef = useRef(null);
+  const inputRef = useRef<HTMLInputElement | null>(null);
+  const dropdownRef = useRef<HTMLDivElement | null>(null);
     // Xử lý debounce cho search
     useEffect(() => {
       if (!searchQuery.trim()) {
@@ -55,8 +55,7 @@ export default function Header() {
       const handler = setTimeout(async () => {
         setSearchLoading(true);
         try {
-          const res = await eventService.search(searchQuery.trim());
-          const events = res.data ? res.data : res;
+          const events = await eventService.search(searchQuery.trim());
           setSuggestions(events.slice(0, 6)); // Hiện tối đa 6 gợi ý
           setShowDropdown(true);
         } catch (e) {
@@ -74,9 +73,9 @@ export default function Header() {
       const handleClickOutside = (event: MouseEvent) => {
         if (
           dropdownRef.current &&
-          !dropdownRef.current.contains(event.target) &&
+          !dropdownRef.current.contains(event.target as Node) &&
           inputRef.current &&
-          !inputRef.current.contains(event.target)
+          !inputRef.current.contains(event.target as Node)
         ) {
           setShowDropdown(false);
         }
@@ -90,40 +89,10 @@ export default function Header() {
     if (!searchQuery.trim()) return;
     setSearchLoading(true);
     try {
-      const res = await eventService.search(searchQuery.trim());
-      // Nếu API trả về .data thì lấy .data, còn không thì lấy trực tiếp
-      const events: Event[] = res.data ? res.data : res;
-      // Chuyển đổi dữ liệu về EventProps[] như HomePage
-      const transformedEvents = events.map((item: Event) => {
-        let minPrice = 0;
-        const allPrices: number[] = [];
-        if (item.showings && item.showings.length > 0) {
-          item.showings.forEach(show => {
-            if (show.types && show.types.length > 0) {
-              show.types.forEach(ticket => allPrices.push(ticket.price));
-            }
-          });
-        }
-        if (allPrices.length > 0) {
-          minPrice = Math.min(...allPrices);
-        }
-        const firstDate = item.showings && item.showings.length > 0
-          ? item.showings[0].startTime
-          : new Date().toISOString();
-        const image = item.files && item.files.length > 0 && item.files[0].thumbUrl
-          ? item.files[0].thumbUrl
-          : "https://images.unsplash.com/photo-1459749411177-334811adbced?q=80&w=800&auto=format&fit=crop";
-        return {
-          id: item.id,
-          title: item.title,
-          imageUrl: image,
-          minPrice: minPrice,
-          date: firstDate,
-          category: item.categoryName
-        };
-      });
-      // Chuyển hướng sang trang chủ với state chứa kết quả tìm kiếm
-      navigate("/", { state: { searchResults: transformedEvents, searchQuery } });
+      const events: Event[] = await eventService.search(searchQuery.trim());
+
+      // Chuyển hướng sang trang chủ với state chứa kết quả tìm kiếm (Event[])
+      navigate("/", { state: { searchResults: events, searchQuery } });
     } catch (error) {
       // Có thể hiển thị toast lỗi ở đây
       console.error("Lỗi tìm kiếm sự kiện:", error);

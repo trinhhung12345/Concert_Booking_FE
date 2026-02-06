@@ -11,46 +11,67 @@ export default function EventSlider({ events }: Props) {
   const sorted = [...events].sort(
     (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
   );
-
+ 
+  
   const newestEvents = sorted.slice(0, 2);
   const specialEvents = sorted.slice(2);
 
   return (
     <div className="space-y-10">
       {/* ===== EVENT MỚI NHẤT ===== */}
-      <div className="space-y-4">
-        <h3 className="text-lg font-semibold text-white">
-          Sự kiện mới nhất
-        </h3>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        {newestEvents.map((event) => {
+          const imageFiles = event.files?.filter((f) => f.type === 0) ?? [];
+          const preferred16x9 = imageFiles.find(
+            (f) =>
+              f.width &&
+              f.height &&
+              Math.abs(f.width / f.height - 16 / 9) < 0.2
+          );
+          const bannerFile = preferred16x9 || imageFiles[0];
+          const bannerUrl =
+            bannerFile?.thumbUrl || bannerFile?.originUrl || event.imageUrl;
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {newestEvents.map((event) => (
+          const isHorizontal =
+            bannerFile?.width && bannerFile.height
+              ? bannerFile.width > bannerFile.height
+              : true; // fallback
+          
+          return (
+            
             <div
               key={event.id}
-              className="relative h-[260px] rounded-2xl overflow-hidden bg-black"
+              className={`
+          relative rounded-2xl overflow-hidden bg-black
+          ${isHorizontal ? "aspect-video" : "aspect-[3/4]"}
+        `}
             >
-              {/* blur bg */}
+              {/* BLUR BACKGROUND */}
               <img
-                src={event.imageUrl}
+                src={bannerUrl}
                 alt=""
-                className="absolute inset-0 w-full h-full object-cover blur-xl scale-110 opacity-60"
+                className="absolute inset-0 w-full h-full object-cover blur-2xl scale-110 opacity-60"
               />
 
-              {/* main image */}
+              {/* MAIN IMAGE */}
               <img
-                src={event.imageUrl}
+                src={bannerUrl}
                 alt={event.title}
-                className="absolute inset-0 w-full h-full object-contain"
+                className={`
+            absolute inset-0 w-full h-full
+            ${isHorizontal ? "object-cover" : "object-contain"}
+          `}
               />
 
+              {/* OVERLAY */}
               <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent" />
 
+              {/* CONTENT */}
               <div className="absolute inset-0 flex flex-col justify-end p-6">
                 <h4 className="text-white font-semibold text-lg line-clamp-2">
                   {event.title}
                 </h4>
 
-                {/* 🔥 CHỈ NÚT NÀY CLICK ĐƯỢC */}
                 <Link
                   to={`/event/${event.id}`}
                   className="mt-3 inline-block w-fit px-4 py-2 text-sm bg-white text-black rounded-full hover:opacity-90 transition"
@@ -59,9 +80,11 @@ export default function EventSlider({ events }: Props) {
                 </Link>
               </div>
             </div>
-          ))}
-        </div>
+          );
+        })}
       </div>
+
+
 
       {/* ===== SPECIAL EVENTS SLIDER (CLICK CẢ POSTER) ===== */}
       <div className="space-y-4">

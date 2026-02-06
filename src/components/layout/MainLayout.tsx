@@ -2,6 +2,7 @@ import { useEffect } from "react";
 import { Outlet } from "react-router-dom";
 import Header from "./Header";
 import CategoryNav from "./CategoryNav"; // Import mới
+import Footer from "./Footer";
 
 const MainLayout = () => {
   // Đảm bảo trang user luôn dùng light theme
@@ -10,7 +11,7 @@ const MainLayout = () => {
   }, []);
 
   return (
-    <div className="flex flex-col min-h-screen font-sans bg-gray-50">
+    <div className="flex flex-col min-h-screen font-sans bg-gray-900 text-slate-100">
 
       {/* Khối Header Wrapper */}
       {/* Nếu muốn cả thanh category cũng dính thì bọc sticky cả 2 component này */}
@@ -25,11 +26,7 @@ const MainLayout = () => {
       </main>
 
       {/* FOOTER */}
-      <footer className="bg-secondary text-white py-8 mt-auto">
-        <div className="container mx-auto px-4 text-center">
-          <p>© Tien go kys. All rights reserved.</p>
-        </div>
-      </footer>
+      <Footer />
     </div>
   );
 };

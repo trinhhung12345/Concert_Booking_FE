@@ -120,10 +120,10 @@ const OrderDetailPage = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center bg-gray-900 text-slate-100">
         <div className="text-center">
           <FontAwesomeIcon icon={faSpinner} spin className="text-4xl text-primary mb-4" />
-          <p className="text-gray-500">Đang tải thông tin đơn hàng...</p>
+          <p className="text-slate-300">Đang tải thông tin đơn hàng...</p>
         </div>
       </div>
     );
@@ -131,11 +131,11 @@ const OrderDetailPage = () => {
 
   if (error || !order) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center bg-gray-900 text-slate-100">
         <div className="text-center">
           <div className="text-red-500 text-6xl mb-4">😕</div>
-          <h2 className="text-xl font-bold text-gray-600 mb-2">Không tìm thấy đơn hàng</h2>
-          <p className="text-gray-400 mb-6">{error || "Đơn hàng không tồn tại hoặc bạn không có quyền xem."}</p>
+          <h2 className="text-xl font-bold text-slate-100 mb-2">Không tìm thấy đơn hàng</h2>
+          <p className="text-slate-400 mb-6">{error || "Đơn hàng không tồn tại hoặc bạn không có quyền xem."}</p>
           <Button onClick={() => navigate("/tickets")}>
             <FontAwesomeIcon icon={faArrowLeft} className="mr-2" />
             Quay lại danh sách
@@ -146,7 +146,7 @@ const OrderDetailPage = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-900 text-slate-100">
       {/* Header */}
       <div className="bg-gradient-to-r from-primary to-pink-600 text-white">
         <div className="max-w-6xl mx-auto px-4 py-6">
@@ -169,11 +169,11 @@ const OrderDetailPage = () => {
 
       <div className="max-w-6xl mx-auto px-4 py-6">
         {/* Order Info Card */}
-        <div className="bg-white rounded-xl shadow-sm border p-6 mb-6">
+        <div className="bg-slate-900 rounded-xl shadow-sm border border-slate-700 p-6 mb-6">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
             <div>
-              <h2 className="text-xl font-bold text-gray-800">{order.code}</h2>
-              <p className="text-sm text-gray-500 mt-1">
+              <h2 className="text-xl font-bold text-slate-100">{order.code}</h2>
+              <p className="text-sm text-slate-400 mt-1">
                 {order.status === "PAID" 
                   ? `Thanh toán lúc: ${formatDate(order.paymentAt)}`
                   : "Chưa thanh toán"
@@ -184,32 +184,32 @@ const OrderDetailPage = () => {
           </div>
 
           {/* Thông tin người nhận */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 p-4 bg-gray-50 rounded-lg">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 p-4 bg-slate-900 rounded-lg border border-slate-800">
             <div className="flex items-center gap-3">
-              <FontAwesomeIcon icon={faUser} className="text-gray-400 w-4" />
+              <FontAwesomeIcon icon={faUser} className="text-slate-400 w-4" />
               <div>
-                <p className="text-xs text-gray-500">Người nhận</p>
+                <p className="text-xs text-slate-400">Người nhận</p>
                 <p className="font-medium">{order.recipientName}</p>
               </div>
             </div>
             <div className="flex items-center gap-3">
-              <FontAwesomeIcon icon={faPhone} className="text-gray-400 w-4" />
+              <FontAwesomeIcon icon={faPhone} className="text-slate-400 w-4" />
               <div>
-                <p className="text-xs text-gray-500">Số điện thoại</p>
+                <p className="text-xs text-slate-400">Số điện thoại</p>
                 <p className="font-medium">{order.recipientPhone}</p>
               </div>
             </div>
             <div className="flex items-center gap-3">
-              <FontAwesomeIcon icon={faEnvelope} className="text-gray-400 w-4" />
+              <FontAwesomeIcon icon={faEnvelope} className="text-slate-400 w-4" />
               <div>
-                <p className="text-xs text-gray-500">Email</p>
+                <p className="text-xs text-slate-400">Email</p>
                 <p className="font-medium">{order.recipientEmail}</p>
               </div>
             </div>
             <div className="flex items-center gap-3">
-              <FontAwesomeIcon icon={faMapMarkerAlt} className="text-gray-400 w-4" />
+              <FontAwesomeIcon icon={faMapMarkerAlt} className="text-slate-400 w-4" />
               <div>
-                <p className="text-xs text-gray-500">Địa chỉ</p>
+                <p className="text-xs text-slate-400">Địa chỉ</p>
                 <p className="font-medium">{order.recipientAddress}</p>
               </div>
             </div>
@@ -217,22 +217,22 @@ const OrderDetailPage = () => {
         </div>
 
         {/* Danh sách vé trong order */}
-        <div className="bg-white rounded-xl shadow-sm border overflow-hidden">
-          <div className="p-4 border-b bg-gray-50">
+        <div className="bg-slate-900 rounded-xl shadow-sm border border-slate-700 overflow-hidden">
+          <div className="p-4 border-b bg-slate-900/80 border-slate-800">
             <h3 className="font-bold flex items-center gap-2">
               <FontAwesomeIcon icon={faTicketAlt} className="text-primary" />
               Danh sách vé ({order.orderDetails.length})
             </h3>
           </div>
           
-          <div className="divide-y">
+          <div className="divide-y divide-slate-800">
             {order.orderDetails.map((ticket) => (
               <div 
                 key={ticket.id}
-                className="p-4 hover:bg-gray-50 transition-colors"
+                className="p-4 hover:bg-slate-800/80 transition-colors"
               >
                 <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-4">
+                    <div className="flex items-center gap-4">
                     {/* Ticket icon */}
                     <div className={`w-16 h-16 rounded-xl flex items-center justify-center ${
                       order.status === "PAID" 
@@ -241,7 +241,7 @@ const OrderDetailPage = () => {
                         ? "bg-gradient-to-br from-orange-400 to-amber-500"
                         : "bg-gradient-to-br from-gray-400 to-gray-500"
                     } text-white`}>
-                      <div className="text-center">
+                        <div className="text-center">
                         <FontAwesomeIcon icon={faChair} className="text-lg" />
                         <p className="text-xs font-bold mt-1">{ticket.seatCode}</p>
                       </div>
@@ -249,9 +249,9 @@ const OrderDetailPage = () => {
                     
                     {/* Ticket info */}
                     <div>
-                      <h4 className="font-bold text-lg">{ticket.seatCode}</h4>
-                      <p className="text-sm text-gray-500">Mã ghế: {ticket.seatId}</p>
-                      <p className="text-xs text-gray-400 line-through">
+                      <h4 className="font-bold text-lg text-slate-100">{ticket.seatCode}</h4>
+                      <p className="text-sm text-slate-400">Mã ghế: {ticket.seatId}</p>
+                      <p className="text-xs text-slate-500 line-through">
                         Giá gốc: {ticket.originalPrice != null ? ticket.originalPrice.toLocaleString("vi-VN") : "-"} đ
                       </p>
                     </div>

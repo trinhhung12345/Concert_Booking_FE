@@ -3,17 +3,8 @@ import { useParams, Link, useNavigate } from "react-router-dom";
 import { eventService, type Event, type EventFile } from "@/features/concerts/services/eventService";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Badge } from "@/components/ui/badge";
 import parse from "html-react-parser";
 import DOMPurify from "dompurify";
-
-// Hàm decode HTML entities (xử lý trường hợp double-encoded)
-const decodeHtmlEntities = (text: string): string => {
-  if (!text) return "";
-  const textarea = document.createElement("textarea");
-  textarea.innerHTML = text;
-  return textarea.value;
-};
 import {
   Dialog,
   DialogContent,
@@ -21,8 +12,8 @@ import {
   DialogTitle,
   DialogDescription,
 } from "@/components/ui/dialog";
-import YouTube from 'react-youtube';
-import type { YouTubeProps } from 'react-youtube';
+import YouTube from "react-youtube";
+import type { YouTubeProps } from "react-youtube";
 import { getYouTubeId, getYouTubeThumbnail } from "@/lib/utils";
 import EventSchedule from "@/features/concerts/components/EventSchedule";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
@@ -32,36 +23,38 @@ import {
   faClock,
   faTicketAlt,
   faChevronLeft,
-  faPlay
 } from "@fortawesome/free-solid-svg-icons";
 
-// Hàm format tiền và ngày (tái sử dụng)
-const formatCurrency = (amount: number) =>
-  new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND" }).format(amount);
-
-const formatDate = (dateString: string) =>
-  new Date(dateString).toLocaleDateString("vi-VN", { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
-
-const formatTime = (dateString: string) =>
-  new Date(dateString).toLocaleTimeString("vi-VN", { hour: '2-digit', minute: '2-digit' });
-
-// Format lịch diễn ngắn gọn cho modal
-const formatScheduleShort = (start: string, end: string) => {
-  const startDate = new Date(start);
-  const endDate = new Date(end);
-  const timeStr = `${startDate.toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" })} - ${endDate.toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" })}`;
-  const dateStr = startDate.toLocaleDateString("vi-VN", { weekday: "short", day: "2-digit", month: "2-digit", year: "numeric" });
-  return { time: timeStr, date: dateStr };
+const decodeHtmlEntities = (text: string) => {
+  if (!text) return "";
+  const t = document.createElement("textarea");
+  t.innerHTML = text;
+  return t.value;
 };
 
-// Cập nhật hàm check video: Chấp nhận type=1 (video từ backend) HOẶC link youtube
-const isVideo = (file: EventFile) => {
-  // Check type từ backend trả về (type=1 là video)
-  if (file.type === 1) return true;
+const formatCurrency = (n: number) =>
+  new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND" }).format(n);
 
-  // Check đường dẫn nếu backend chưa cập nhật type
-  const url = (file.originUrl || file.thumbUrl || "").toLowerCase();
-  return url.includes("youtube.com") || url.includes("youtu.be") || url.match(/\.(mp4|webm|ogg|mov)$/i);
+const formatTime = (d: string) =>
+  new Date(d).toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" });
+
+const formatScheduleShort = (start: string, end: string) => {
+  const s = new Date(start);
+  return {
+    time: `${formatTime(start)} - ${formatTime(end)}`,
+    date: s.toLocaleDateString("vi-VN", {
+      weekday: "short",
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric",
+    }),
+  };
+};
+
+const isVideo = (f: EventFile) => {
+  if (f.type === 1) return true;
+  const u = (f.originUrl || f.thumbUrl || "").toLowerCase();
+  return u.includes("youtube") || u.includes("youtu.be");
 };
 
 export default function EventDetailPage() {
@@ -69,301 +62,230 @@ export default function EventDetailPage() {
   const navigate = useNavigate();
   const [event, setEvent] = useState<Event | null>(null);
   const [loading, setLoading] = useState(true);
-
-  const [videoId, setVideoId] = useState<string | null>(null); // Lưu ID sạch
-  const [heroImage, setHeroImage] = useState<string>("");
-  const [showingModalOpen, setShowingModalOpen] = useState(false); // Modal chọn suất diễn
+  const [videoId, setVideoId] = useState<string | null>(null);
+  const [heroImage, setHeroImage] = useState("");
+  const [showingModalOpen, setShowingModalOpen] = useState(false);
 
   useEffect(() => {
-    const fetchEventDetail = async () => {
-      try {
-        if (id) {
-          const data = await eventService.getById(id);
-          setEvent(data);
+    (async () => {
+      if (!id) return;
+      const data = await eventService.getById(id);
+      setEvent(data);
 
-          if (data.files && data.files.length > 0) {
-            // DEBUG: Log tất cả files để xem dữ liệu từ API
-            console.log("🎯 All event files:", data.files);
+      const videoFile = data.files?.find(
+        (f) => f.type === 1 || (f.originUrl && getYouTubeId(f.originUrl))
+      );
+      const ytId = getYouTubeId(videoFile?.originUrl);
+      setVideoId(ytId);
 
-            // 1. TÌM VIDEO & EXTRACT ID
-            // Ưu tiên file có type=1 (video) hoặc link chứa youtube
-            const foundVideoFile = data.files.find(f =>
-                f.type === 1 ||
-                (f.originUrl && (f.originUrl.includes("youtube") || f.originUrl.includes("youtu.be")))
-            );
+      const imageFile = data.files?.find((f) => f.type === 0 && !isVideo(f));
+      if (imageFile?.originUrl) setHeroImage(imageFile.originUrl);
+      else if (ytId) setHeroImage(getYouTubeThumbnail(ytId));
 
-            console.log("🎥 Found video file:", foundVideoFile);
-            console.log("🎥 Video originUrl:", foundVideoFile?.originUrl);
-            console.log("🎥 Video thumbUrl:", foundVideoFile?.thumbUrl);
-
-            // Bóc tách ID
-            const extractedId = getYouTubeId(foundVideoFile?.originUrl);
-            console.log("🔍 Extracted YouTube ID:", extractedId);
-
-            setVideoId(extractedId);
-
-            // 2. TÌM ẢNH BÌA (HERO IMAGE)
-            // Tìm ảnh thường (không phải video - type=0 hoặc không có youtube link)
-            const foundImageFile = data.files.find(f => f.type === 0 || (f.type !== 1 && !getYouTubeId(f.originUrl)));
-
-            let finalImage = "https://images.unsplash.com/photo-1501281668745-f7f57925c3b4"; // Ảnh mặc định
-
-            if (foundImageFile) {
-                // Nếu có ảnh thật -> dùng luôn
-                finalImage = foundImageFile.originUrl || foundImageFile.thumbUrl;
-                console.log("🖼️ Using image file:", foundImageFile);
-            } else if (extractedId) {
-                // Nếu không có ảnh nhưng có video -> Lấy thumbnail chuẩn từ YouTube ID
-                finalImage = getYouTubeThumbnail(extractedId);
-                console.log("🖼️ Using YouTube thumbnail:", finalImage);
-            }
-
-            console.log("🎨 Final hero image:", finalImage);
-            setHeroImage(finalImage);
-          }
-        }
-      } catch (error) {
-        console.error("Lỗi:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchEventDetail();
+      setLoading(false);
+    })();
   }, [id]);
 
-  if (loading) return <div className="container py-10"><Skeleton className="h-[400px] w-full rounded-3xl" /></div>;
-  if (!event) return <div className="text-center py-20">Không tìm thấy sự kiện</div>;
+  if (loading)
+    return (
+      <div className="container py-10">
+        <Skeleton className="h-[420px] w-full rounded-3xl" />
+      </div>
+    );
 
-  // Lấy dữ liệu hiển thị an toàn từ showing đầu tiên (cho mục đích hiển thị header)
-  const firstShowing = event.showings?.[0]; // Lấy suất diễn đầu tiên
+  if (!event)
+    return <div className="py-20 text-center text-white">Không tìm thấy sự kiện</div>;
+
+  const firstShowing = event.showings?.[0];
   const startTime = firstShowing?.startTime || new Date().toISOString();
+  const prices =
+    event.showings?.flatMap((s) => s.types?.map((t) => t.price) || []) || [0];
+  const minPrice = Math.min(...prices);
 
-  // Tính khoảng giá từ tất cả showings (cho mục đích hiển thị ở booking card)
-  const allTicketPrices = event.showings?.flatMap(s => s.types?.map(t => t.price) || []) || [0];
-  const minPrice = Math.min(...allTicketPrices);
+  // ✅ ẢNH GIỚI THIỆU
+  const introImages =
+    event.files?.filter((f) => f.type === 0 && !isVideo(f)) || [];
 
-  // Cấu hình cho React Youtube Player
-  const videoOptions: YouTubeProps['opts'] = {
-    height: '100%',
-    width: '100%',
+  const videoOpts: YouTubeProps["opts"] = {
+    height: "100%",
+    width: "100%",
     playerVars: {
-      autoplay: 1,      // Tự chạy
-      controls: 0,      // Ẩn điều khiển
-      rel: 0,           // Không gợi ý video linh tinh
-      showinfo: 0,      // Ẩn tiêu đề
-      mute: 1,          // Tắt tiếng (để autoplay được)
-      loop: 1,          // Lặp lại
-      playlist: videoId || '', // Cần thiết để loop hoạt động trên iframe youtube
-      origin: window.location.origin, // Thêm origin để YouTube chấp nhận request từ mọi domain/IP
+      autoplay: 1,
+      mute: 1,
+      controls: 0,
+      rel: 0,
+      loop: 1,
+      playlist: videoId || "",
     },
   };
 
   return (
-    <div className="bg-gray-900 min-h-screen w-full pb-20">
+    <div className="min-h-screen bg-[#05010a] text-slate-100">
+      {/* HERO */}
+      <div className="relative h-[420px] md:h-[520px] overflow-hidden bg-black">
+        {videoId ? (
+          <div className="absolute inset-0 scale-125">
+            <YouTube videoId={videoId} opts={videoOpts} className="w-full h-full" />
+            <div className="absolute inset-0 bg-black/70" />
+          </div>
+        ) : (
+          <>
+            <div
+              className="absolute inset-0 bg-cover bg-center blur-xl scale-110 opacity-40"
+              style={{ backgroundImage: `url(${heroImage})` }}
+            />
+            <div
+              className="absolute inset-0 bg-contain bg-center bg-no-repeat"
+              style={{ backgroundImage: `url(${heroImage})` }}
+            />
+            <div className="absolute inset-0 bg-black/70" />
+          </>
+        )}
 
-      {/* 1. HERO BANNER (VIDEO HOẶC ẢNH) */}
-      <div className="relative h-[400px] md:h-[550px] bg-gray-900 overflow-hidden group">
-
-        {/* LỚP MEDIA NỀN */}
-        {(() => {
-            // DEBUG: Log final videoId trước khi render YouTube
-            console.log("🎬 Rendering YouTube with videoId:", videoId);
-            return videoId ? (
-                // TRƯỜNG HỢP CÓ YOUTUBE ID HỢP LỆ
-                <div className="absolute inset-0 w-full h-full pointer-events-none scale-125">
-                    {/* scale-125 để zoom video lên một chút, che đi viền đen nếu có */}
-                    <YouTube
-                        videoId={videoId}
-                        opts={videoOptions}
-                        className="w-full h-full absolute top-0 left-0"
-                        iframeClassName="w-full h-full object-cover"
-                        // host="https://www.youtube-nocookie.com"
-                    />
-                    {/* Lớp phủ đen */}
-                    <div className="absolute inset-0 bg-black/50 z-10" />
-                </div>
-            ) : (
-                // TRƯỜNG HỢP CHỈ CÓ ẢNH
-                <>
-                    <div
-                        className="absolute inset-0 bg-cover bg-center opacity-40 blur-xl scale-110"
-                        style={{ backgroundImage: `url(${heroImage})` }}
-                    />
-                    <div
-                        className="absolute inset-0 bg-contain bg-center bg-no-repeat opacity-100 z-0"
-                        style={{ backgroundImage: `url(${heroImage})` }}
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-t from-gray-900 via-gray-900/40 to-transparent" />
-                </>
-            );
-        })()}
-
-        <div className="container relative h-full flex flex-col justify-end pb-10 px-4 mx-auto z-10">
-            <Link to="/" className="absolute top-8 left-4 md:left-0 text-white hover:text-primary flex items-center gap-2 transition-colors">
-                <FontAwesomeIcon icon={faChevronLeft} /> Quay lại
-            </Link>
-
-            <div className="flex items-center gap-3 mb-4">
-                <Badge className="bg-primary text-white border-none px-3 py-1 text-sm shadow-lg shadow-primary/20">
-                    {event.categoryName}
-                </Badge>
-                {videoId && (
-                     <Badge variant="outline" className="text-white border-white/50 backdrop-blur-md gap-1">
-                         <FontAwesomeIcon icon={faPlay} className="text-[10px]" /> Trailer
-                     </Badge>
-                )}
-            </div>
-
-            <h1 className="text-3xl md:text-5xl font-bold text-white mb-4 leading-tight shadow-sm">
-                {event.title}
-            </h1>
-
-            <div className="flex flex-wrap items-center gap-6 text-gray-200 text-sm md:text-base">
-                <div className="flex items-center gap-2">
-                    <FontAwesomeIcon icon={faCalendarAlt} className="text-primary" />
-                    <span>{formatDate(startTime)}</span>
-                </div>
-                <div className="flex items-center gap-2">
-                    <FontAwesomeIcon icon={faMapMarkerAlt} className="text-primary" />
-                    <span>{event.venue} - {event.address}</span>
-                </div>
-            </div>
+        <div className="container relative z-10 h-full flex flex-col justify-end pb-10">
+          <Link
+            to="/"
+            className="absolute top-8 left-4 flex items-center gap-2 text-slate-300 hover:text-pink-400"
+          >
+            <FontAwesomeIcon icon={faChevronLeft} /> Quay lại
+          </Link>
         </div>
       </div>
 
-      {/* 2. MAIN CONTENT (2 Columns) */}
-      <div className="container mx-auto px-4 -mt-8 relative z-20">
+      {/* CONTENT */}
+      <div className="container mx-auto px-4 -mt-16 relative z-20">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          {/* LEFT */}
+          <div className="lg:col-span-2 space-y-8">
+            {/* GIỚI THIỆU */}
+            <div className="rounded-2xl bg-[#0d0616] border border-pink-500/10 p-8">
+              <h2 className="text-xl font-semibold mb-4 text-white">
+                Giới thiệu sự kiện
+              </h2>
 
-            {/* CỘT TRÁI: THÔNG TIN CHI TIẾT (70%) */}
-            <div className="lg:col-span-2 space-y-8">
-
-                {/* Giới thiệu */}
-                <div className="bg-white p-8 rounded-3xl shadow-sm border border-gray-100">
-                    <h2 className="text-2xl font-bold text-gray-900 mb-4">Giới thiệu sự kiện</h2>
-                    <div className="text-gray-600 leading-relaxed event-description">
-                        {parse(DOMPurify.sanitize(decodeHtmlEntities(event.description || ""), {
-                            ALLOWED_TAGS: ['p', 'br', 'strong', 'em', 'u', 's', 'a', 'ul', 'ol', 'li', 'h1', 'h2', 'h3', 'blockquote', 'span', 'div'],
-                            ALLOWED_ATTR: ['href', 'target', 'rel', 'class']
-                        }))}
-                    </div>
-
-                    {/* Gallery ảnh (loại bỏ video) */}
-                    {event.files && event.files.length > 0 && (
-                        <div className="mt-6 grid grid-cols-2 gap-4">
-                            {event.files
-                                .filter(f => !isVideo(f)) // Chỉ hiện ảnh ở đây
-                                .map((file) => (
-                                    <img
-                                        key={file.id}
-                                        src={file.originUrl || file.thumbUrl}
-                                        alt="Gallery"
-                                        className="rounded-xl object-cover h-48 w-full border border-gray-100"
-                                    />
-                            ))}
-                        </div>
-                    )}
+              {/* IMAGE GALLERY */}
+              {introImages.length > 0 && (
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
+                  {introImages.map((img, idx) => (
+                    <img
+                      key={idx}
+                      src={img.originUrl}
+                      alt={`intro-${idx}`}
+                      className="w-full h-[220px] object-cover rounded-xl border border-pink-500/20"
+                    />
+                  ))}
                 </div>
+              )}
 
-                {/* LỊCH DIỄN & VÉ */}
-                <div className="bg-white p-8 rounded-3xl shadow-sm border border-gray-100">
-                    <h2 className="text-2xl font-bold text-gray-900 mb-6 flex items-center gap-2">
-                        <FontAwesomeIcon icon={faCalendarAlt} className="text-primary" />
-                        Lịch diễn & Giá vé
-                    </h2>
+              {/* DESCRIPTION */}
+              <div
+                className="
+                  text-slate-300 leading-relaxed text-[15px]
+                  [&_img]:rounded-xl
+                  [&_img]:my-4
+                  [&_img]:border
+                  [&_img]:border-pink-500/20
+                  [&_img]:max-w-full
+                "
+              >
+                {parse(
+                  DOMPurify.sanitize(
+                    decodeHtmlEntities(event.description || ""),
+                    {
+                      FORBID_ATTR: ["style", "bgcolor"],
+                    }
+                  )
+                )}
 
-                    {/* Gọi component EventSchedule, truyền ID sự kiện vào */}
-                    {event && <EventSchedule eventId={event.id} />}
-                </div>
+              </div>
             </div>
 
-            {/* CỘT PHẢI: BOOKING CARD (Sticky) (30%) */}
-            <div className="lg:col-span-1">
-                <div className="sticky top-24 bg-white p-6 rounded-3xl shadow-xl border border-gray-100">
-                    <div className="text-center mb-6">
-                        <p className="text-gray-500 text-sm mb-1">Giá vé từ</p>
-                        <div className="text-3xl font-bold text-primary">
-                            {formatCurrency(minPrice)}
-                        </div>
-                    </div>
+            {/* LỊCH DIỄN */}
+            <div className="rounded-2xl bg-[#0d0616] border border-pink-500/10 p-8">
+              <h2 className="flex items-center gap-2 text-xl font-semibold text-white mb-6">
+                <FontAwesomeIcon icon={faCalendarAlt} className="text-pink-400" />
+                Lịch diễn & Giá vé
+              </h2>
 
-                    <div className="space-y-4 mb-6">
-                        <div className="flex items-center gap-3 text-gray-600 bg-gray-50 p-3 rounded-xl">
-                            <FontAwesomeIcon icon={faClock} className="text-primary" />
-                            <div>
-                                <p className="text-xs text-gray-400">Thời gian bắt đầu</p>
-                                <p className="font-medium text-sm">{formatTime(startTime)} - {formatDate(startTime)}</p>
-                            </div>
-                        </div>
-                        <div className="flex items-center gap-3 text-gray-600 bg-gray-50 p-3 rounded-xl">
-                             <FontAwesomeIcon icon={faMapMarkerAlt} className="text-primary" />
-                             <div>
-                                <p className="text-xs text-gray-400">Địa điểm</p>
-                                <p className="font-medium text-sm line-clamp-1">{event.venue}</p>
-                            </div>
-                        </div>
-                    </div>
-
-                    <Button 
-                        className="w-full h-12 text-lg font-bold rounded-xl bg-primary hover:bg-primary/90 shadow-lg shadow-primary/30 animate-in fade-in zoom-in duration-300"
-                        onClick={() => {
-                            const showings = event?.showings || [];
-                            if (showings.length === 1) {
-                                // Chỉ có 1 suất diễn -> chuyển thẳng tới trang booking
-                                navigate(`/booking/${event?.id}?showingId=${showings[0].id}`);
-                            } else if (showings.length > 1) {
-                                // Nhiều suất diễn -> mở modal chọn
-                                setShowingModalOpen(true);
-                            }
-                        }}
-                    >
-                        Đặt vé ngay
-                    </Button>
-
-                    <p className="text-xs text-center text-gray-400 mt-4">
-                        * Vé đã mua không được hoàn trả. Vui lòng kiểm tra kỹ thông tin.
-                    </p>
-                </div>
+              <div
+                className="rounded-xl bg-[#0a0312] p-4
+                [&_*]:bg-[#12061f]
+                [&_*]:border-pink-500/20
+                [&_*]:text-slate-200
+                [&_button]:bg-pink-500
+                [&_button]:text-white"
+              >
+                <EventSchedule eventId={event.id} />
+              </div>
             </div>
+          </div>
 
+          {/* RIGHT */}
+          <div className="lg:col-span-1">
+            <div className="sticky top-24 rounded-2xl bg-[#0a0312] border border-pink-500/20 p-6">
+              <h3 className="text-center text-lg font-semibold text-pink-400 mb-1">
+                {event.title}
+              </h3>
+              <p className="text-center text-xs text-slate-400 mb-1">Giá vé từ</p>
+              <p className="text-center text-3xl font-bold text-pink-500 mb-6">
+                {formatCurrency(minPrice)}
+              </p>
+
+              <div className="space-y-3 mb-6">
+                <div className="flex items-center gap-3 rounded-xl bg-[#12061f] px-4 py-3">
+                  <FontAwesomeIcon icon={faClock} className="text-pink-400" />
+                  <span className="text-sm">{formatTime(startTime)}</span>
+                </div>
+
+                <div className="flex items-center gap-3 rounded-xl bg-[#12061f] px-4 py-3">
+                  <FontAwesomeIcon icon={faMapMarkerAlt} className="text-pink-400" />
+                  <span className="text-sm truncate">{event.venue}</span>
+                </div>
+              </div>
+
+              <Button
+                className="w-full h-12 rounded-xl bg-pink-500 hover:bg-pink-400 text-white font-semibold"
+                onClick={() => {
+                  if (event.showings?.length === 1)
+                    navigate(`/booking/${event.id}?showingId=${event.showings[0].id}`);
+                  else setShowingModalOpen(true);
+                }}
+              >
+                Đặt vé ngay
+              </Button>
+            </div>
+          </div>
         </div>
       </div>
 
-      {/* MODAL CHỌN SUẤT DIỄN */}
+      {/* MODAL */}
       <Dialog open={showingModalOpen} onOpenChange={setShowingModalOpen}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="bg-[#0a0312] border border-pink-500/20 text-white">
           <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <FontAwesomeIcon icon={faCalendarAlt} className="text-primary" />
-              Chọn suất diễn
-            </DialogTitle>
-            <DialogDescription>
-              Vui lòng chọn suất diễn bạn muốn đặt vé
+            <DialogTitle>Chọn suất diễn</DialogTitle>
+            <DialogDescription className="text-slate-400">
+              Vui lòng chọn suất diễn
             </DialogDescription>
           </DialogHeader>
-          <div className="space-y-3 mt-4 max-h-[400px] overflow-y-auto">
-            {event?.showings?.map((showing) => {
-              const { time, date } = formatScheduleShort(showing.startTime, showing.endTime);
+
+          <div className="space-y-3 mt-4">
+            {event.showings?.map((s) => {
+              const { time, date } = formatScheduleShort(s.startTime, s.endTime);
               return (
                 <div
-                  key={showing.id}
-                  className="p-4 border border-gray-200 rounded-xl hover:border-primary hover:bg-pink-50/50 cursor-pointer transition-all group"
+                  key={s.id}
                   onClick={() => {
                     setShowingModalOpen(false);
-                    navigate(`/booking/${event?.id}?showingId=${showing.id}`);
+                    navigate(`/booking/${event.id}?showingId=${s.id}`);
                   }}
+                  className="cursor-pointer rounded-xl border border-pink-500/20 hover:border-pink-400 bg-[#12061f] px-4 py-3"
                 >
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-lg bg-gray-100 group-hover:bg-primary group-hover:text-white flex items-center justify-center transition-colors">
-                        <FontAwesomeIcon icon={faCalendarAlt} />
-                      </div>
-                      <div>
-                        <p className="font-bold text-gray-900">{time}</p>
-                        <p className="text-sm text-gray-500 group-hover:text-primary transition-colors">{date}</p>
-                      </div>
+                  <div className="flex justify-between items-center">
+                    <div>
+                      <p className="font-semibold text-white">{time}</p>
+                      <p className="text-sm text-slate-400">{date}</p>
                     </div>
-                    <FontAwesomeIcon icon={faTicketAlt} className="text-gray-400 group-hover:text-primary transition-colors" />
+                    <FontAwesomeIcon icon={faTicketAlt} className="text-pink-400" />
                   </div>
                 </div>
               );

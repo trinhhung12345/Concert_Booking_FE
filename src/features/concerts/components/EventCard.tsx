@@ -2,6 +2,7 @@ import { Link } from "react-router-dom";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faCalendarAlt } from "@fortawesome/free-regular-svg-icons"; // Dùng icon lịch rỗng cho thanh thoát
 import { Badge } from "@/components/ui/badge"; // Dùng badge của Shadcn nếu cần tag
+import type { EventFile } from "@/features/concerts/services/eventService";
 
 // Interface cho props (dữ liệu đầu vào)
 export interface EventProps {
@@ -13,6 +14,9 @@ export interface EventProps {
   category?: string;
   large?: boolean;
   aspect?: '3/2' | '16/9';
+  imageWidth?: number;
+  imageHeight?: number;
+  files?: EventFile[]; // toàn bộ files thuộc về event
 }
 
 // Hàm format tiền tệ VNĐ
