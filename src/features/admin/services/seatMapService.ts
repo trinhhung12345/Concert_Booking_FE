@@ -53,7 +53,9 @@ export const seatMapService = {
 
   // Alternative API route for seat maps by showing ID
  getSeatMapsByShowingId: async (showingId: number): Promise<SeatMap[]> => {
-    const response = await axios.get(`/seat-maps/showings/${showingId}`);
+    // Thêm timestamp để tránh cache
+    const timestamp = new Date().getTime();
+    const response = await axios.get(`/seat-maps/showings/${showingId}?t=${timestamp}`);
     // Note: Due to axios interceptor, response is already the data from server
     // The interceptor in lib/axios.ts does: (response) => response.data
     if (Array.isArray(response)) {

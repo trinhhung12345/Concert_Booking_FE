@@ -384,41 +384,111 @@ export default function EventWizardPage() {
             }
             console.log("Step 2 Data:", showingsData);
 
-            // 2. Duyệt qua từng suất diễn để lưu
-            // Dùng for...of để chạy tuần tự (async/await hoạt động tốt hơn forEach)
-            for (const show of showingsData) {
+            // 2. LẤY DỮ LIỆU HIỆN CÓ TỪ BACKEND ĐỂ SO SÁNH
+            let existingShowings: Showing[] = [];
+            if (createdEventId) {
+              existingShowings = await eventService.getShowingsByEventId(createdEventId);
+              console.log("Existing showings from BE:", existingShowings);
+            }
 
-                // A. TẠO SHOWING
-                const showingPayload = {
-                    eventId: createdEventId, // ID sự kiện lấy từ bước 1
+            // 3. DUYỆT QUA TỪNG SUẤT DIỄN TRONG FORM ĐỂ XỬ LÝ
+            for (const show of showingsData) {
+              let showingId;
+              
+              // Kiểm tra xem đây là suất diễn mới hay đã tồn tại
+              if (typeof show.id === 'number') {
+                // Đây là suất diễn đã tồn tại, tiến hành cập nhật nếu có thay đổi
+                const existingShowing = existingShowings.find(s => s.id === show.id);
+                
+                if (existingShowing) {
+                  // So sánh dữ liệu để chỉ cập nhật nếu có thay đổi
+                  const startTimeFormatted = show.startTime.length === 16 ? show.startTime.replace('T', ' ') + ":00" : show.startTime.replace('T', ' ');
+                  const endTimeFormatted = show.endTime.length === 16 ? show.endTime.replace('T', ' ') + ":00" : show.endTime.replace('T', ' ');
+                  
+                  // Kiểm tra xem có sự thay đổi không
+                  if (existingShowing.startTime !== startTimeFormatted || existingShowing.endTime !== endTimeFormatted) {
+                    const showingPayload = {
+                      id: show.id,
+                      eventId: createdEventId!, // ID sự kiện lấy từ bước 1
+                      status: "ACTIVE",
+                      isSalable: true,
+                      // Chuyển đổi định dạng ngày từ ISO sang yyyy-MM-dd HH:mm:ss theo yêu cầu backend
+                      startTime: startTimeFormatted,
+                      endTime: endTimeFormatted,
+                    };
+
+                    console.log("Updating Showing...", showingPayload);
+                    await eventService.updateShowing(showingPayload);
+                  }
+                  showingId = show.id;
+                } else {
+                  // Trường hợp không tìm thấy suất diễn trong dữ liệu hiện có, tạo mới
+                  const showingPayload = {
+                    eventId: createdEventId!, // ID sự kiện lấy từ bước 1
                     status: "ACTIVE",
                     isSalable: true,
-                    // Thêm giây vào cuối cho đúng format Backend
-                    startTime: show.startTime.length === 16 ? show.startTime + ":00" : show.startTime,
-                    endTime: show.endTime.length === 16 ? show.endTime + ":00" : show.endTime,
+                    // Chuyển đổi định dạng ngày từ ISO sang yyyy-MM-dd HH:mm:ss theo yêu cầu backend
+                    startTime: show.startTime.length === 16 ? show.startTime.replace('T', ' ') + ":00" : show.startTime.replace('T', ' '),
+                    endTime: show.endTime.length === 16 ? show.endTime.replace('T', ' ') + ":00" : show.endTime.replace('T', ' '),
+                  };
+
+                  console.log("Creating Showing...", showingPayload);
+                  const showingRes = await eventService.createShowing(showingPayload);
+                  showingId = showingRes.id;
+                }
+              } else {
+                // Đây là suất diễn mới (id là string từ Date.now()), tạo mới
+                const showingPayload = {
+                  eventId: createdEventId!, // ID sự kiện lấy từ bước 1
+                  status: "ACTIVE",
+                  isSalable: true,
+                  // Chuyển đổi định dạng ngày từ ISO sang yyyy-MM-dd HH:mm:ss theo yêu cầu backend
+                  startTime: show.startTime.length === 16 ? show.startTime.replace('T', ' ') + ":00" : show.startTime.replace('T', ' '),
+                  endTime: show.endTime.length === 16 ? show.endTime.replace('T', ' ') + ":00" : show.endTime.replace('T', ' '),
                 };
 
                 console.log("Creating Showing...", showingPayload);
                 const showingRes = await eventService.createShowing(showingPayload);
+                showingId = showingRes.id;
+              }
 
-                // Backend trả về object có field `id`
-                const newShowingId = showingRes.id;
+              if (!showingId) {
+                throw new Error("Không lấy được ID của suất diễn vừa tạo/cập nhật");
+              }
+              console.log("Processed Showing ID:", showingId);
 
-                if (!newShowingId) {
-                    throw new Error("Không lấy được ID của suất diễn vừa tạo");
-                }
-                console.log("Created Showing ID:", newShowingId);
+              // 4. XỬ LÝ CÁC LOẠI VÉ CHO SUẤT DIỄN NÀY
+              // Lấy danh sách loại vé hiện tại cho suất diễn này
+              const existingTicketTypes = await eventService.getTicketTypesByShowingId(showingId);
+              console.log(`Existing ticket types for showing ${showingId}:`, existingTicketTypes);
 
-                // B. TẠO CÁC LOẠI VÉ CHO SHOWING NÀY
-                for (const ticket of show.tickets) {
-                    const ticketPayload = {
-                        showingId: newShowingId,
+              for (const ticket of show.tickets) {
+                if (typeof ticket.id === 'number') {
+                  // Đây là loại vé đã tồn tại, tiến hành cập nhật nếu có thay đổi
+                  const existingTicket = existingTicketTypes.find(t => t.id === ticket.id);
+                  
+                  if (existingTicket) {
+                    // So sánh dữ liệu để chỉ cập nhật nếu có thay đổi
+                    const newPrice = Number(ticket.price);
+                    const startTimeFormatted = new Date().toISOString().slice(0, 19).replace('T', ' ');
+                    const endTimeFormatted = show.endTime.length === 16 ? show.endTime.replace('T', ' ') + ":00" : show.endTime.replace('T', ' ');
+                    
+                    // Kiểm tra xem có sự thay đổi không
+                    if (existingTicket.name !== ticket.name || 
+                        existingTicket.description !== (ticket.description || ticket.name) || 
+                        existingTicket.color !== (ticket.color || "#FF0082") || 
+                        existingTicket.price !== newPrice ||
+                        existingTicket.endTime !== endTimeFormatted) {
+                      
+                      const ticketPayload = {
+                        id: ticket.id,
+                        showingId: showingId,
                         name: ticket.name,
                         description: ticket.description || ticket.name, // Fallback nếu rỗng
                         color: ticket.color || "#FF0082",
                         isFree: false,
-                        price: Number(ticket.price),
-                        originalPrice: Number(ticket.price), // Giả sử giá gốc bằng giá bán
+                        price: newPrice,
+                        originalPrice: newPrice, // Giả sử giá gốc bằng giá bán
                         maxQtyPerOrder: 4, // Mặc định
                         minQtyPerOrder: 1, // Mặc định
                         status: "ACTIVE",
@@ -427,25 +497,95 @@ export default function EventWizardPage() {
 
                         // Thời gian bán vé:
                         // Mặc định cho bán ngay bây giờ đến lúc hết sự kiện
-                        startTime: new Date().toISOString().slice(0, 19),
-                        endTime: show.endTime.length === 16 ? show.endTime + ":00" : show.endTime,
+                        // Chuyển đổi định dạng ngày từ ISO sang yyyy-MM-dd HH:mm:ss theo yêu cầu backend
+                        startTime: startTimeFormatted,
+                        endTime: endTimeFormatted,
+                      };
+
+                      console.log("Updating Ticket...", ticketPayload);
+                      await eventService.updateTicketType(ticketPayload);
+                    }
+                  } else {
+                    // Trường hợp không tìm thấy loại vé trong dữ liệu hiện có, tạo mới
+                    const ticketPayload = {
+                      showingId: showingId,
+                      name: ticket.name,
+                      description: ticket.description || ticket.name, // Fallback nếu rỗng
+                      color: ticket.color || "#FF0082",
+                      isFree: false,
+                      price: Number(ticket.price),
+                      originalPrice: Number(ticket.price), // Giả sử giá gốc bằng giá bán
+                      maxQtyPerOrder: 4, // Mặc định
+                      minQtyPerOrder: 1, // Mặc định
+                      status: "ACTIVE",
+                      position: 1,
+                      imageUrl: "https://placehold.co/100x100?text=Ticket", // Placeholder vì chưa có upload ảnh vé
+
+                      // Thời gian bán vé:
+                      // Mặc định cho bán ngay bây giờ đến lúc hết sự kiện
+                      // Chuyển đổi định dạng ngày từ ISO sang yyyy-MM-dd HH:mm:ss theo yêu cầu backend
+                      startTime: new Date().toISOString().slice(0, 19).replace('T', ' '),
+                      endTime: show.endTime.length === 16 ? show.endTime.replace('T', ' ') + ":00" : show.endTime.replace('T', ' '),
                     };
 
                     console.log("Creating Ticket...", ticketPayload);
                     await eventService.createTicketType(ticketPayload);
+                  }
+                } else {
+                  // Đây là loại vé mới (id là string từ Date.now()), tạo mới
+                  const ticketPayload = {
+                    showingId: showingId,
+                    name: ticket.name,
+                    description: ticket.description || ticket.name, // Fallback nếu rỗng
+                    color: ticket.color || "#FF0082",
+                    isFree: false,
+                    price: Number(ticket.price),
+                    originalPrice: Number(ticket.price), // Giả sử giá gốc bằng giá bán
+                    maxQtyPerOrder: 4, // Mặc định
+                    minQtyPerOrder: 1, // Mặc định
+                    status: "ACTIVE",
+                    position: 1,
+                    imageUrl: "https://placehold.co/100x100?text=Ticket", // Placeholder vì chưa có upload ảnh vé
+
+                    // Thời gian bán vé:
+                    // Mặc định cho bán ngay bây giờ đến lúc hết sự kiện
+                    // Chuyển đổi định dạng ngày từ ISO sang yyyy-MM-dd HH:mm:ss theo yêu cầu backend
+                    startTime: new Date().toISOString().slice(0, 19).replace('T', ' '),
+                    endTime: show.endTime.length === 16 ? show.endTime.replace('T', ' ') + ":00" : show.endTime.replace('T', ' '),
+                  };
+
+                  console.log("Creating Ticket...", ticketPayload);
+                  await eventService.createTicketType(ticketPayload);
                 }
+              }
             }
 
-                alert("Đã lưu thành công tất cả Suất diễn & Vé!");
-
-                // Load lại dữ liệu showings từ API để cập nhật cho bước tiếp theo
-                if (createdEventId) {
-                    const freshShowings = await eventService.getShowingsByEventId(createdEventId);
-                    const transformedData = await transformShowingsToFormValues(freshShowings, createdEventId);
-                    setLoadedShowingsData(transformedData);
-                    setStep2Data(transformedData);
-                    console.log("Updated showings data after save:", transformedData);
+            // 5. XỬ LÝ XÓA CÁC SUẤT DIỄN BỊ XÓA TRONG FORM (OPTIONAL)
+            // So sánh giữa suất diễn trong BE và trong form để xem suất nào bị xóa
+            if (existingShowings && existingShowings.length > 0) {
+              for (const existingShowing of existingShowings) {
+                const stillExistsInForm = showingsData.some(formShow => 
+                  typeof formShow.id === 'number' && formShow.id === existingShowing.id
+                );
+                
+                if (!stillExistsInForm) {
+                  // Suất diễn này đã bị xóa khỏi form, tiến hành soft delete
+                  console.log(`Soft deleting showing ${existingShowing.id} as it was removed from form`);
+                  await eventService.softDeleteShowing(existingShowing.id);
                 }
+              }
+            }
+
+            alert("Đã lưu thành công tất cả Suất diễn & Vé!");
+
+            // Load lại dữ liệu showings từ API để cập nhật cho bước tiếp theo
+            if (createdEventId) {
+              const freshShowings = await eventService.getShowingsByEventId(createdEventId);
+              const transformedData = await transformShowingsToFormValues(freshShowings, createdEventId);
+              setLoadedShowingsData(transformedData);
+              setStep2Data(transformedData);
+              console.log("Updated showings data after save:", transformedData);
+            }
         }
 
         // Chuyển bước nếu cần

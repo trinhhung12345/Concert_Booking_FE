@@ -227,6 +227,7 @@ export default function SeatMapEditor({ showingId, onSave }: SeatMapEditorProps)
     setError(null);
     
     try {
+      // Gọi API để lấy dữ liệu mới nhất từ backend
       const seatMaps = await seatMapService.getSeatMapsByShowingId(showingId);
       if (seatMaps && seatMaps.length > 0) {
         // Convert seatmap data to ShapeData format
@@ -265,6 +266,9 @@ export default function SeatMapEditor({ showingId, onSave }: SeatMapEditorProps)
           });
         
         setShapes(convertedShapes);
+      } else {
+        // Nếu không có seatmap nào, đặt mảng rỗng
+        setShapes([]);
       }
     } catch (err) {
       console.error('Error refreshing seat map data:', err);
@@ -353,14 +357,35 @@ export default function SeatMapEditor({ showingId, onSave }: SeatMapEditorProps)
     try {
       // GET lại seatmap hiện tại từ server để đảm bảo dữ liệu mới nhất
       const existingSeatMaps = await seatMapService.getSeatMapsByShowingId(showingId);
-      const existingSeatMap = existingSeatMaps && existingSeatMaps.length > 0 ? existingSeatMaps[0] : null;
+      let existingSeatMap = existingSeatMaps && existingSeatMaps.length > 0 ? existingSeatMaps[0] : null;
+      
+      // Nếu chưa có seatmap nào cho showing này, tạo mới một seatmap
+      if (!existingSeatMap) {
+        const newSeatMap = await seatMapService.createSeatMap({
+          name: `Sơ đồ ghế cho suất #${showingId}`,
+          status: 1,
+          viewbox: "0 0 1200 800",  // mặc định
+          showingId: showingId
+        });
+        existingSeatMap = newSeatMap;
+        console.log(`Tạo mới seatmap ${newSeatMap.id} cho showing ${showingId}`);
+      }
+      
+      // Tạo danh sách các section ID đã tồn tại trên backend
+      const existingSectionIds = new Set<number>();
+      if (existingSeatMap && existingSeatMap.sections) {
+        existingSeatMap.sections.forEach(section => {
+          existingSectionIds.add(section.id);
+        });
+      }
 
       // Với mỗi shape trong editor, kiểm tra xem đó là section đã tồn tại hay mới
       for (const shape of shapes) {
         // Trích xuất ID thật từ format "section-{id}" nếu có
         const realSectionId = shape.id.startsWith('section-') ? parseInt(shape.id.replace('section-', '')) : null;
 
-        if (realSectionId) {
+        // Kiểm tra xem section có tồn tại trong dữ liệu từ backend không
+        if (realSectionId && existingSectionIds.has(realSectionId)) {
           // Đây là section đã tồn tại, cần cập nhật
           try {
             // GET chi tiết section từ server để so sánh
@@ -434,12 +459,12 @@ export default function SeatMapEditor({ showingId, onSave }: SeatMapEditorProps)
             alert(`Lỗi khi cập nhật section ${realSectionId}: ${(error as Error).message}`);
           }
         } else {
-          // Đây là section mới (chưa có ID thật), tạo mới
+          // Đây là section mới (chưa có ID thật hoặc ID không tồn tại trong BE), tạo mới
           try {
             const isStage = shape.ticketTypeId === null;
             const newSectionData = {
               name: shape.name,
-              seatMapId: existingSeatMap?.id || 0,
+              seatMapId: existingSeatMap.id, // Sử dụng ID của seatmap vừa tạo hoặc đã tồn tại
               status: 1,
               isStage: isStage,
               isSalable: !isStage,
@@ -451,6 +476,11 @@ export default function SeatMapEditor({ showingId, onSave }: SeatMapEditorProps)
 
             const createdSection = await seatMapService.createSection(newSectionData);
             console.log(`Tạo mới section ${createdSection.id} thành công`);
+
+            // CẬP NHẬT SHAPE ID VỚI ID THẬT TỪ BACKEND
+            setShapes(prevShapes => prevShapes.map(s => 
+              s.id === shape.id ? { ...s, id: `section-${createdSection.id}` } : s
+            ));
 
             // Tạo section attribute cho section mới
             await seatMapService.createSectionAttribute({
@@ -488,8 +518,10 @@ export default function SeatMapEditor({ showingId, onSave }: SeatMapEditorProps)
       }
 
       alert("Cập nhật sơ đồ ghế thành công!");
-      // Làm mới dữ liệu sau khi lưu
-      refreshSeatMap();
+      // Chờ một chút để đảm bảo dữ liệu được cập nhật ở backend trước khi refresh
+      setTimeout(() => {
+        refreshSeatMap();
+      }, 500);
     } catch (error) {
       console.error("Lỗi khi lưu sơ đồ ghế:", error);
       alert("Lỗi khi lưu sơ đồ ghế: " + (error as Error).message);
