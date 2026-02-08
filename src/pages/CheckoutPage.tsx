@@ -16,11 +16,19 @@ import {
 } from "@fortawesome/free-solid-svg-icons";
 import { orderService } from "@/features/booking/services/orderService";
 import type { Seat } from "@/features/booking/types/seatmap";
-import type { Order } from "@/features/booking/types/order";
+import type { Order, TicketOrderItem } from "@/features/booking/types/order";
 import { useAuthStore } from "@/store/useAuthStore";
 
+interface TicketSelection {
+  ticketTypeId: number;
+  name: string;
+  price: number;
+  quantity: number;
+}
+
 interface LocationState {
-  selectedSeats: Seat[];
+  selectedSeats?: Seat[];
+  ticketSelections?: TicketSelection[];
   eventName: string;
   showingId: string;
 }
@@ -42,16 +50,25 @@ export default function CheckoutPage() {
   const [isCheckingOut, setIsCheckingOut] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  const selectedSeats = state?.selectedSeats || [];
+  const ticketSelections = state?.ticketSelections || [];
+
+  const hasSeatMode = selectedSeats.length > 0;
+  const hasTicketMode = !hasSeatMode && ticketSelections.length > 0;
+
   useEffect(() => {
-    if (!state || !state.selectedSeats || state.selectedSeats.length === 0) {
+    if (!state || (!hasSeatMode && !hasTicketMode)) {
       navigate("/");
     }
-  }, [state, navigate]);
+  }, [state, hasSeatMode, hasTicketMode, navigate]);
 
-  if (!state || !state.selectedSeats) return null;
+  if (!state || (!hasSeatMode && !hasTicketMode)) return null;
 
-  const { selectedSeats, eventName } = state;
-  const totalAmount = selectedSeats.reduce((acc, seat) => acc + (seat.price || 0), 0);
+  const { eventName } = state;
+
+  const totalAmount = hasSeatMode
+    ? selectedSeats.reduce((acc, seat) => acc + (seat.price || 0), 0)
+    : ticketSelections.reduce((acc, t) => acc + t.price * t.quantity, 0);
 
   const handleCreateOrder = async () => {
     if (!recipientName.trim() || !recipientPhone.trim() || !recipientEmail.trim() || !recipientAddress.trim()) {
@@ -63,13 +80,24 @@ export default function CheckoutPage() {
     setIsCreatingOrder(true);
 
     try {
-      const response = await orderService.createOrder({
+      const payload: any = {
         recipientName: recipientName.trim(),
         recipientPhone: recipientPhone.trim(),
         recipientEmail: recipientEmail.trim(),
         recipientAddress: recipientAddress.trim(),
-        seatIds: selectedSeats.map((seat) => seat.id),
-      });
+      };
+
+      if (hasSeatMode) {
+        payload.seatIds = selectedSeats.map((seat) => seat.id);
+      } else if (hasTicketMode) {
+        const items: TicketOrderItem[] = ticketSelections.map((t) => ({
+          ticketTypeId: t.ticketTypeId,
+          quantity: t.quantity,
+        }));
+        payload.ticketItems = items;
+      }
+
+      const response = await orderService.createOrder(payload);
 
       if (response.code === 200) {
         setCreatedOrder(response.data);
@@ -126,23 +154,49 @@ export default function CheckoutPage() {
             <div className="bg-slate-800 rounded-xl p-6 border border-slate-700">
               <h2 className="font-bold text-lg mb-4 flex items-center gap-2 text-white">
                 <FontAwesomeIcon icon={faTicketAlt} className="text-primary" />
-                Vé đã chọn ({selectedSeats.length})
+                Vé đã chọn (
+                {hasSeatMode
+                  ? selectedSeats.length
+                  : ticketSelections.reduce((sum, t) => sum + t.quantity, 0)}
+                )
               </h2>
 
               <div className="space-y-3">
-                {selectedSeats.map((seat) => (
-                  <div key={seat.id} className="flex justify-between items-center p-3 bg-slate-700 rounded-lg">
-                    <div>
-                      <span className="font-bold text-white">{seat.code}</span>
-                      <span className="text-slate-400 text-sm ml-2">
-                        {seat.ticketTypeId }
+                {hasSeatMode &&
+                  selectedSeats.map((seat) => (
+                    <div
+                      key={seat.id}
+                      className="flex justify-between items-center p-3 bg-slate-700 rounded-lg"
+                    >
+                      <div>
+                        <span className="font-bold text-white">{seat.code}</span>
+                        <span className="text-slate-400 text-sm ml-2">
+                          {seat.ticketTypeId}
+                        </span>
+                      </div>
+                      <span className="font-semibold text-primary">
+                        {(seat.price || 0).toLocaleString("vi-VN")} đ
                       </span>
                     </div>
-                    <span className="font-semibold text-primary">
-                      {(seat.price || 0).toLocaleString("vi-VN")} đ
-                    </span>
-                  </div>
-                ))}
+                  ))}
+
+                {hasTicketMode &&
+                  ticketSelections.map((t, idx) => (
+                    <div
+                      key={idx}
+                      className="flex justify-between items-center p-3 bg-slate-700 rounded-lg"
+                    >
+                      <div>
+                        <span className="font-bold text-white">{t.name}</span>
+                        <span className="text-slate-400 text-sm ml-2">
+                          x{t.quantity}
+                        </span>
+                      </div>
+                      <span className="font-semibold text-primary">
+                        {(t.price * t.quantity).toLocaleString("vi-VN")} đ
+                      </span>
+                    </div>
+                  ))}
               </div>
             </div>
 
@@ -186,7 +240,11 @@ export default function CheckoutPage() {
               <div className="space-y-3 text-sm">
                 <div className="flex justify-between text-slate-300">
                   <span>Số lượng vé</span>
-                  <span>{selectedSeats.length}</span>
+                  <span>
+                    {hasSeatMode
+                      ? selectedSeats.length
+                      : ticketSelections.reduce((sum, t) => sum + t.quantity, 0)}
+                  </span>
                 </div>
                 <div className="flex justify-between text-slate-300">
                   <span>Tạm tính</span>
