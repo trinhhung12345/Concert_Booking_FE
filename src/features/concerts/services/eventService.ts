@@ -20,6 +20,7 @@ export interface TicketType {
   originalPrice: number;
   maxQtyPerOrder: number;
   minQtyPerOrder: number;
+  quantity: number;
   startTime: string;
   endTime: string;
   position: number;

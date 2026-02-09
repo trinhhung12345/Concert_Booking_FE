@@ -72,7 +72,7 @@ export default function EventWizardPage() {
           id: tt.id,
           name: tt.name,
           price: tt.price,
-          quantity: 100, // Default since API doesn't provide quantity
+          quantity: typeof tt.quantity === "number" ? tt.quantity : 100,
           description: tt.description,
           color: tt.color
         })),
@@ -421,6 +421,7 @@ export default function EventWizardPage() {
                         originalPrice: Number(ticket.price), // Giả sử giá gốc bằng giá bán
                         maxQtyPerOrder: 4, // Mặc định
                         minQtyPerOrder: 1, // Mặc định
+                    quantity: Number(ticket.quantity),
                         status: "ACTIVE",
                         position: 1,
                         imageUrl: "https://placehold.co/100x100?text=Ticket", // Placeholder vì chưa có upload ảnh vé
