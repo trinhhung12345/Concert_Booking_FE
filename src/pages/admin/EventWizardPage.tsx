@@ -358,14 +358,17 @@ export default function EventWizardPage() {
 
             // API Call
             let res;
+            let newEventId = createdEventId; // Dùng biến local để đảm bảo giá trị đúng ngay lập tức
             if (createdEventId) {
                 // Update existing event - append ID to FormData as required by API
                 formData.append("id", String(createdEventId));
                 res = await eventService.update(formData);
+                newEventId = createdEventId;
             } else {
                 // Create New
                 res = await eventService.create(formData);
-                setCreatedEventId(res.id); // Lưu ID lại để dùng cho bước sau
+                newEventId = res.id;
+                setCreatedEventId(newEventId); // Lưu ID lại để dùng cho bước sau
             }
 
             console.log("Step 1 Saved:", res);
@@ -471,6 +474,7 @@ export default function EventWizardPage() {
             onSave={() => handleSave(false)}
             onNext={() => handleSave(true)}
             onCancel={handleCancel}
+            onStepChange={handleStepChange}
             loading={loading}
         />
 
