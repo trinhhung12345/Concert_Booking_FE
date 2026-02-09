@@ -33,6 +33,14 @@ export default function EventWizardPage() {
   const [loadedEventData, setLoadedEventData] = useState<EventInfoFormValues | null>(null);
   const [loadedShowingsData, setLoadedShowingsData] = useState<any[] | null>(null);
 
+  // --- HELPER FUNCTIONS ---
+  // Format date cho Spring Boot backend: yyyy-MM-dd HH:mm:ss
+  const formatDateTimeForBE = (dateStr: string): string => {
+    // Chuyển "2026-02-10T21:30:00" → "2026-02-10 21:30:00"
+    if (!dateStr) return dateStr;
+    return dateStr.replace('T', ' ');
+  };
+
   // --- DATA TRANSFORMATION FUNCTIONS ---
   const transformEventToFormValues = (event: Event): EventInfoFormValues => {
     console.log("Transforming event data:", event);
@@ -385,71 +393,198 @@ export default function EventWizardPage() {
             if (!showingsData) {
                 throw new Error("Không có dữ liệu suất diễn");
             }
-            console.log("Step 2 Data:", showingsData);
+            console.log("Step 2 Form Data:", showingsData);
 
-            // 2. Duyệt qua từng suất diễn để lưu
-            // Dùng for...of để chạy tuần tự (async/await hoạt động tốt hơn forEach)
-            for (const show of showingsData) {
+            // =========================================================
+            // BƯỚC 1: GET FRESH DATA TỪ BE TRƯỚC
+            // =========================================================
+            let freshShowingsData: any[] = [];
+            if (createdEventId) {
+                console.log("Fetching fresh data from BE...");
+                const freshFromBE = await eventService.getShowingsByEventId(createdEventId);
+                freshShowingsData = await transformShowingsToFormValues(freshFromBE, createdEventId);
+                console.log("Fresh BE Data:", freshShowingsData);
+            }
 
-                // A. TẠO SHOWING
-                const showingPayload = {
-                    eventId: createdEventId, // ID sự kiện lấy từ bước 1
-                    status: "ACTIVE",
-                    isSalable: true,
-                    // Thêm giây vào cuối cho đúng format Backend
-                    startTime: show.startTime.length === 16 ? show.startTime + ":00" : show.startTime,
-                    endTime: show.endTime.length === 16 ? show.endTime + ":00" : show.endTime,
-                };
-
-                console.log("Creating Showing...", showingPayload);
-                const showingRes = await eventService.createShowing(showingPayload);
-
-                // Backend trả về object có field `id`
-                const newShowingId = showingRes.id;
-
-                if (!newShowingId) {
-                    throw new Error("Không lấy được ID của suất diễn vừa tạo");
+            // Tạo Map để lookup dễ dàng
+            const freshShowingMap = new Map<number, any>();
+            freshShowingsData.forEach(s => {
+                if (s.id && typeof s.id === 'number') {
+                    freshShowingMap.set(s.id, s);
                 }
-                console.log("Created Showing ID:", newShowingId);
+            });
 
-                // B. TẠO CÁC LOẠI VÉ CHO SHOWING NÀY
-                for (const ticket of show.tickets) {
-                    const ticketPayload = {
-                        showingId: newShowingId,
-                        name: ticket.name,
-                        description: ticket.description || ticket.name, // Fallback nếu rỗng
-                        color: ticket.color || "#FF0082",
-                        isFree: false,
-                        price: Number(ticket.price),
-                        originalPrice: Number(ticket.price), // Giả sử giá gốc bằng giá bán
-                        maxQtyPerOrder: 4, // Mặc định
-                        minQtyPerOrder: 1, // Mặc định
-                    quantity: Number(ticket.quantity),
+            const freshTicketMap = new Map<number, Map<number, any>>();
+            freshShowingsData.forEach(s => {
+                const ticketMap = new Map<number, any>();
+                s.tickets.forEach((t: any) => {
+                    if (t.id && typeof t.id === 'number') {
+                        ticketMap.set(t.id, t);
+                    }
+                });
+                freshTicketMap.set(s.id, ticketMap);
+            });
+
+            // =========================================================
+            // BƯỚC 2: XỬ LÝ SHOWINGS (UPDATE hoặc CREATE)
+            // =========================================================
+            for (const show of showingsData) {
+                // Check if showing exists in BE by checking freshShowingMap
+                // Nếu id tồn tại trong fresh data từ BE → UPDATE, ngược lại → CREATE
+                const isExistingShowing = freshShowingMap.has(show.id);
+
+                if (isExistingShowing) {
+                    // --- UPDATE EXISTING SHOWING ---
+                    console.log(`Updating existing showing ID: ${show.id}`);
+
+                    const showingPayload = {
+                        id: show.id,
+                        eventId: createdEventId || undefined,
                         status: "ACTIVE",
-                        position: 1,
-                        imageUrl: "https://placehold.co/100x100?text=Ticket", // Placeholder vì chưa có upload ảnh vé
-
-                        // Thời gian bán vé:
-                        // Mặc định cho bán ngay bây giờ đến lúc hết sự kiện
-                        startTime: new Date().toISOString().slice(0, 19),
-                        endTime: show.endTime.length === 16 ? show.endTime + ":00" : show.endTime,
+                        isSalable: true,
+                        startTime: formatDateTimeForBE(show.startTime.length === 16 ? show.startTime + ":00" : show.startTime),
+                        endTime: formatDateTimeForBE(show.endTime.length === 16 ? show.endTime + ":00" : show.endTime),
                     };
 
-                    console.log("Creating Ticket...", ticketPayload);
-                    await eventService.createTicketType(ticketPayload);
+                    await eventService.updateShowing(showingPayload);
+
+                    // Xử lý tickets cho showing này
+                    const existingTickets = freshTicketMap.get(show.id) || new Map();
+                    const formTicketIds = new Set<number>();
+
+                    for (const ticket of show.tickets) {
+                        // Check if ticket exists in BE by checking freshTicketMap
+                        const isExistingTicket = existingTickets.has(ticket.id);
+
+                        // Chỉ add ID thực từ BE vào Set để so sánh xóa
+                        if (isExistingTicket) {
+                            formTicketIds.add(ticket.id as number);
+                        }
+
+                        if (isExistingTicket) {
+                            // UPDATE existing ticket
+                            console.log(`Updating ticket ID: ${ticket.id}`);
+                            await eventService.updateTicketType({
+                                id: ticket.id,
+                                name: ticket.name,
+                                description: ticket.description || ticket.name,
+                                color: ticket.color || "#FF0082",
+                                isFree: false,
+                                price: Number(ticket.price),
+                                originalPrice: Number(ticket.price),
+                                maxQtyPerOrder: 4,
+                                minQtyPerOrder: 1,
+                                quantity: Number(ticket.quantity),
+                                status: "ACTIVE",
+                                position: 1,
+                                imageUrl: "https://placehold.co/100x100?text=Ticket",
+                                showingId: show.id,
+                                startTime: formatDateTimeForBE(new Date().toISOString().slice(0, 19)),
+                                endTime: formatDateTimeForBE(show.endTime.length === 16 ? show.endTime + ":00" : show.endTime),
+                            });
+                        } else {
+                            // CREATE new ticket
+                            console.log("Creating new ticket...");
+                            await eventService.createTicketType({
+                                showingId: show.id,
+                                name: ticket.name,
+                                description: ticket.description || ticket.name,
+                                color: ticket.color || "#FF0082",
+                                isFree: false,
+                                price: Number(ticket.price),
+                                originalPrice: Number(ticket.price),
+                                maxQtyPerOrder: 4,
+                                minQtyPerOrder: 1,
+                                quantity: Number(ticket.quantity),
+                                status: "ACTIVE",
+                                position: 1,
+                                imageUrl: "https://placehold.co/100x100?text=Ticket",
+                                startTime: formatDateTimeForBE(new Date().toISOString().slice(0, 19)),
+                                endTime: formatDateTimeForBE(show.endTime.length === 16 ? show.endTime + ":00" : show.endTime),
+                            });
+                        }
+                    }
+
+                    // XÓA MỀM tickets không còn trong form
+                    existingTickets.forEach((existingTicket, ticketId) => {
+                        if (!formTicketIds.has(ticketId)) {
+                            console.log(`Soft-deleting ticket ID: ${ticketId}`);
+                            eventService.hideTicketType(ticketId);
+                        }
+                    });
+
+                } else {
+                    // --- CREATE NEW SHOWING ---
+                    console.log("Creating new showing...");
+
+                    const showingPayload = {
+                        eventId: createdEventId,
+                        status: "ACTIVE",
+                        isSalable: true,
+                        startTime: formatDateTimeForBE(show.startTime.length === 16 ? show.startTime + ":00" : show.startTime),
+                        endTime: formatDateTimeForBE(show.endTime.length === 16 ? show.endTime + ":00" : show.endTime),
+                    };
+
+                    const showingRes = await eventService.createShowing(showingPayload);
+                    const newShowingId = showingRes.id;
+
+                    if (!newShowingId) {
+                        throw new Error("Không lấy được ID của suất diễn vừa tạo");
+                    }
+                    console.log("Created new showing ID:", newShowingId);
+
+                    // Tạo tickets mới cho showing
+                    for (const ticket of show.tickets) {
+                        await eventService.createTicketType({
+                            showingId: newShowingId,
+                            name: ticket.name,
+                            description: ticket.description || ticket.name,
+                            color: ticket.color || "#FF0082",
+                            isFree: false,
+                            price: Number(ticket.price),
+                            originalPrice: Number(ticket.price),
+                            maxQtyPerOrder: 4,
+                            minQtyPerOrder: 1,
+                            quantity: Number(ticket.quantity),
+                            status: "ACTIVE",
+                            position: 1,
+                            imageUrl: "https://placehold.co/100x100?text=Ticket",
+                            startTime: formatDateTimeForBE(new Date().toISOString().slice(0, 19)),
+                            endTime: formatDateTimeForBE(show.endTime.length === 16 ? show.endTime + ":00" : show.endTime),
+                        });
+                    }
                 }
             }
 
-                alert("Đã lưu thành công tất cả Suất diễn & Vé!");
-
-                // Load lại dữ liệu showings từ API để cập nhật cho bước tiếp theo
-                if (createdEventId) {
-                    const freshShowings = await eventService.getShowingsByEventId(createdEventId);
-                    const transformedData = await transformShowingsToFormValues(freshShowings, createdEventId);
-                    setLoadedShowingsData(transformedData);
-                    setStep2Data(transformedData);
-                    console.log("Updated showings data after save:", transformedData);
+            // =========================================================
+            // BƯỚC 3: XÓA MỀM SHOWINGS KHÔNG CÒN TRONG FORM
+            // =========================================================
+            const formShowingIds = new Set<number>();
+            showingsData.forEach(s => {
+                if (freshShowingMap.has(s.id)) {
+                    formShowingIds.add(s.id as number);
                 }
+            });
+
+            freshShowingMap.forEach((_, showingId) => {
+                if (!formShowingIds.has(showingId)) {
+                    console.log(`Soft-deleting showing ID: ${showingId}`);
+                    eventService.softDeleteShowing(showingId);
+                }
+            });
+
+            alert("Đã lưu thành công tất cả Suất diễn & Vé!");
+
+            // =========================================================
+            // BƯỚC 4: LOAD LẠI DATA TỪ BE
+            // =========================================================
+            if (createdEventId) {
+                const freshShowings = await eventService.getShowingsByEventId(createdEventId);
+                const transformedData = await transformShowingsToFormValues(freshShowings, createdEventId);
+                setLoadedShowingsData(transformedData);
+                setStep2Data(transformedData);
+                console.log("Updated showings data after save:", transformedData);
+            }
         }
 
         // Chuyển bước nếu cần
