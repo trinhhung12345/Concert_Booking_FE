@@ -24,12 +24,18 @@ export interface Order {
   orderDetails: OrderDetail[];
 }
 
+export interface TicketOrderItem {
+  ticketTypeId: number;
+  quantity: number;
+}
+
 export interface CreateOrderRequest {
   recipientName: string;
   recipientPhone: string;
   recipientEmail: string;
   recipientAddress: string;
-  seatIds: number[];
+  seatIds?: number[];
+  ticketItems?: TicketOrderItem[];
 }
 
 export interface CheckoutRequest {

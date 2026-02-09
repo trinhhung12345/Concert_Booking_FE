@@ -629,7 +629,7 @@ export default function SeatMapEditor({ showingId, onSave }: SeatMapEditorProps)
       <div className="flex h-[600px] items-center justify-center bg-card border border-border rounded-xl">
         <div className="text-center">
           <FontAwesomeIcon icon={faRefresh} spin className="text-2xl text-primary mb-2" />
-          <p className="text-muted-foreground">Đang tải sơ đồ ghế...</p>
+          <p className="text-muted-foreground">Đang tải...</p>
         </div>
       </div>
     );
