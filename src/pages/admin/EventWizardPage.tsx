@@ -491,7 +491,7 @@ export default function EventWizardPage() {
                         originalPrice: newPrice, // Giả sử giá gốc bằng giá bán
                         maxQtyPerOrder: 4, // Mặc định
                         minQtyPerOrder: 1, // Mặc định
-                    quantity: Number(ticket.quantity),
+                        quantity: typeof ticket.quantity === 'number' ? ticket.quantity : 100,
                         status: "ACTIVE",
                         position: 1,
                         imageUrl: "https://placehold.co/100x100?text=Ticket", // Placeholder vì chưa có upload ảnh vé
@@ -518,6 +518,7 @@ export default function EventWizardPage() {
                       originalPrice: Number(ticket.price), // Giả sử giá gốc bằng giá bán
                       maxQtyPerOrder: 4, // Mặc định
                       minQtyPerOrder: 1, // Mặc định
+                      quantity: typeof ticket.quantity === 'number' ? ticket.quantity : 100,
                       status: "ACTIVE",
                       position: 1,
                       imageUrl: "https://placehold.co/100x100?text=Ticket", // Placeholder vì chưa có upload ảnh vé
@@ -544,6 +545,7 @@ export default function EventWizardPage() {
                     originalPrice: Number(ticket.price), // Giả sử giá gốc bằng giá bán
                     maxQtyPerOrder: 4, // Mặc định
                     minQtyPerOrder: 1, // Mặc định
+                    quantity: typeof ticket.quantity === 'number' ? ticket.quantity : 100,
                     status: "ACTIVE",
                     position: 1,
                     imageUrl: "https://placehold.co/100x100?text=Ticket", // Placeholder vì chưa có upload ảnh vé
