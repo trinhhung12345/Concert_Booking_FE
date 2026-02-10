@@ -13,6 +13,16 @@ import CheckInPage from "./pages/CheckInPage";
 import BookingPage from "./pages/BookingPage";
 import CheckoutPage from "./pages/CheckoutPage";
 import MyOrdersPage from "./pages/MyOrdersPage";
+import TermsPage from "./pages/static/TermsPage";
+import PrivacyPage from "./pages/static/PrivacyPage";
+import SupportPage from "./pages/static/SupportPage";
+import RefundPolicyPage from "./pages/static/RefundPolicyPage";
+import OrganizerTermsPage from "./pages/static/OrganizerTermsPage";
+import SellWithUsPage from "./pages/static/SellWithUsPage";
+import MarketingSolutionsPage from "./pages/static/MarketingSolutionsPage";
+import BusinessContactPage from "./pages/static/BusinessContactPage";
+import AboutPage from "./pages/static/AboutPage";
+import PaymentMethodsPage from "./pages/static/PaymentMethodsPage";
 import AdminLayout from "@/components/layout/admin/AdminLayout";
 import EventManagerPage from "@/pages/admin/EventManagerPage";
 import EventWizardPage from "@/pages/admin/EventWizardPage";
@@ -45,6 +55,18 @@ function App() {
             <Route path="/profile" element={<ProfilePage />} />
             <Route path="/tickets" element={<TicketsPage />} />
             <Route path="/tickets/:orderId" element={<OrderDetailPage />} />
+
+          {/* Trang tĩnh từ footer */}
+          <Route path="/terms" element={<TermsPage />} />
+          <Route path="/privacy" element={<PrivacyPage />} />
+          <Route path="/support" element={<SupportPage />} />
+          <Route path="/refund-policy" element={<RefundPolicyPage />} />
+          <Route path="/organizer-terms" element={<OrganizerTermsPage />} />
+          <Route path="/sell-with-us" element={<SellWithUsPage />} />
+          <Route path="/marketing-solutions" element={<MarketingSolutionsPage />} />
+          <Route path="/business-contact" element={<BusinessContactPage />} />
+          <Route path="/about" element={<AboutPage />} />
+          <Route path="/payment-methods" element={<PaymentMethodsPage />} />
         </Route>
 
         {/* Các trang Auth nằm riêng (Không có Header/Footer của MainLayout) */}
