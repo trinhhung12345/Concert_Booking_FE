@@ -32,6 +32,7 @@ export interface Seat {
   ticketTypeId?: number | null;
   seatElementId?: number | null;
   status: "AVAILABLE" | "BOOKED" | "LOCKED";
+  isSalable?: boolean;
   price?: number;
 }
 
