@@ -20,7 +20,7 @@ const teamMembers = [
 
 export default function AboutPage() {
   return (
-    <div className="bg-gray-900 text-slate-100">
+    <div className="bg-gray-900 min-h-screen text-slate-100">
       {/* HERO */}
       <div className="relative">
         <img

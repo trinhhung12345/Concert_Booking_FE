@@ -1,8 +1,37 @@
 import axios from '../../../lib/axios';
 
-export const getUsers = async (params: Record<string, any>) => {
+export interface AdminUserApiRole {
+  roleId: number;
+  objectId: number;
+  roleName: string;
+  roleType: number;
+}
+
+export interface AdminUserApi {
+  id: number;
+  code: string | null;
+  name: string;
+  email: string;
+  address: string | null;
+  phone: string;
+  status: number;
+  birthday: string | null;
+  role: AdminUserApiRole;
+}
+
+export interface UserListResponse {
+  code: number;
+  data: AdminUserApi[];
+  message: string;
+  total_record: number;
+  current_page: number;
+}
+
+export const getUsers = async (
+  params: Record<string, any>
+): Promise<UserListResponse> => {
   try {
-    const res = await axios.get('/users', { params });
+    const res = await axios.get<UserListResponse>('/users', { params });
     console.log('[getUsers] response:', res);
     return res;
   } catch (error) {
