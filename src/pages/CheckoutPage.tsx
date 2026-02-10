@@ -280,7 +280,7 @@ export default function CheckoutPage() {
                 </Button>
               ) : (
                 <Button
-                  className="w-full h-12 text-lg font-bold bg-green-600 hover:bg-green-700"
+                  className="w-full h-12 text-lg font-bold bg-pink-600 hover:bg-pink-700"
                   onClick={handleCheckout}
                   disabled={isCheckingOut}
                 >

@@ -208,7 +208,7 @@ export default function HomePage() {
                             {event.title}
                           </h3>
 
-                          <p className="text-green-400 font-semibold text-sm">
+                          <p className="text-pink-400 font-semibold text-sm">
                             From{" "}
                             {new Intl.NumberFormat("vi-VN", {
                               style: "currency",

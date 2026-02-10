@@ -76,7 +76,7 @@ const TicketsPage = () => {
     switch (status) {
       case "PAID":
         return (
-          <span className={`${baseClass} bg-green-100 text-green-700`}>
+          <span className={`${baseClass} bg-pink-100 text-pink-700`}>
             <FontAwesomeIcon icon={faCheckCircle} className="text-xs" />
             Đã thanh toán
           </span>
@@ -163,7 +163,7 @@ const TicketsPage = () => {
                 <div className="text-slate-400 text-sm">Tổng số vé</div>
               </div>
               <div className="bg-slate-900 rounded-xl p-6 shadow-sm border border-slate-700">
-                <div className="text-3xl font-bold text-green-400">{paidOrders.length}</div>
+                <div className="text-3xl font-bold text-pink-400">{paidOrders.length}</div>
                 <div className="text-slate-400 text-sm">Đơn đã thanh toán</div>
               </div>
               <div className="bg-slate-900 rounded-xl p-6 shadow-sm border border-slate-700">
@@ -191,7 +191,7 @@ const TicketsPage = () => {
                     variant={filterStatus === "PAID" ? "default" : "outline"}
                     size="sm"
                     onClick={() => setFilterStatus("PAID")}
-                    className={filterStatus === "PAID" ? "bg-green-600 hover:bg-green-700" : ""}
+                    className={filterStatus === "PAID" ? "bg-pink-600 hover:bg-pink-700" : ""}
                   >
                     <FontAwesomeIcon icon={faCheckCircle} className="mr-1" />
                     Đã thanh toán ({paidOrders.length})

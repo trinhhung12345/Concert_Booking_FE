@@ -37,7 +37,7 @@ const SeatItem = ({
           disabled
             ? 'bg-gray-700 text-gray-400 cursor-not-allowed'
             : selected
-            ? 'bg-green-500 text-black'
+            ? 'bg-pink-500 text-black'
             : 'bg-white text-black hover:bg-blue-300'
         }
       `}
@@ -112,7 +112,7 @@ export default function SeatMap({
 
           <div className="text-sm text-gray-300">
             Khu vực:{' '}
-            <span className="text-green-400 font-semibold">
+            <span className="text-pink-400 font-semibold">
               {selectedSection?.name}
             </span>
           </div>
@@ -193,7 +193,7 @@ export default function SeatMap({
       {viewMode === 'SEATS' && selectedSection && (
         <div className="flex-1 overflow-auto p-6">
           <div className="max-w-5xl mx-auto bg-gray-900 rounded-2xl p-6">
-            <div className="mb-4 text-center font-bold text-green-400">
+            <div className="mb-4 text-center font-bold text-pink-400">
               {selectedSection.name}
             </div>
 
@@ -232,7 +232,7 @@ export default function SeatMap({
 
             <div className="mt-6 text-sm text-center text-gray-300">
               Ghế đã chọn:{' '}
-              <span className="text-green-400">
+              <span className="text-pink-400">
                 {selectedSeats.map((s) => s.code).join(', ') || 'Chưa chọn'}
               </span>
             </div>

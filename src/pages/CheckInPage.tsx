@@ -100,9 +100,9 @@ const CheckInPage = () => {
       case "success":
         return {
           icon: faCheckCircle,
-          iconClass: "text-green-500",
-          bgClass: "bg-gradient-to-br from-green-50 to-emerald-100",
-          borderClass: "border-green-200",
+          iconClass: "text-pink-500",
+          bgClass: "bg-gradient-to-br from-pink-50 to-emerald-100",
+          borderClass: "border-pink-200",
         };
       case "already_used":
         return {
@@ -138,7 +138,7 @@ const CheckInPage = () => {
           <div className="mb-6">
             <div className={`w-24 h-24 mx-auto rounded-full flex items-center justify-center ${
               result.status === "loading" ? "bg-primary/10" :
-              result.status === "success" ? "bg-green-100" :
+              result.status === "success" ? "bg-pink-100" :
               result.status === "already_used" ? "bg-orange-100" :
               "bg-red-100"
             }`}>
@@ -152,7 +152,7 @@ const CheckInPage = () => {
           {/* Status Title */}
           <h2 className={`text-2xl font-bold mb-3 ${
             result.status === "loading" ? "text-gray-700" :
-            result.status === "success" ? "text-green-600" :
+            result.status === "success" ? "text-pink-600" :
             result.status === "already_used" ? "text-orange-600" :
             "text-red-600"
           }`}>
@@ -170,8 +170,8 @@ const CheckInPage = () => {
           {/* Success animation */}
           {result.status === "success" && (
             <div className="mb-8">
-              <div className="inline-flex items-center gap-2 px-4 py-2 bg-green-100 text-green-700 rounded-full text-sm font-medium">
-                <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
+              <div className="inline-flex items-center gap-2 px-4 py-2 bg-pink-100 text-pink-700 rounded-full text-sm font-medium">
+                <span className="w-2 h-2 bg-pink-500 rounded-full animate-pulse"></span>
                 Vé đã được xác nhận
               </div>
             </div>
