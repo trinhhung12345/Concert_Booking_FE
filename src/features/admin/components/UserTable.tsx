@@ -66,12 +66,12 @@ const UserTable: React.FC<UserTableProps> = ({ users, loading, onDelete, onRoleC
   const currentUsers = filteredUsers.slice(indexOfFirstItem, indexOfLastItem);
 
   const getRoleLabel = (roleId: number) => {
-    if (roleId === 2) return "Admin";
+    if (roleId === 1) return "Admin";
     return "User";
   };
 
   const getRoleColor = (roleId: number) => {
-    if (roleId === 2) return "bg-purple-100 text-purple-800";
+    if (roleId === 1) return "bg-purple-100 text-purple-800";
     return "bg-blue-100 text-blue-800";
   };
 
@@ -162,8 +162,8 @@ const UserTable: React.FC<UserTableProps> = ({ users, loading, onDelete, onRoleC
                         onChange={(e) => onRoleChange(u.id, Number(e.target.value))}
                         className="text-xs bg-gray-900 border border-gray-700 rounded px-2 py-1 text-slate-200 focus:outline-none focus:ring-1 focus:ring-blue-500"
                       >
-                        <option value={1}>User</option>
-                        <option value={2}>Admin</option>
+                        <option value={2}>User</option>
+                        <option value={1}>Admin</option>
                       </select>
                     </div>
                   </td>
