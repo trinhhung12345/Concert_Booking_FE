@@ -326,24 +326,30 @@ export default function SeatMapEditor({ showingId, onSave }: SeatMapEditorProps)
   };
 
   // 4. CẬP NHẬT DỮ LIỆU TỪ FORM (Sidebar phải)
+  // Tự động lấy màu từ ticket type khi chọn loại vé
   const updateSelectedShape = (field: keyof ShapeData, value: any) => {
-    // If updating ticketTypeId, check constraint
-    /* if (field === 'ticketTypeId') {
-      const ticketTypeId = value === 'none' ? null : Number(value);
-      
-      // Check if this ticket type is already used in another section
-      // Chỉ kiểm tra ràng buộc nếu section hiện tại không phải là section mới (chưa có id thật)
-      const currentShape = shapes.find(s => s.id === selectedId);
-      if (ticketTypeId !== null && currentShape && shapes.some(s => s.id !== selectedId && s.ticketTypeId === ticketType)) {
-        alert('Loại vé này đã được sử dụng cho khu vực khác. Mỗi loại vé chỉ được dùng cho một khu vực.');
-        return;
+    setShapes(shapes.map(s => {
+      if (s.id === selectedId) {
+        const updated = { ...s, [field]: value === 'none' ? null : value };
+        
+        // Nếu thay đổi ticketTypeId, tự động cập nhật màu từ ticket type
+        if (field === 'ticketTypeId' && value !== 'none') {
+          const selectedTicket = ticketTypes.find(t => t.id.toString() === value);
+          if (selectedTicket) {
+            updated.color = selectedTicket.color;
+          }
+        }
+        
+        // Nếu chọn "none" (stage), dùng màu xám mặc định
+        if (field === 'ticketTypeId' && value === 'none') {
+          updated.color = "#808080";
+        }
+        
+        return updated;
       }
-    } */
-    
-    setShapes(shapes.map(s => s.id === selectedId ? { ...s, [field]: value === 'none' ? null : value } : s));
+      return s;
+    }));
   };
-
-  // 5. HÀM LƯU SƠ ĐỒ GHẾ VỚI LOGIC CẬP NHẬT SECTION ĐÃ TỒN TẠI
   const handleSaveWithExistingCheck = async () => {
     if (!showingId) {
       alert("Không có showingId để lưu sơ đồ ghế!");
@@ -776,24 +782,7 @@ export default function SeatMapEditor({ showingId, onSave }: SeatMapEditorProps)
               Tổng: {selectedShape.rows * selectedShape.cols} ghế
             </div>
 
-            <div className="space-y-1">
-              <Label>Màu sắc</Label>
-              <div className="flex gap-2">
-                <Input
-                  type="color"
-                  value={selectedShape.color}
-                  onChange={(e) => updateSelectedShape("color", e.target.value)}
-                  className="w-12 h-10 p-1 bg-background border-input cursor-pointer"
-                />
-                <Input
-                  value={selectedShape.color}
-                  onChange={(e) => updateSelectedShape("color", e.target.value)}
-                  className="bg-background border-input flex-1"
-                />
-              </div>
-            </div>
-
-            {/* Thêm phần chọn loại vé */}
+            {/* Thêm phần chọn loại vé với hiển thị màu */}
             <div className="space-y-1">
               <Label>Loại vé</Label>
               {loadingTicketTypes ? (
@@ -807,21 +796,22 @@ export default function SeatMapEditor({ showingId, onSave }: SeatMapEditorProps)
                     <SelectValue placeholder="Chọn loại vé" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="none">Không chọn</SelectItem>
+                    <SelectItem value="none">
+                      <span className="flex items-center gap-2">
+                        <span className="w-4 h-4 rounded-full border border-gray-400" style={{ backgroundColor: "#808080" }}></span>
+                        Không chọn (Stage)
+                      </span>
+                    </SelectItem>
                     {ticketTypes.map((ticketType) => {
-                      // Kiểm tra xem loại vé này đã được sử dụng ở section khác chưa
-                      // Bỏ qua kiểm tra nếu section hiện tại là section mới (chưa có id thật)
-                      /* const currentShape = shapes.find(s => s.id === selectedId);
-                      const isCurrentShapeNew = currentShape && currentShape.id.startsWith('section-'); // Section mới sẽ có id dạng 'section-timestamp'
-                      const isDisabled = !isCurrentShapeNew && shapes.some(s => s.id !== selectedId && s.ticketTypeId === ticketType.id); */
-                      
                       return (
                         <SelectItem 
                           key={ticketType.id} 
                           value={ticketType.id.toString()}
-                          /* disabled={isDisabled} */
                         >
-                          {ticketType.name} - {new Intl.NumberFormat('vi-VN').format(ticketType.price)}đ
+                          <span className="flex items-center gap-2">
+                            <span className="w-4 h-4 rounded-full border border-gray-300" style={{ backgroundColor: ticketType.color }}></span>
+                            {ticketType.name} - {new Intl.NumberFormat('vi-VN').format(ticketType.price)}đ
+                          </span>
                         </SelectItem>
                       );
                     })}
@@ -830,6 +820,16 @@ export default function SeatMapEditor({ showingId, onSave }: SeatMapEditorProps)
               ) : (
                 <div className="text-muted-foreground text-sm">Chưa có loại vé nào</div>
               )}
+              
+              {/* Hiển thị màu của section (readonly) */}
+              <div className="flex items-center gap-2 mt-2 p-2 bg-muted/50 rounded-md">
+                <span className="text-xs text-muted-foreground">Màu khu vực:</span>
+                <span 
+                  className="w-5 h-5 rounded border border-border shadow-sm" 
+                  style={{ backgroundColor: selectedShape.color }}
+                ></span>
+                <span className="text-xs text-muted-foreground font-mono">{selectedShape.color}</span>
+              </div>
             </div>
 
             <div className="flex flex-col gap-2 pt-4">
