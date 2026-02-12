@@ -1,4 +1,4 @@
-import { useEffect, useState, forwardRef, useImperativeHandle } from "react";
+import { useEffect, useState, forwardRef, useImperativeHandle, useRef } from "react";
 import { useForm, Controller } from "react-hook-form";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -7,6 +7,9 @@ import ReactQuill from "react-quill-new";
 import "react-quill-new/dist/quill.snow.css";
 import ImageUploadBox from "@/features/admin/components/ImageUploadBox";
 import { categoryService, type Category } from "@/features/concerts/services/categoryService";
+import { Button } from "@/components/ui/button";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faTrash, faPlus } from "@fortawesome/free-solid-svg-icons";
 
 // Type cho data form
 export interface EventInfoFormValues {
@@ -21,6 +24,11 @@ export interface EventInfoFormValues {
   // Existing images for edit mode (URLs)
   existingThumbnailUrl?: string;
   existingCoverUrl?: string;
+  // Gallery images for event detail
+  galleryFiles?: File[];
+  existingGalleryUrls?: string[];
+  // Track removed gallery URLs in edit mode
+  removedGalleryUrls?: string[];
 }
 
 interface StepEventInfoProps {
@@ -31,6 +39,9 @@ const StepEventInfo = forwardRef(({ initialData }: StepEventInfoProps, ref) => {
   const [categories, setCategories] = useState<Category[]>([]);
   const [thumbnailFile, setThumbnailFile] = useState<File | null>(null);
   const [coverFile, setCoverFile] = useState<File | null>(null);
+  const [galleryFiles, setGalleryFiles] = useState<File[]>([]);
+  const [removedGalleryUrls, setRemovedGalleryUrls] = useState<string[]>([]);
+  const galleryInputRef = useRef<HTMLInputElement>(null);
 
   const { register, control, trigger, getValues, reset } = useForm<EventInfoFormValues>({
     defaultValues: {
@@ -43,7 +54,7 @@ const StepEventInfo = forwardRef(({ initialData }: StepEventInfoProps, ref) => {
     }
   });
 
-  // Reset form when initialData changes (for edit mode)
+  // Reset form and gallery state when initialData changes (for edit mode)
   useEffect(() => {
     if (initialData) {
       reset({
@@ -54,8 +65,11 @@ const StepEventInfo = forwardRef(({ initialData }: StepEventInfoProps, ref) => {
         description: initialData.description || "",
         YoutubeUrl: initialData.YoutubeUrl || "",
       });
+      // Reset gallery state when loading new initial data
+      setRemovedGalleryUrls([]);
+      setGalleryFiles([]);
     }
-  }, [initialData, reset]);
+  }, [initialData, reset, setGalleryFiles, setRemovedGalleryUrls]);
 
   // Load Categories
   useEffect(() => {
@@ -90,6 +104,30 @@ const StepEventInfo = forwardRef(({ initialData }: StepEventInfoProps, ref) => {
     }
   }, [coverPreviewUrl]);
 
+  // Handle gallery file upload
+  const handleGalleryUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files.length > 0) {
+      const newFiles = Array.from(e.target.files);
+      setGalleryFiles(prev => [...prev, ...newFiles]);
+      // Reset input to allow selecting same files again
+      e.target.value = "";
+    }
+  };
+
+  const removeGalleryFile = (index: number) => {
+    setGalleryFiles(prev => prev.filter((_, i) => i !== index));
+  };
+
+  // Create preview URLs for gallery files
+  const galleryPreviews = galleryFiles.map(file => URL.createObjectURL(file));
+
+  // Cleanup preview URLs
+  useEffect(() => {
+    return () => {
+      galleryPreviews.forEach(url => URL.revokeObjectURL(url));
+    };
+  }, [galleryPreviews]);
+
   // Expose hàm validate và getData cho cha dùng
   useImperativeHandle(ref, () => ({
     validate: async () => {
@@ -106,10 +144,18 @@ const StepEventInfo = forwardRef(({ initialData }: StepEventInfoProps, ref) => {
       return isValid;
     },
     getData: () => {
+      // Calculate remaining existing gallery URLs (exclude removed ones)
+      const remainingGalleryUrls = initialData?.existingGalleryUrls?.filter(
+        url => !removedGalleryUrls.includes(url)
+      ) || [];
+      
       const data = {
         ...getValues(),
         thumbnailFile,
-        coverFile
+        coverFile,
+        galleryFiles,
+        existingGalleryUrls: remainingGalleryUrls,
+        removedGalleryUrls
       };
       console.log("StepEventInfo - getData:", data);
       return data;
@@ -195,6 +241,91 @@ const StepEventInfo = forwardRef(({ initialData }: StepEventInfoProps, ref) => {
                     </div>
                 )}
              />
+        </div>
+
+        {/* SECTION 4: GALLERY IMAGES */}
+        <div className="bg-card p-6 rounded-xl border border-border">
+             <h3 className="text-lg font-bold mb-4 text-primary border-b border-border pb-2">
+                Ảnh bổ sung cho chi tiết sự kiện
+                <span className="text-xs text-muted-foreground font-normal ml-2">Sẽ hiển thị ở trang chi tiết sự kiện</span>
+             </h3>
+             
+             {/* Upload Button */}
+             <div className="mb-4">
+                <input
+                    type="file"
+                    ref={galleryInputRef}
+                    onChange={handleGalleryUpload}
+                    accept="image/*"
+                    multiple
+                    className="hidden"
+                />
+                <Button 
+                    type="button"
+                    variant="outline" 
+                    onClick={() => galleryInputRef.current?.click()}
+                    className="border-dashed border-2"
+                >
+                    <FontAwesomeIcon icon={faPlus} className="mr-2" />
+                    Thêm ảnh
+                </Button>
+             </div>
+
+             {/* Gallery Preview Grid */}
+             {(galleryFiles.length > 0 || (initialData?.existingGalleryUrls && initialData.existingGalleryUrls.length > 0)) && (
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+                    {/* New Uploaded Files */}
+                    {galleryFiles.map((_file, index) => (
+                        <div key={`new-${index}`} className="relative aspect-square rounded-lg overflow-hidden border border-border group">
+                            <img 
+                                src={galleryPreviews[index]} 
+                                alt={`Gallery ${index}`}
+                                className="w-full h-full object-cover"
+                            />
+                            <div className="absolute inset-0 bg-black/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                                <Button
+                                    type="button"
+                                    size="sm"
+                                    variant="destructive"
+                                    onClick={() => removeGalleryFile(index)}
+                                >
+                                    <FontAwesomeIcon icon={faTrash} />
+                                </Button>
+                            </div>
+                        </div>
+                    ))}
+
+                    {/* Existing Images (Edit Mode) - Only show if not removed */}
+                    {initialData?.existingGalleryUrls?.map((url, index) => (
+                        !removedGalleryUrls.includes(url) ? (
+                        <div key={`existing-${index}`} className="relative aspect-square rounded-lg overflow-hidden border border-border group">
+                            <img 
+                                src={url} 
+                                alt={`Gallery existing ${index}`}
+                                className="w-full h-full object-cover"
+                            />
+                            <div className="absolute inset-0 bg-black/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                                <Button
+                                    type="button"
+                                    size="sm"
+                                    variant="destructive"
+                                    onClick={() => {
+                                        setRemovedGalleryUrls(prev => [...prev, url]);
+                                    }}
+                                >
+                                    <FontAwesomeIcon icon={faTrash} />
+                                </Button>
+                            </div>
+                        </div>
+                        ) : null
+                    ))}
+                </div>
+             )}
+
+             {/* Helper text */}
+             <p className="text-sm text-muted-foreground mt-4">
+                Có thể chọn nhiều ảnh cùng lúc. Ảnh sẽ được hiển thị trong phần giới thiệu sự kiện.
+             </p>
         </div>
     </div>
   );

@@ -49,6 +49,9 @@ export default function EventWizardPage() {
     const imageFiles = event.files.filter(f => f.type === 0);
     const youtubeFile = event.files.find(f => f.type === 1);
 
+    // Gallery images are files from index 2 onwards (after thumbnail and cover)
+    const galleryUrls = imageFiles.slice(2).map(f => f.thumbUrl || f.originUrl).filter(Boolean);
+
     return {
       title: event.title,
       venue: event.venue,
@@ -59,7 +62,9 @@ export default function EventWizardPage() {
       // Existing images for display in edit mode
       existingThumbnailUrl: imageFiles[0]?.thumbUrl || imageFiles[0]?.originUrl,
       existingCoverUrl: imageFiles[1]?.thumbUrl || imageFiles[1]?.originUrl,
-      // Note: thumbnailFile and coverFile are for new uploads only
+      // Gallery images (files from index 2 onwards)
+      existingGalleryUrls: galleryUrls,
+      // Note: thumbnailFile, coverFile, galleryFiles are for new uploads only
     };
   };
 
@@ -339,16 +344,56 @@ export default function EventWizardPage() {
     setLoading(true);
     try {
         if (currentStep === 1) {
+            // Store ref in local variable to prevent changes during processing
+            const currentStep1Ref = step1Ref.current;
+            if (!currentStep1Ref) {
+                console.error("step1Ref.current is null");
+                setLoading(false);
+                return;
+            }
+
             // Validate Step 1
-            const isValid = await step1Ref.current?.validate();
+            const isValid = await currentStep1Ref.validate();
             if (!isValid) {
                 setLoading(false);
                 return;
             }
 
             // Get data from step component
-            const eventData = step1Ref.current?.getData();
+            const eventData = currentStep1Ref.getData();
             if (!eventData) return;
+
+            console.log("Step 1 event data:", eventData);
+
+            // In edit mode, get fresh event data first to preserve existing files
+            let existingThumbnailUrl = "";
+            let existingCoverUrl = "";
+            let existingGalleryUrls: string[] = [];
+            let existingFileIds: number[] = [];
+            
+            if (createdEventId) {
+                console.log("Fetching fresh event data to preserve existing files...");
+                const freshEvent = await eventService.getById(createdEventId);
+                const imageFiles = freshEvent.files.filter((f: any) => f.type === 0);
+                
+                // Get existing thumbnail (first image)
+                if (imageFiles[0]) {
+                    existingThumbnailUrl = imageFiles[0].thumbUrl || imageFiles[0].originUrl || "";
+                    existingFileIds.push(imageFiles[0].id);
+                }
+                // Get existing cover (second image)
+                if (imageFiles[1]) {
+                    existingCoverUrl = imageFiles[1].thumbUrl || imageFiles[1].originUrl || "";
+                    existingFileIds.push(imageFiles[1].id);
+                }
+                // Get existing gallery images (from index 2 onwards)
+                if (imageFiles.length > 2) {
+                    existingGalleryUrls = imageFiles.slice(2).map((f: any) => f.thumbUrl || f.originUrl);
+                    imageFiles.slice(2).forEach((f: any) => existingFileIds.push(f.id));
+                }
+                
+                console.log("Existing files - thumbnail:", existingThumbnailUrl, "cover:", existingCoverUrl, "gallery:", existingGalleryUrls);
+            }
 
             // Prepare Form Data
             const formData = new FormData();
@@ -361,8 +406,44 @@ export default function EventWizardPage() {
             if (eventData.YoutubeUrl && eventData.YoutubeUrl.trim() !== "") {
                 formData.append("youtubeUrl", eventData.YoutubeUrl.trim());
             }
-            if (eventData.thumbnailFile) formData.append("files", eventData.thumbnailFile);
-            if (eventData.coverFile) formData.append("files", eventData.coverFile);
+            
+            // Upload thumbnail (only if new file selected, otherwise keep existing)
+            if (eventData.thumbnailFile) {
+                formData.append("files", eventData.thumbnailFile);
+            }
+            
+            // Upload cover (only if new file selected, otherwise keep existing)
+            if (eventData.coverFile) {
+                formData.append("files", eventData.coverFile);
+            }
+            
+            // Upload gallery files (new uploads)
+            if (eventData.galleryFiles && eventData.galleryFiles.length > 0) {
+                eventData.galleryFiles.forEach((file) => {
+                    formData.append("files", file);
+                });
+            }
+
+            // In edit mode, send existing file info to preserve them
+            if (createdEventId) {
+                // Send existing file URLs to preserve
+                if (existingThumbnailUrl) {
+                    formData.append("existingThumbnailUrl", existingThumbnailUrl);
+                }
+                if (existingCoverUrl) {
+                    formData.append("existingCoverUrl", existingCoverUrl);
+                }
+                if (existingGalleryUrls.length > 0) {
+                    formData.append("existingGalleryUrls", JSON.stringify(existingGalleryUrls));
+                }
+                if (existingFileIds.length > 0) {
+                    formData.append("existingFileIds", JSON.stringify(existingFileIds));
+                }
+                // Send removed gallery URLs so backend knows which images to delete
+                if (eventData.removedGalleryUrls && eventData.removedGalleryUrls.length > 0) {
+                    formData.append("removedGalleryUrls", JSON.stringify(eventData.removedGalleryUrls));
+                }
+            }
 
             // API Call
             let res;
@@ -370,16 +451,36 @@ export default function EventWizardPage() {
             if (createdEventId) {
                 // Update existing event - append ID to FormData as required by API
                 formData.append("id", String(createdEventId));
+                console.log("Calling eventService.update...");
                 res = await eventService.update(formData);
+                console.log("Update response:", res);
                 newEventId = createdEventId;
             } else {
                 // Create New
+                console.log("Calling eventService.create...");
                 res = await eventService.create(formData);
+                console.log("Create response:", res);
                 newEventId = res.id;
                 setCreatedEventId(newEventId); // Lưu ID lại để dùng cho bước sau
             }
 
             console.log("Step 1 Saved:", res);
+
+            // Update state with fresh data after successful save
+            // Wait briefly to allow rendering completion
+            await new Promise(resolve => setTimeout(resolve, 100));
+
+            // Reload event data from BE to get updated gallery URLs
+            if (createdEventId) {
+                console.log("Reloading event data from BE after save...");
+                const updatedEventData = await eventService.getById(createdEventId);
+                const transformedData = transformEventToFormValues(updatedEventData);
+                
+                // Update both states to ensure UI refresh
+                setLoadedEventData(transformedData);
+                setStep1Data(transformedData);
+                console.log("Updated event data after save:", transformedData);
+            }
         } else if (currentStep === 2) {
             // Validate Step 2
             const isValid = step2Ref.current?.validate();
