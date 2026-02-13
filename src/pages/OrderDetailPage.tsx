@@ -86,7 +86,7 @@ const OrderDetailPage = () => {
     switch (status) {
       case "PAID":
         return (
-          <span className={`${baseClass} bg-green-100 text-green-700`}>
+          <span className={`${baseClass} bg-pink-100 text-pink-700`}>
             <FontAwesomeIcon icon={faCheckCircle} className="text-xs" />
             Đã thanh toán
           </span>

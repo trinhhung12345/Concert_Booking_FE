@@ -17,6 +17,7 @@ export default function HomePage() {
   const [eventsByCategory, setEventsByCategory] = useState<
     Record<number, EventProps[]>
   >({});
+  const [categoryPageIndex, setCategoryPageIndex] = useState<Record<number, number>>({});
   const [isLoading, setIsLoading] = useState(true);
   const searchResults = location.state?.searchResults;
 
@@ -81,6 +82,30 @@ export default function HomePage() {
 
   const allEvents = Object.values(eventsByCategory).flat();
 
+  const VISIBLE_EVENTS_PER_CATEGORY = 3;
+
+  const handleNextCategoryPage = (categoryId: number) => {
+    setCategoryPageIndex((prev) => {
+      const current = prev[categoryId] ?? 0;
+      const total = eventsByCategory[categoryId]?.length ?? 0;
+      if (total === 0) return prev;
+
+      const maxStart = Math.max(total - VISIBLE_EVENTS_PER_CATEGORY, 0);
+      const next = Math.min(current + VISIBLE_EVENTS_PER_CATEGORY, maxStart);
+      if (next === current) return prev;
+      return { ...prev, [categoryId]: next };
+    });
+  };
+
+  const handlePrevCategoryPage = (categoryId: number) => {
+    setCategoryPageIndex((prev) => {
+      const current = prev[categoryId] ?? 0;
+      const next = Math.max(current - VISIBLE_EVENTS_PER_CATEGORY, 0);
+      if (next === current) return prev;
+      return { ...prev, [categoryId]: next };
+    });
+  };
+
   return (
     <div className="bg-gray-900 min-h-screen w-full">
       <div className="container mx-auto px-4 py-8 space-y-14">
@@ -113,18 +138,46 @@ export default function HomePage() {
                   <h2 className="text-2xl font-bold text-white">
                     {cat.name}
                   </h2>
-                  <Button
-                    variant="ghost"
-                    className="text-primary"
-                    onClick={() => navigate(`/category/${cat.id}`)}
-                  >
-                    Xem tất cả →
-                  </Button>
+                  <div className="flex items-center gap-2">
+                    {eventsByCategory[cat.id]?.length > VISIBLE_EVENTS_PER_CATEGORY && (
+                      <div className="flex items-center gap-1">
+                        <Button
+                          variant="outline"
+                          size="icon"
+                          className="h-8 w-8 text-xs"
+                          onClick={() => handlePrevCategoryPage(cat.id)}
+                        >
+                          ←
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="icon"
+                          className="h-8 w-8 text-xs"
+                          onClick={() => handleNextCategoryPage(cat.id)}
+                        >
+                          →
+                        </Button>
+                      </div>
+                    )}
+                    <Button
+                      variant="ghost"
+                      className="text-primary"
+                      onClick={() => navigate(`/category/${cat.id}`)}
+                    >
+                      Xem tất cả →
+                    </Button>
+                  </div>
                 </div>
 
                 {eventsByCategory[cat.id]?.length ? (
-                  <div className="flex gap-6 overflow-x-auto pb-3">
-                    {eventsByCategory[cat.id].slice(0, 6).map((event) => (
+                  <div className="relative pb-3">
+                    <div className="flex gap-6">
+                      {eventsByCategory[cat.id]
+                        .slice(
+                          categoryPageIndex[cat.id] ?? 0,
+                          (categoryPageIndex[cat.id] ?? 0) + VISIBLE_EVENTS_PER_CATEGORY
+                        )
+                        .map((event) => (
                       <div
                         key={event.id}
                         className="min-w-[320px] w-[320px] bg-gray-800 rounded-xl overflow-hidden cursor-pointer hover:shadow-xl transition"
@@ -155,7 +208,7 @@ export default function HomePage() {
                             {event.title}
                           </h3>
 
-                          <p className="text-green-400 font-semibold text-sm">
+                          <p className="text-pink-400 font-semibold text-sm">
                             From{" "}
                             {new Intl.NumberFormat("vi-VN", {
                               style: "currency",
@@ -186,7 +239,8 @@ export default function HomePage() {
                           </div>
                         </div>
                       </div>
-                    ))}
+                        ))}
+                    </div>
                   </div>
                 ) : (
                   <div className="text-gray-400 italic py-6">

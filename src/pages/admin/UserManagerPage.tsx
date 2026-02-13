@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { getUsers, deleteUser, updateUserRole } from "../../features/admin/services/userService";
+import { getUsers, deleteUser, updateUserRole, type UserListResponse } from "../../features/admin/services/userService";
 import UserTable from "../../features/admin/components/UserTable";
 import UserForm from "../../features/admin/components/UserForm";
 
@@ -19,9 +19,16 @@ const UserManagerPage = () => {
   useEffect(() => {
     setLoading(true);
     getUsers({ page: 1, size: 50 })
-      .then((res: any) => {
+      .then((res: UserListResponse) => {
         console.log("[UserManagerPage] getUsers result:", res);
-        setUsers(res.data || []); // API trả về res.data là mảng user
+        const mapped = (res.data || []).map((u) => ({
+          id: u.id,
+          name: u.name,
+          email: u.email,
+          phone: u.phone,
+          roleId: u.role?.roleId ?? 1,
+        }));
+        setUsers(mapped);
       })
       .finally(() => setLoading(false));
   }, [reload]);

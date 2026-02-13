@@ -73,7 +73,7 @@ const StepEventInfo = forwardRef(({ initialData }: StepEventInfoProps, ref) => {
 
   // Load Categories
   useEffect(() => {
-    categoryService.getAll().then(data => setCategories(Array.isArray(data) ? data : []));
+    categoryService.getAllAdmin().then(data => setCategories(Array.isArray(data) ? data : []));
   }, []);
 
   // Populate files from initialData when it changes

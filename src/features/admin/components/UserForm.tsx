@@ -150,8 +150,8 @@ const UserForm: React.FC<UserFormProps> = ({ onSuccess }) => {
             onChange={handleChange}
             className="w-full rounded-lg border border-gray-700 bg-gray-800 px-3 py-2 text-sm text-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
           >
-            <option value={1}>User</option>
-            <option value={2}>Admin</option>
+            <option value={2}>User</option>
+            <option value={1}>Admin</option>
           </select>
         </div>
       </div>
