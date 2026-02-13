@@ -16,7 +16,7 @@ import {
 } from "@fortawesome/free-solid-svg-icons";
 import { orderService } from "@/features/booking/services/orderService";
 import type { Seat } from "@/features/booking/types/seatmap";
-import type { Order, TicketOrderItem } from "@/features/booking/types/order";
+import type { Order } from "@/features/booking/types/order";
 import { useAuthStore } from "@/store/useAuthStore";
 
 interface TicketSelection {
@@ -76,6 +76,20 @@ export default function CheckoutPage() {
       return;
     }
 
+    if (hasTicketMode) {
+      const nonZeroSelections = ticketSelections.filter((t) => t.quantity > 0);
+
+      if (nonZeroSelections.length === 0) {
+        setError("Vui lòng chọn ít nhất một vé");
+        return;
+      }
+
+      if (nonZeroSelections.length > 1) {
+        setError("Hiện tại mỗi đơn chỉ hỗ trợ một loại vé. Vui lòng chỉ chọn một loại vé.");
+        return;
+      }
+    }
+
     setError(null);
     setIsCreatingOrder(true);
 
@@ -90,11 +104,10 @@ export default function CheckoutPage() {
       if (hasSeatMode) {
         payload.seatIds = selectedSeats.map((seat) => seat.id);
       } else if (hasTicketMode) {
-        const items: TicketOrderItem[] = ticketSelections.map((t) => ({
-          ticketTypeId: t.ticketTypeId,
-          quantity: t.quantity,
-        }));
-        payload.ticketItems = items;
+        const nonZeroSelections = ticketSelections.filter((t) => t.quantity > 0);
+        const selected = nonZeroSelections[0];
+        payload.ticketTypeId = selected.ticketTypeId;
+        payload.quantity = selected.quantity;
       }
 
       const response = await orderService.createOrder(payload);
@@ -120,6 +133,8 @@ export default function CheckoutPage() {
     try {
       const response = await orderService.checkout({ orderId: createdOrder.id });
       if (response.code === 200 && response.message) {
+        // Xóa thông tin order trên FE trước khi chuyển sang PayOS
+        setCreatedOrder(null);
         window.location.href = response.message;
       } else {
         setError("Không thể lấy link thanh toán");
