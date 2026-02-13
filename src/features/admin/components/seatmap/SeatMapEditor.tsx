@@ -23,6 +23,7 @@ interface TicketType {
   originalPrice: number;
   maxQtyPerOrder: number;
   minQtyPerOrder: number;
+  quantity: number;
   startTime: string;
   endTime: string;
   position: number;
@@ -325,16 +326,62 @@ export default function SeatMapEditor({ showingId, onSave }: SeatMapEditorProps)
     setShapes(newShapes);
   };
 
-  // 4. CẬP NHẬT DỮ LIỆU TỪ FORM (Sidebar phải)
+  // 4. HÀM TÍNH TỔNG SỐ GHẾ THEO TICKET TYPE
+  const calculateUsedSeatsByTicketType = (allShapes: ShapeData[]): Map<number, number> => {
+    const usedSeats = new Map<number, number>();
+    
+    // Count all shapes include temporary ones
+    allShapes.forEach(shape => {
+      if (shape.ticketTypeId) {
+        // Ensure ticketTypeId is treated as number (handle potential string from Select)
+        const typeId = Number(shape.ticketTypeId);
+        if (!isNaN(typeId) && typeId > 0) {
+          const totalSeats = shape.rows * shape.cols;
+          const current = usedSeats.get(typeId) || 0;
+          usedSeats.set(typeId, current + totalSeats);
+        }
+      }
+    });
+    
+    return usedSeats;
+  };
+
+  // 5. KIỂM TRA VALIDATION TRƯỚC KHI LƯU
+  const validateSeatsAgainstTicketQuantity = (): { valid: boolean; errors: string[] } => {
+    const errors: string[] = [];
+    const usedSeatsMap = calculateUsedSeatsByTicketType(shapes);
+    
+    usedSeatsMap.forEach((usedSeats, ticketTypeId) => {
+      const ticketType = ticketTypes.find(t => t.id === ticketTypeId);
+      if (ticketType) {
+        if (usedSeats > ticketType.quantity) {
+          errors.push(
+            `${ticketType.name}: Đã sử dụng ${usedSeats} ghế / ${ticketType.quantity} vé (vượt quá ${usedSeats - ticketType.quantity} ghế)`
+          );
+        }
+      }
+    });
+    
+    return { valid: errors.length === 0, errors };
+  };
+
+  // 6. CẬP NHẬT DỮ LIỆU TỪ FORM (Sidebar phải)
   // Tự động lấy màu từ ticket type khi chọn loại vé
   const updateSelectedShape = (field: keyof ShapeData, value: any) => {
     setShapes(shapes.map(s => {
       if (s.id === selectedId) {
-        const updated = { ...s, [field]: value === 'none' ? null : value };
+        let finalValue = value === 'none' ? null : value;
+        
+        // Ensure ticketTypeId is saved as number
+        if (field === 'ticketTypeId' && finalValue !== null) {
+          finalValue = Number(finalValue);
+        }
+
+        const updated = { ...s, [field]: finalValue };
         
         // Nếu thay đổi ticketTypeId, tự động cập nhật màu từ ticket type
         if (field === 'ticketTypeId' && value !== 'none') {
-          const selectedTicket = ticketTypes.find(t => t.id.toString() === value);
+          const selectedTicket = ticketTypes.find(t => t.id == value); // Auto type coercion
           if (selectedTicket) {
             updated.color = selectedTicket.color;
           }
@@ -353,6 +400,13 @@ export default function SeatMapEditor({ showingId, onSave }: SeatMapEditorProps)
   const handleSaveWithExistingCheck = async () => {
     if (!showingId) {
       alert("Không có showingId để lưu sơ đồ ghế!");
+      return;
+    }
+
+    // Validate seats against ticket quantity before saving
+    const validation = validateSeatsAgainstTicketQuantity();
+    if (!validation.valid) {
+      alert("Lỗi ràng buộc dữ liệu:\n\n" + validation.errors.join("\n"));
       return;
     }
 
@@ -736,132 +790,213 @@ export default function SeatMapEditor({ showingId, onSave }: SeatMapEditorProps)
       </div>
 
       {/* 3. PROPERTIES PANEL (BÊN PHẢI) */}
-      <div className="w-72 border-l border-border bg-card p-4 text-foreground overflow-y-auto">
-        <div className="flex justify-between items-center mb-6">
+      <div className="w-72 border-l border-border bg-card flex flex-col">
+        <div className="p-4 border-b border-border flex justify-between items-center bg-card z-10">
           <h3 className="font-bold">Thuộc tính</h3>
           <Button size="sm" onClick={handleSaveWithExistingCheck} className="bg-primary hover:bg-primary/90">
             <FontAwesomeIcon icon={faSave} className="mr-2" /> Lưu
           </Button>
         </div>
 
-        {selectedShape ? (
-          <div className="space-y-4 animate-in slide-in-from-right-2">
-            <div className="space-y-1">
-              <Label>Tên khu vực</Label>
-              <Input
-                value={selectedShape.name}
-                onChange={(e) => updateSelectedShape("name", e.target.value)}
-                className="bg-background border-input"
-              />
-            </div>
-
-            <div className="grid grid-cols-2 gap-2">
+        <div className="flex-1 overflow-y-auto p-4">
+          {selectedShape ? (
+            <div className="space-y-4 animate-in slide-in-from-right-2">
               <div className="space-y-1">
-                <Label>Số hàng</Label>
+                <Label>Tên khu vực</Label>
                 <Input
-                  type="number"
-                  min={1}
-                  value={selectedShape.rows}
-                  onChange={(e) => updateSelectedShape("rows", parseInt(e.target.value) || 1)}
+                  value={selectedShape.name}
+                  onChange={(e) => updateSelectedShape("name", e.target.value)}
                   className="bg-background border-input"
                 />
               </div>
-              <div className="space-y-1">
-                <Label>Số cột</Label>
-                <Input
-                  type="number"
-                  min={1}
-                  value={selectedShape.cols}
-                  onChange={(e) => updateSelectedShape("cols", parseInt(e.target.value) || 1)}
-                  className="bg-background border-input"
-                />
+
+              <div className="grid grid-cols-2 gap-2">
+                <div className="space-y-1">
+                  <Label>Số hàng</Label>
+                  <Input
+                    type="number"
+                    min={1}
+                    value={selectedShape.rows}
+                    onChange={(e) => updateSelectedShape("rows", parseInt(e.target.value) || 1)}
+                    className="bg-background border-input"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <Label>Số cột</Label>
+                  <Input
+                    type="number"
+                    min={1}
+                    value={selectedShape.cols}
+                    onChange={(e) => updateSelectedShape("cols", parseInt(e.target.value) || 1)}
+                    className="bg-background border-input"
+                  />
+                </div>
               </div>
-            </div>
 
-            <div className="text-xs text-muted-foreground text-center">
-              Tổng: {selectedShape.rows * selectedShape.cols} ghế
-            </div>
+              <div className="text-xs text-muted-foreground text-center">
+                Tổng: {selectedShape.rows * selectedShape.cols} ghế
+              </div>
 
-            {/* Thêm phần chọn loại vé với hiển thị màu */}
-            <div className="space-y-1">
-              <Label>Loại vé</Label>
-              {loadingTicketTypes ? (
-                <div className="text-muted-foreground text-sm">Đang tải loại vé...</div>
-              ) : ticketTypes.length > 0 ? (
-                <Select
-                  value={selectedShape.ticketTypeId?.toString() || 'none'}
-                  onValueChange={(value) => updateSelectedShape("ticketTypeId", value)}
+              {/* Thêm phần chọn loại vé với hiển thị màu */}
+              <div className="space-y-1">
+                <Label>Loại vé</Label>
+                {loadingTicketTypes ? (
+                  <div className="text-muted-foreground text-sm">Đang tải loại vé...</div>
+                ) : ticketTypes.length > 0 ? (
+                  <Select
+                    value={selectedShape.ticketTypeId?.toString() || 'none'}
+                    onValueChange={(value) => updateSelectedShape("ticketTypeId", value)}
+                  >
+                    <SelectTrigger className="bg-background border-input">
+                      <SelectValue placeholder="Chọn loại vé" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="none">
+                        <span className="flex items-center gap-2">
+                          <span className="w-4 h-4 rounded-full border border-gray-400" style={{ backgroundColor: "#808080" }}></span>
+                          Không chọn (Stage)
+                        </span>
+                      </SelectItem>
+                      {ticketTypes.map((ticketType) => {
+                        return (
+                          <SelectItem 
+                            key={ticketType.id} 
+                            value={ticketType.id.toString()}
+                          >
+                            <span className="flex items-center gap-2">
+                              <span className="w-4 h-4 rounded-full border border-gray-300" style={{ backgroundColor: ticketType.color }}></span>
+                              {ticketType.name} - {new Intl.NumberFormat('vi-VN').format(ticketType.price)}đ
+                            </span>
+                          </SelectItem>
+                        );
+                      })}
+                    </SelectContent>
+                  </Select>
+                ) : (
+                  <div className="text-muted-foreground text-sm">Chưa có loại vé nào</div>
+                )}
+                
+                {/* Hiển thị màu của section (readonly) */}
+                <div className="flex items-center gap-2 mt-2 p-2 bg-muted/50 rounded-md">
+                  <span className="text-xs text-muted-foreground">Màu khu vực:</span>
+                  <span 
+                    className="w-5 h-5 rounded border border-border shadow-sm" 
+                    style={{ backgroundColor: selectedShape.color }}
+                  ></span>
+                  <span className="text-xs text-muted-foreground font-mono">{selectedShape.color}</span>
+                </div>
+              </div>
+
+              <div className="flex flex-col gap-2 pt-4">
+                {false && (
+                <Button
+                  variant="destructive"
+                  className="w-full"
+                  onClick={() => {
+                    setShapes(shapes.filter(s => s.id !== selectedId));
+                    setSelectedId(null);
+                  }}
                 >
-                  <SelectTrigger className="bg-background border-input">
-                    <SelectValue placeholder="Chọn loại vé" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="none">
-                      <span className="flex items-center gap-2">
-                        <span className="w-4 h-4 rounded-full border border-gray-400" style={{ backgroundColor: "#808080" }}></span>
-                        Không chọn (Stage)
-                      </span>
-                    </SelectItem>
-                    {ticketTypes.map((ticketType) => {
-                      return (
-                        <SelectItem 
-                          key={ticketType.id} 
-                          value={ticketType.id.toString()}
-                        >
-                          <span className="flex items-center gap-2">
-                            <span className="w-4 h-4 rounded-full border border-gray-300" style={{ backgroundColor: ticketType.color }}></span>
-                            {ticketType.name} - {new Intl.NumberFormat('vi-VN').format(ticketType.price)}đ
-                          </span>
-                        </SelectItem>
-                      );
-                    })}
-                  </SelectContent>
-                </Select>
-              ) : (
-                <div className="text-muted-foreground text-sm">Chưa có loại vé nào</div>
-              )}
-              
-              {/* Hiển thị màu của section (readonly) */}
-              <div className="flex items-center gap-2 mt-2 p-2 bg-muted/50 rounded-md">
-                <span className="text-xs text-muted-foreground">Màu khu vực:</span>
-                <span 
-                  className="w-5 h-5 rounded border border-border shadow-sm" 
-                  style={{ backgroundColor: selectedShape.color }}
-                ></span>
-                <span className="text-xs text-muted-foreground font-mono">{selectedShape.color}</span>
+                  <FontAwesomeIcon icon={faTrash} className="mr-2" /> Xóa khu vực
+                </Button>
+                )}
+                <Button
+                  variant="outline"
+                  className="w-full"
+                  onClick={() => openDialog('soft-delete', () => softDeleteSection(selectedId!))}
+                >
+                  <FontAwesomeIcon icon={faEyeSlash} className="mr-2" /> Ẩn khu vực
+                </Button>
               </div>
             </div>
-
-            <div className="flex flex-col gap-2 pt-4">
-              {false && (
-              <Button
-                variant="destructive"
-                className="w-full"
-                onClick={() => {
-                  setShapes(shapes.filter(s => s.id !== selectedId));
-                  setSelectedId(null);
-                }}
-              >
-                <FontAwesomeIcon icon={faTrash} className="mr-2" /> Xóa khu vực
-              </Button>
+          ) : (
+            <div className="text-muted-foreground text-sm text-center mt-10">
+              Chọn một khu vực trên bản vẽ để chỉnh sửa hoặc nhấn dấu (+) để thêm mới.
+              {showingId && shapes.length === 0 && (
+                <p className="mt-2 text-xs">Chưa có khu vực nào được tạo cho suất diễn này.</p>
               )}
-              <Button
-                variant="outline"
-                className="w-full"
-                onClick={() => openDialog('soft-delete', () => softDeleteSection(selectedId!))}
-              >
-                <FontAwesomeIcon icon={faEyeSlash} className="mr-2" /> Ẩn khu vực
-              </Button>
             </div>
-          </div>
-        ) : (
-          <div className="text-muted-foreground text-sm text-center mt-10">
-            Chọn một khu vực trên bản vẽ để chỉnh sửa hoặc nhấn dấu (+) để thêm mới.
-            {showingId && shapes.length === 0 && (
-              <p className="mt-2 text-xs">Chưa có khu vực nào được tạo cho suất diễn này.</p>
-            )}
-          </div>
-        )}
+          )}
+        </div>
+
+        {/* Thống kê số ghế theo từng loại vé - Luôn hiển thị ở dưới cùng */}
+        <div className="p-4 border-t border-border bg-muted/10">
+          {(() => {
+            const usedSeatsMap = calculateUsedSeatsByTicketType(shapes);
+            const ticketTypeStats: { name: string; used: number; quantity: number; color: string }[] = [];
+            
+            usedSeatsMap.forEach((usedSeats, ticketTypeId) => {
+              const ticketType = ticketTypes.find(t => t.id === ticketTypeId);
+              if (ticketType) {
+                ticketTypeStats.push({
+                  name: ticketType.name,
+                  used: usedSeats,
+                  quantity: ticketType.quantity,
+                  color: ticketType.color
+                });
+              }
+            });
+
+            if (ticketTypeStats.length === 0) return (
+              <div className="text-xs text-muted-foreground text-center italic">
+                Chưa có thống kê vé
+              </div>
+            );
+
+            return (
+              <div className="space-y-3">
+                <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                  Thống kê vé
+                </h4>
+                <div className="space-y-2 max-h-40 overflow-y-auto pr-1">
+                  {ticketTypeStats.map((stat, index) => {
+                    const isOver = stat.used > stat.quantity;
+                    const percentage = Math.min((stat.used / stat.quantity) * 100, 100);
+                    
+                    return (
+                      <div key={index} className="space-y-1">
+                        <div className="flex items-center justify-between text-xs">
+                          <div className="flex items-center gap-1.5 overflow-hidden">
+                            <span 
+                              className="w-2 h-2 rounded-full flex-shrink-0" 
+                              style={{ backgroundColor: stat.color }}
+                            ></span>
+                            <span className="truncate font-medium max-w-[100px]" title={stat.name}>
+                              {stat.name}
+                            </span>
+                          </div>
+                          
+                          <div className="flex items-center gap-1 flex-shrink-0">
+                            <span className={isOver ? "text-red-600 font-bold" : "text-foreground font-medium"}>
+                              {stat.used}
+                            </span>
+                            <span className="text-muted-foreground">/</span>
+                            <span className="text-muted-foreground">
+                              {stat.quantity}
+                            </span>
+                          </div>
+                        </div>
+                        
+                        <div className="h-1.5 w-full bg-muted rounded-full overflow-hidden">
+                          <div 
+                            className={`h-full ${isOver ? 'bg-red-500' : 'bg-emerald-500'} transition-all duration-300`}
+                            style={{ width: `${percentage}%` }}
+                          ></div>
+                        </div>
+                        
+                        {isOver && (
+                          <div className="text-[10px] text-red-500 font-medium text-right">
+                            Vượt quá: {stat.used - stat.quantity} ghế
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            );
+          })()}
+        </div>
       </div>
 
       {/* Dialog xác nhận xóa mềm */}
