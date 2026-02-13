@@ -49,27 +49,6 @@ interface ShapeData {
   attributeId?: number | null; // ID của attribute để phân biệt PUT/POST khi lưu
 }
 
-// Interface mở rộng cho mục đích tạo section mới, bao gồm các thuộc tính bổ sung
-interface ExtendedSection {
-  _tempId?: string;
-  id?: number;
-  name: string;
-  seatMapId: number;
-  status: number;
-  isStage: boolean;
-  isSalable: boolean;
-  isReservingSeat: boolean;
-  message: string;
-  ticketTypeId: number;
-  elements?: any[];
-  attribute?: any;
-  seats?: any[];
-  // Các thuộc tính bổ sung để sử dụng trong quá trình tạo section
-  price?: number;
-  rows?: number;
-  cols?: number;
-}
-
 interface SeatMapEditorProps {
   showingId?: number;
   onSave?: (data: any) => void;
@@ -95,7 +74,9 @@ export default function SeatMapEditor({ showingId, onSave }: SeatMapEditorProps)
         throw new Error("Invalid section ID format");
       }
 
+      // Updated based on requirement: soft delete via section attribute status = 0
       await seatMapService.softDeleteSection(numericId);
+      
       // Remove the section from the UI after soft delete
       setShapes(shapes.filter(s => s.id !== sectionId));
       setSelectedId(null);
