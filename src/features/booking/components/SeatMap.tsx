@@ -83,8 +83,8 @@ export default function SeatMap({
 
   /* ===== DATA ===== */
 
-  const stageSection = data.sections.find((s) => s.isStage);
-  const seatSections = data.sections.filter((s) => !s.isStage);
+  const stageSection = data.sections.find((s: any) => s.isStage && s.status === 1);
+  const seatSections = data.sections.filter((s: any) => !s.isStage && s.status === 1);
 
   const viewBox = data.viewbox
     ? data.viewbox.split(' ').map(Number)
