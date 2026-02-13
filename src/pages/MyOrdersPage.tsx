@@ -194,6 +194,11 @@ export default function MyOrdersPage() {
                         >
                           <FontAwesomeIcon icon={faTicketAlt} className="text-primary" />
                           <span className="font-medium">{detail.seatCode}</span>
+                          {(detail.ticketTypeName || detail.ticketTypeId) && (
+                            <span className="text-gray-500">
+                              • {detail.ticketTypeName ?? `Loại vé #${detail.ticketTypeId}`}
+                            </span>
+                          )}
                           <span className="text-gray-500">-</span>
                           <span className="text-primary font-semibold">
                             {detail.price.toLocaleString("vi-VN")} đ
