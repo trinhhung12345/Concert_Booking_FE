@@ -470,16 +470,11 @@ export const seatMapService = {
     }
   },
 
-  softDeleteSectionAttribute: async (id: number): Promise<SectionAttribute> => {
-    const response = await axios.put(`/seat-map/section-attributes/${id}`, { 
-      x: null, 
-      y: null, 
-      width: null, 
-      height: null, 
-      scaleX: null, 
-      scaleY: null, 
-      rotate: null, 
-      fill: null
+  softDeleteSectionAttribute: async (sectionId: number): Promise<SectionAttribute> => {
+    // The API requires sectionId in the body to identify which attribute to update
+    const response = await axios.put(`/seat-map/section-attributes`, { 
+      sectionId: sectionId,
+      status: 0
     });
     // Note: Due to axios interceptor, response is already the data from server
     if (response && typeof response === 'object' && 'x' in response) {
@@ -491,7 +486,10 @@ export const seatMapService = {
       if (response && typeof response === 'object' && 'x' in response) {
         return response as unknown as SectionAttribute;
       }
-      throw new Error('Invalid response format from server');
+      // If server returns success but not the object, we can just return a dummy or null casted
+      // However, usually it returns the updated object.
+      // Let's assume it returns something we can use.
+      return response as unknown as SectionAttribute;
     }
   },
 

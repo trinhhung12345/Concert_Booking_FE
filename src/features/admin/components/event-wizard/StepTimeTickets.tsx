@@ -256,8 +256,14 @@ const StepTimeTickets = forwardRef(({ eventId, initialData }: StepTimeTicketsPro
                                                 </div>
                                             </div>
 
-                                            {/* Icon Vé */}
-                                            <div className="w-8 h-8 rounded bg-muted flex items-center justify-center text-muted-foreground">
+                                            {/* Icon Vé - Hiển thị màu từ loại vé */}
+                                            <div 
+                                                className="w-8 h-8 rounded flex items-center justify-center"
+                                                style={{ 
+                                                    backgroundColor: `${ticket.color || '#6366f1'}25`,
+                                                    color: ticket.color || '#6366f1'
+                                                }}
+                                            >
                                                 <FontAwesomeIcon icon={faTicket} />
                                             </div>
 
