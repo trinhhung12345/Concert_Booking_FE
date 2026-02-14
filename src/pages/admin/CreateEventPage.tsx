@@ -37,7 +37,7 @@ export default function CreateEventPage() {
   useEffect(() => {
     const fetchCats = async () => {
       try {
-        const data = await categoryService.getAll();
+                const data = await categoryService.getAllAdmin();
         setCategories(Array.isArray(data) ? data : []);
       } catch (e) {
         console.error(e);

@@ -16,23 +16,27 @@ export type CategoryCreatePayload = {
 };
 
 export const categoryService = {
-  // API: Lấy tất cả danh mục đang hoạt động
+  // API public: Lấy tất cả danh mục đang hoạt động (frontend user)
   getAll: async () => {
-    // API trả về mảng trực tiếp Category[]
     return apiClient.get<any, Category[]>("/categories");
   },
 
-  // API: Tạo mới category
+  // API admin: Lấy tất cả category (bao gồm quản lý)
+  getAllAdmin: async () => {
+    return apiClient.get<any, Category[]>("/admin/categories");
+  },
+
+  // API: Tạo mới category (dùng chung cho admin)
   create: async (payload: CategoryCreatePayload) => {
     return apiClient.post<any, Category>("/categories", payload);
   },
 
-  // API: Cập nhật trạng thái active
+  // API: Cập nhật trạng thái active (dùng chung cho admin)
   updateActive: async (id: number, active: boolean) => {
     return apiClient.put<any, void>(`/categories/${id}`, { active });
   },
 
-  // API: Xoá category
+  // API: Xoá category (dùng chung cho admin)
   delete: async (id: number) => {
     return apiClient.delete<void>(`/categories/${id}`);
   },

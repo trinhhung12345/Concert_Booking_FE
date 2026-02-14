@@ -17,7 +17,7 @@ export default function EventSlider({ events }: Props) {
   // Luôn hiển thị "Sự kiện đặc sắc" dù có ít event,
   // nhưng tối đa 4 sự kiện trong slider.
   const specialEvents =
-    sorted.length <= 2 ? sorted : sorted.slice(2, 6);
+    sorted.length <= 5 ? sorted : sorted.slice(2, 6);
 
   return (
     <div className="space-y-10">

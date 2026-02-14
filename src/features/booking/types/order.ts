@@ -7,6 +7,9 @@ export interface OrderDetail {
   price: number;
   originalPrice: number;
   qr: string | null;
+  // Thông tin loại vé (optional, phụ thuộc API)
+  ticketTypeId?: number | null;
+  ticketTypeName?: string | null;
 }
 
 export interface Order {
@@ -36,6 +39,8 @@ export interface CreateOrderRequest {
   recipientAddress: string;
   seatIds?: number[];
   ticketItems?: TicketOrderItem[];
+  ticketTypeId?: number;
+  quantity?: number;
 }
 
 export interface CheckoutRequest {

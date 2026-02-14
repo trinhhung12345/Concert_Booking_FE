@@ -1,6 +1,11 @@
 import { useEffect, useState } from 'react';
 import type { SeatMapData, Section, Seat } from '../types/seatmap';
 
+/* ================= UTILS ================= */
+
+const isSeatDisabled = (seat: Seat) =>
+  seat.status !== 'AVAILABLE' || seat.isSalable === false;
+
 /* ================= SEAT ITEM ================= */
 
 const SeatItem = ({
@@ -11,27 +16,44 @@ const SeatItem = ({
   seat: Seat;
   onSelect: (seat: Seat) => void;
   selected: boolean;
-}) => (
-  <button
-    className={`
-      w-7 h-7 m-1 rounded-full text-[10px] font-semibold
-      flex items-center justify-center
-      border
-      ${
-        seat.status === 'BOOKED' || seat.status === 'LOCKED'
-          ? 'bg-gray-500 cursor-not-allowed text-gray-800'
-          : selected
-          ? 'bg-green-500 text-black'
-          : 'bg-white text-black hover:bg-blue-300'
+}) => {
+  const disabled = isSeatDisabled(seat);
+
+  return (
+    <button
+      disabled={disabled}
+      onClick={() => !disabled && onSelect(seat)}
+      title={
+        disabled
+          ? seat.status !== 'AVAILABLE'
+            ? 'Ghế đã bán / không khả dụng'
+            : 'Ghế không được phép bán'
+          : seat.code
       }
-    `}
-    disabled={seat.status === 'BOOKED' || seat.status === 'LOCKED'}
-    onClick={() => onSelect(seat)}
-    title={seat.code}
-  >
-    {seat.colIndex}
-  </button>
-);
+      className={`
+        relative w-7 h-7 m-1 rounded-full text-[10px] font-semibold
+        flex items-center justify-center border transition
+        ${
+          disabled
+            ? 'bg-gray-700 text-gray-400 cursor-not-allowed'
+            : selected
+            ? 'bg-pink-500 text-black'
+            : 'bg-white text-black hover:bg-blue-300'
+        }
+      `}
+    >
+      {seat.colIndex}
+
+      {/* GẠCH CHÉO */}
+      {disabled && (
+        <>
+          <span className="pointer-events-none absolute w-full h-[2px] bg-red-500 rotate-45" />
+          <span className="pointer-events-none absolute w-full h-[2px] bg-red-500 -rotate-45" />
+        </>
+      )}
+    </button>
+  );
+};
 
 /* ================= MAIN ================= */
 
@@ -48,12 +70,14 @@ export default function SeatMap({
 }: SeatMapProps) {
   const [selectedSection, setSelectedSection] = useState<Section | null>(null);
   const [activeZoneId, setActiveZoneId] = useState<number | null>(null);
+  const [viewMode, setViewMode] = useState<'MAP' | 'SEATS'>('MAP');
 
-  /* ===== RESET ZONE KHI BỎ HẾT GHẾ ===== */
+  /* ===== RESET KHI BỎ HẾT GHẾ ===== */
   useEffect(() => {
     if (selectedSeats.length === 0) {
       setActiveZoneId(null);
       setSelectedSection(null);
+      setViewMode('MAP');
     }
   }, [selectedSeats]);
 
@@ -68,100 +92,117 @@ export default function SeatMap({
 
   const [, , vbW, vbH] = viewBox;
 
-  const canvasW = 800;
+  const canvasW = 900;
   const canvasH = 600;
   const scale = Math.min(canvasW / vbW, canvasH / vbH);
 
-  /* ===== RENDER ===== */
+  /* ================= RENDER ================= */
 
   return (
-    <div className="flex w-full h-screen bg-black text-white">
-      <div
-        className="relative mx-auto my-auto"
-        style={{ width: canvasW, height: canvasH }}
-      >
-        {/* STAGE */}
-        {stageSection?.attribute && (
-          <div
-            className="absolute flex items-center justify-center font-bold text-2xl rounded-lg"
-            style={{
-              left: stageSection.attribute.x * scale,
-              top: stageSection.attribute.y * scale,
-              width: stageSection.attribute.width * scale,
-              height: stageSection.attribute.height * scale,
-              background: stageSection.attribute.fill || '#ccc',
-              color: '#222',
-              border: '2px solid #fff',
-              zIndex: 10,
-            }}
+    <div className="w-full h-screen bg-black text-white flex flex-col">
+      {/* ===== HEADER ===== */}
+      {viewMode === 'SEATS' && (
+        <div className="flex items-center gap-3 px-4 py-3 bg-[#0a0312] border-b border-pink-500/20">
+          <button
+            onClick={() => setViewMode('MAP')}
+            className="px-4 py-2 rounded-lg bg-gray-700 hover:bg-gray-600 text-sm"
           >
-            STAGE
-          </div>
-        )}
+            ← Quay lại sơ đồ
+          </button>
 
-        {/* SECTIONS (ZONES) */}
-        {seatSections.map(
-          (section) =>
-            section.attribute && (
+          <div className="text-sm text-gray-300">
+            Khu vực:{' '}
+            <span className="text-pink-400 font-semibold">
+              {selectedSection?.name}
+            </span>
+          </div>
+        </div>
+      )}
+
+      {/* ===== MAP VIEW ===== */}
+      {viewMode === 'MAP' && (
+        <div className="flex-1 flex items-center justify-center">
+          <div
+            className="relative"
+            style={{ width: canvasW, height: canvasH }}
+          >
+            {/* STAGE */}
+            {stageSection?.attribute && (
               <div
-                key={section.id}
-                className={`
-                  absolute flex flex-col items-center justify-center
-                  border-2 rounded-lg cursor-pointer transition
-                  ${
-                    activeZoneId !== null &&
-                    activeZoneId !== section.id
-                      ? 'opacity-40 cursor-not-allowed'
-                      : ''
-                  }
-                  ${
-                    selectedSection?.id === section.id
-                      ? 'ring-4 ring-green-400'
-                      : ''
-                  }
-                `}
+                className="absolute flex items-center justify-center font-bold text-2xl rounded-lg"
                 style={{
-                  left: section.attribute.x * scale,
-                  top: section.attribute.y * scale,
-                  width: section.attribute.width * scale,
-                  height: section.attribute.height * scale,
-                  background: section.attribute.fill || '#666',
-                }}
-                onClick={() => {
-                  if (
-                    activeZoneId !== null &&
-                    activeZoneId !== section.id
-                  ) {
-                    return;
-                  }
-                  setSelectedSection(section);
+                  left: stageSection.attribute.x * scale,
+                  top: stageSection.attribute.y * scale,
+                  width: stageSection.attribute.width * scale,
+                  height: stageSection.attribute.height * scale,
+                  background: stageSection.attribute.fill || '#ccc',
+                  color: '#222',
+                  border: '2px solid #fff',
                 }}
               >
-                <div className="font-bold">{section.name}</div>
-                <div className="text-xs">
-                  {section.seats.length ? 'Seating' : 'Standing'}
-                </div>
+                STAGE
               </div>
-            )
-        )}
+            )}
 
-        {/* SEATS POPUP */}
-        {selectedSection && (
-          <div className="absolute left-1/2 top-1/2 z-50 -translate-x-1/2 -translate-y-1/2 bg-gray-800 p-5 rounded-xl shadow-2xl max-h-[80vh] overflow-auto">
-            <div className="mb-3 font-bold text-green-400 text-center">
+            {/* ZONES */}
+            {seatSections.map(
+              (section) =>
+                section.attribute && (
+                  <div
+                    key={section.id}
+                    className={`
+                      absolute flex flex-col items-center justify-center
+                      border-2 rounded-lg cursor-pointer transition
+                      ${
+                        activeZoneId !== null &&
+                        activeZoneId !== section.id
+                          ? 'opacity-40 cursor-not-allowed'
+                          : ''
+                      }
+                    `}
+                    style={{
+                      left: section.attribute.x * scale,
+                      top: section.attribute.y * scale,
+                      width: section.attribute.width * scale,
+                      height: section.attribute.height * scale,
+                      background: section.attribute.fill || '#666',
+                    }}
+                    onClick={() => {
+                      if (
+                        activeZoneId !== null &&
+                        activeZoneId !== section.id
+                      )
+                        return;
+
+                      setSelectedSection(section);
+                      setViewMode('SEATS');
+                    }}
+                  >
+                    <div className="font-bold">{section.name}</div>
+                    <div className="text-xs opacity-80">
+                      {section.seats.length ? 'Seating' : 'Standing'}
+                    </div>
+                  </div>
+                )
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* ===== SEAT VIEW (FULL SCREEN) ===== */}
+      {viewMode === 'SEATS' && selectedSection && (
+        <div className="flex-1 overflow-auto p-6">
+          <div className="max-w-5xl mx-auto bg-gray-900 rounded-2xl p-6">
+            <div className="mb-4 text-center font-bold text-pink-400">
               {selectedSection.name}
             </div>
 
-            {/* SEAT GRID */}
             {Array.from(
               new Set(selectedSection.seats.map((s) => s.rowIndex))
             )
               .sort((a, b) => a - b)
               .map((row) => (
-                <div
-                  key={row}
-                  className="flex items-center justify-center"
-                >
+                <div key={row} className="flex justify-center mb-2">
                   <span className="w-6 text-xs text-gray-400 mr-2">
                     {row <= 26 ? String.fromCharCode(64 + row) : row}
                   </span>
@@ -178,7 +219,6 @@ export default function SeatMap({
                             (s) => s.id === seat.id
                           )}
                           onSelect={(seat) => {
-                            // LẦN ĐẦU CHỌN GHẾ → KHÓA ZONE
                             if (activeZoneId === null) {
                               setActiveZoneId(selectedSection.id);
                             }
@@ -190,15 +230,15 @@ export default function SeatMap({
                 </div>
               ))}
 
-            <div className="mt-4 text-sm text-center text-gray-300">
+            <div className="mt-6 text-sm text-center text-gray-300">
               Ghế đã chọn:{' '}
-              <span className="text-green-400">
+              <span className="text-pink-400">
                 {selectedSeats.map((s) => s.code).join(', ') || 'Chưa chọn'}
               </span>
             </div>
           </div>
-        )}
-      </div>
+        </div>
+      )}
     </div>
   );
 }

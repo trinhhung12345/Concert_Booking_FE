@@ -1,4 +1,5 @@
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { Link } from "react-router-dom";
 import {
   faFacebookF,
   faInstagram,
@@ -15,7 +16,7 @@ export default function Footer() {
           <h3 className="text-xs font-semibold tracking-[0.2em] text-slate-400 uppercase">
             Hotline
           </h3>
-          <p className="text-green-400 font-semibold text-lg">1900 6408</p>
+          <p className="text-pink-400 font-semibold text-lg">1900 6408</p>
 
           <h3 className="mt-5 text-xs font-semibold tracking-[0.2em] text-slate-400 uppercase">
             Email
@@ -37,10 +38,38 @@ export default function Footer() {
             Dành cho khách hàng
           </h3>
           <ul className="space-y-1 text-slate-400">
-            <li>Điều khoản sử dụng</li>
-            <li>Chính sách bảo mật</li>
-            <li>Hỗ trợ &amp; Câu hỏi thường gặp</li>
-            <li>Chính sách hoàn tiền</li>
+            <li>
+              <Link
+                to="/terms"
+                className="hover:text-slate-100 hover:underline underline-offset-4"
+              >
+                Điều khoản sử dụng
+              </Link>
+            </li>
+            <li>
+              <Link
+                to="/privacy"
+                className="hover:text-slate-100 hover:underline underline-offset-4"
+              >
+                Chính sách bảo mật
+              </Link>
+            </li>
+            <li>
+              <Link
+                to="/support"
+                className="hover:text-slate-100 hover:underline underline-offset-4"
+              >
+                Hỗ trợ &amp; Câu hỏi thường gặp
+              </Link>
+            </li>
+            <li>
+              <Link
+                to="/refund-policy"
+                className="hover:text-slate-100 hover:underline underline-offset-4"
+              >
+                Chính sách hoàn tiền
+              </Link>
+            </li>
           </ul>
         </div>
 
@@ -50,10 +79,38 @@ export default function Footer() {
             Dành cho nhà tổ chức
           </h3>
           <ul className="space-y-1 text-slate-400">
-            <li>Điều khoản nhà tổ chức</li>
-            <li>Bán vé cùng chúng tôi</li>
-            <li>Giải pháp marketing</li>
-            <li>Liên hệ kinh doanh</li>
+            <li>
+              <Link
+                to="/organizer-terms"
+                className="hover:text-slate-100 hover:underline underline-offset-4"
+              >
+                Điều khoản nhà tổ chức
+              </Link>
+            </li>
+            <li>
+              <Link
+                to="/sell-with-us"
+                className="hover:text-slate-100 hover:underline underline-offset-4"
+              >
+                Bán vé cùng chúng tôi
+              </Link>
+            </li>
+            <li>
+              <Link
+                to="/marketing-solutions"
+                className="hover:text-slate-100 hover:underline underline-offset-4"
+              >
+                Giải pháp marketing
+              </Link>
+            </li>
+            <li>
+              <Link
+                to="/business-contact"
+                className="hover:text-slate-100 hover:underline underline-offset-4"
+              >
+                Liên hệ kinh doanh
+              </Link>
+            </li>
           </ul>
         </div>
 
@@ -64,9 +121,30 @@ export default function Footer() {
               Về công ty
             </h3>
             <ul className="space-y-1 text-slate-400">
-              <li>Giới thiệu</li>
-              <li>Điều khoản &amp; điều kiện</li>
-              <li>Phương thức thanh toán</li>
+              <li>
+                <Link
+                  to="/about"
+                  className="hover:text-slate-100 hover:underline underline-offset-4"
+                >
+                  Giới thiệu
+                </Link>
+              </li>
+              <li>
+                <Link
+                  to="/terms"
+                  className="hover:text-slate-100 hover:underline underline-offset-4"
+                >
+                  Điều khoản &amp; điều kiện
+                </Link>
+              </li>
+              <li>
+                <Link
+                  to="/payment-methods"
+                  className="hover:text-slate-100 hover:underline underline-offset-4"
+                >
+                  Phương thức thanh toán
+                </Link>
+              </li>
             </ul>
           </div>
 

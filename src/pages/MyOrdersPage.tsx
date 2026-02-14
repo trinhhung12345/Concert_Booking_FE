@@ -66,7 +66,7 @@ export default function MyOrdersPage() {
     switch (status) {
       case "PAID":
         return (
-          <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-green-700">
+          <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-sm font-medium bg-pink-100 text-pink-700">
             <FontAwesomeIcon icon={faCheckCircle} className="text-xs" />
             Đã thanh toán
           </span>
@@ -194,6 +194,11 @@ export default function MyOrdersPage() {
                         >
                           <FontAwesomeIcon icon={faTicketAlt} className="text-primary" />
                           <span className="font-medium">{detail.seatCode}</span>
+                          {(detail.ticketTypeName || detail.ticketTypeId) && (
+                            <span className="text-gray-500">
+                              • {detail.ticketTypeName ?? `Loại vé #${detail.ticketTypeId}`}
+                            </span>
+                          )}
                           <span className="text-gray-500">-</span>
                           <span className="text-primary font-semibold">
                             {detail.price.toLocaleString("vi-VN")} đ
@@ -220,7 +225,7 @@ export default function MyOrdersPage() {
 
                   {order.status === "UNPAID" && (
                     <Button 
-                      className="bg-green-600 hover:bg-green-700"
+                      className="bg-pink-600 hover:bg-pink-700"
                       onClick={() => handleCheckout(order.id)}
                       disabled={checkingOutId === order.id}
                     >

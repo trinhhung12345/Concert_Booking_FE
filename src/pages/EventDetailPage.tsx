@@ -180,14 +180,27 @@ export default function EventDetailPage() {
               {/* DESCRIPTION */}
               <div
                 className="
-                  text-slate-300 leading-relaxed text-[15px]
-                  [&_img]:rounded-xl
-                  [&_img]:my-4
-                  [&_img]:border
-                  [&_img]:border-pink-500/20
-                  [&_img]:max-w-full
-                "
+    text-slate-300 leading-relaxed text-[15px]
+
+    break-words
+    whitespace-pre-wrap
+    overflow-hidden
+
+    [&_img]:rounded-xl
+    [&_img]:my-4
+    [&_img]:border
+    [&_img]:border-pink-500/20
+    [&_img]:max-w-full
+    [&_img]:h-auto
+
+    [&_table]:max-w-full
+    [&_table]:block
+    [&_table]:overflow-x-auto
+
+    [&_iframe]:max-w-full
+  "
               >
+
                 {parse(
                   DOMPurify.sanitize(
                     decodeHtmlEntities(event.description || ""),
