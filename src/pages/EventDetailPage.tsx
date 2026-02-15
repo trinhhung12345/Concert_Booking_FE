@@ -98,7 +98,7 @@ export default function EventDetailPage() {
     );
 
   if (!event)
-    return <div className="py-20 text-center text-white">Không tìm thấy sự kiện</div>;
+    return <div className="py-20 text-center text-foreground">Không tìm thấy sự kiện</div>;
 
   const firstShowing = event.showings?.[0];
   const startTime = firstShowing?.startTime || new Date().toISOString();
@@ -124,7 +124,7 @@ export default function EventDetailPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#05010a] text-slate-100">
+    <div className="min-h-screen bg-background">
       {/* HERO */}
       <div className="relative h-[420px] md:h-[520px] overflow-hidden bg-black">
         {videoId ? (

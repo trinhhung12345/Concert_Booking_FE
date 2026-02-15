@@ -31,6 +31,7 @@
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "dompurify": "^3.3.1",
+    "framer-motion": "^12.34.0",
     "html-react-parser": "^5.2.12",
     "input-otp": "^1.4.2",
     "konva": "^10.2.0",

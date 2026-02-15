@@ -9,24 +9,24 @@ import {
 
 export default function Footer() {
   return (
-    <footer className="bg-[#1f2530] text-slate-300 mt-auto border-t border-slate-800">
+    <footer className="bg-secondary text-secondary-foreground mt-auto border-t border-border">
       <div className="container mx-auto px-4 py-10 grid gap-8 md:grid-cols-4 text-sm">
         {/* Liên hệ */}
         <div className="space-y-3">
-          <h3 className="text-xs font-semibold tracking-[0.2em] text-slate-400 uppercase">
+          <h3 className="text-xs font-semibold tracking-[0.2em] text-muted-foreground uppercase">
             Hotline
           </h3>
-          <p className="text-pink-400 font-semibold text-lg">1900 6408</p>
+          <p className="text-primary font-semibold text-lg">1900 6408</p>
 
-          <h3 className="mt-5 text-xs font-semibold tracking-[0.2em] text-slate-400 uppercase">
+          <h3 className="mt-5 text-xs font-semibold tracking-[0.2em] text-muted-foreground uppercase">
             Email
           </h3>
           <p>support@concertbooking.vn</p>
 
-          <h3 className="mt-5 text-xs font-semibold tracking-[0.2em] text-slate-400 uppercase">
+          <h3 className="mt-5 text-xs font-semibold tracking-[0.2em] text-muted-foreground uppercase">
             Trụ sở chính
           </h3>
-          <p className="text-slate-400 leading-relaxed">
+          <p className="text-muted-foreground leading-relaxed">
             Tầng 12, Tòa nhà Example, 285 Cách Mạng Tháng Tám,
             Phường 12, Quận 10, TP. Hồ Chí Minh
           </p>
@@ -34,14 +34,14 @@ export default function Footer() {
 
         {/* Dành cho khách hàng */}
         <div className="space-y-2">
-          <h3 className="text-xs font-semibold tracking-[0.2em] text-slate-400 uppercase">
+          <h3 className="text-xs font-semibold tracking-[0.2em] text-muted-foreground uppercase">
             Dành cho khách hàng
           </h3>
-          <ul className="space-y-1 text-slate-400">
+          <ul className="space-y-1 text-muted-foreground">
             <li>
               <Link
                 to="/terms"
-                className="hover:text-slate-100 hover:underline underline-offset-4"
+                className="hover:text-foreground hover:underline underline-offset-4"
               >
                 Điều khoản sử dụng
               </Link>
@@ -49,7 +49,7 @@ export default function Footer() {
             <li>
               <Link
                 to="/privacy"
-                className="hover:text-slate-100 hover:underline underline-offset-4"
+                className="hover:text-foreground hover:underline underline-offset-4"
               >
                 Chính sách bảo mật
               </Link>
@@ -57,15 +57,15 @@ export default function Footer() {
             <li>
               <Link
                 to="/support"
-                className="hover:text-slate-100 hover:underline underline-offset-4"
+                className="hover:text-foreground hover:underline underline-offset-4"
               >
-                Hỗ trợ &amp; Câu hỏi thường gặp
+                Hỗ trợ & Câu hỏi thường gặp
               </Link>
             </li>
             <li>
               <Link
                 to="/refund-policy"
-                className="hover:text-slate-100 hover:underline underline-offset-4"
+                className="hover:text-foreground hover:underline underline-offset-4"
               >
                 Chính sách hoàn tiền
               </Link>
@@ -75,14 +75,14 @@ export default function Footer() {
 
         {/* Dành cho nhà tổ chức */}
         <div className="space-y-2">
-          <h3 className="text-xs font-semibold tracking-[0.2em] text-slate-400 uppercase">
+          <h3 className="text-xs font-semibold tracking-[0.2em] text-muted-foreground uppercase">
             Dành cho nhà tổ chức
           </h3>
-          <ul className="space-y-1 text-slate-400">
+          <ul className="space-y-1 text-muted-foreground">
             <li>
               <Link
                 to="/organizer-terms"
-                className="hover:text-slate-100 hover:underline underline-offset-4"
+                className="hover:text-foreground hover:underline underline-offset-4"
               >
                 Điều khoản nhà tổ chức
               </Link>
@@ -90,7 +90,7 @@ export default function Footer() {
             <li>
               <Link
                 to="/sell-with-us"
-                className="hover:text-slate-100 hover:underline underline-offset-4"
+                className="hover:text-foreground hover:underline underline-offset-4"
               >
                 Bán vé cùng chúng tôi
               </Link>
@@ -98,7 +98,7 @@ export default function Footer() {
             <li>
               <Link
                 to="/marketing-solutions"
-                className="hover:text-slate-100 hover:underline underline-offset-4"
+                className="hover:text-foreground hover:underline underline-offset-4"
               >
                 Giải pháp marketing
               </Link>
@@ -106,7 +106,7 @@ export default function Footer() {
             <li>
               <Link
                 to="/business-contact"
-                className="hover:text-slate-100 hover:underline underline-offset-4"
+                className="hover:text-foreground hover:underline underline-offset-4"
               >
                 Liên hệ kinh doanh
               </Link>
@@ -117,14 +117,14 @@ export default function Footer() {
         {/* Công ty / Mạng xã hội */}
         <div className="space-y-4">
           <div>
-            <h3 className="text-xs font-semibold tracking-[0.2em] text-slate-400 uppercase">
+            <h3 className="text-xs font-semibold tracking-[0.2em] text-muted-foreground uppercase">
               Về công ty
             </h3>
-            <ul className="space-y-1 text-slate-400">
+            <ul className="space-y-1 text-muted-foreground">
               <li>
                 <Link
                   to="/about"
-                  className="hover:text-slate-100 hover:underline underline-offset-4"
+                  className="hover:text-foreground hover:underline underline-offset-4"
                 >
                   Giới thiệu
                 </Link>
@@ -132,15 +132,15 @@ export default function Footer() {
               <li>
                 <Link
                   to="/terms"
-                  className="hover:text-slate-100 hover:underline underline-offset-4"
+                  className="hover:text-foreground hover:underline underline-offset-4"
                 >
-                  Điều khoản &amp; điều kiện
+                  Điều khoản & điều kiện
                 </Link>
               </li>
               <li>
                 <Link
                   to="/payment-methods"
-                  className="hover:text-slate-100 hover:underline underline-offset-4"
+                  className="hover:text-foreground hover:underline underline-offset-4"
                 >
                   Phương thức thanh toán
                 </Link>
@@ -149,35 +149,35 @@ export default function Footer() {
           </div>
 
           <div className="space-y-2">
-            <h4 className="text-xs font-semibold tracking-[0.2em] text-slate-400 uppercase">
+            <h4 className="text-xs font-semibold tracking-[0.2em] text-muted-foreground uppercase">
               Theo dõi chúng tôi
             </h4>
-            <div className="flex items-center gap-3 text-slate-300">
+            <div className="flex items-center gap-3 text-muted-foreground">
               <a
                 href="#"
                 aria-label="Facebook"
-                className="w-8 h-8 rounded-full bg-slate-700 flex items-center justify-center hover:bg-slate-500 transition-colors"
+                className="w-8 h-8 rounded-full bg-muted flex items-center justify-center hover:bg-accent transition-colors"
               >
                 <FontAwesomeIcon icon={faFacebookF} className="text-sm" />
               </a>
               <a
                 href="#"
                 aria-label="Instagram"
-                className="w-8 h-8 rounded-full bg-slate-700 flex items-center justify-center hover:bg-slate-500 transition-colors"
+                className="w-8 h-8 rounded-full bg-muted flex items-center justify-center hover:bg-accent transition-colors"
               >
                 <FontAwesomeIcon icon={faInstagram} className="text-sm" />
               </a>
               <a
                 href="#"
                 aria-label="YouTube"
-                className="w-8 h-8 rounded-full bg-slate-700 flex items-center justify-center hover:bg-slate-500 transition-colors"
+                className="w-8 h-8 rounded-full bg-muted flex items-center justify-center hover:bg-accent transition-colors"
               >
                 <FontAwesomeIcon icon={faYoutube} className="text-sm" />
               </a>
               <a
                 href="#"
                 aria-label="LinkedIn"
-                className="w-8 h-8 rounded-full bg-slate-700 flex items-center justify-center hover:bg-slate-500 transition-colors"
+                className="w-8 h-8 rounded-full bg-muted flex items-center justify-center hover:bg-accent transition-colors"
               >
                 <FontAwesomeIcon icon={faLinkedinIn} className="text-sm" />
               </a>
@@ -185,14 +185,14 @@ export default function Footer() {
           </div>
 
           <div className="space-y-2">
-            <h4 className="text-xs font-semibold tracking-[0.2em] text-slate-400 uppercase">
+            <h4 className="text-xs font-semibold tracking-[0.2em] text-muted-foreground uppercase">
               Ngôn ngữ
             </h4>
             <div className="flex gap-3 text-xs">
-              <button className="px-3 py-1 rounded-full bg-primary text-white font-medium">
+              <button className="px-3 py-1 rounded-full bg-primary text-primary-foreground font-medium">
                 VI
               </button>
-              <button className="px-3 py-1 rounded-full bg-slate-700 text-slate-200 hover:bg-slate-600 transition-colors">
+              <button className="px-3 py-1 rounded-full bg-muted text-foreground hover:bg-accent transition-colors">
                 EN
               </button>
             </div>
@@ -201,9 +201,9 @@ export default function Footer() {
       </div>
 
       {/* Thanh dưới */}
-      <div className="border-t border-slate-800 bg-[#181d26]">
-        <div className="container mx-auto px-4 py-4 flex flex-col md:flex-row items-center justify-between gap-3 text-xs text-slate-500">
-          <div className="flex items-center gap-2 font-semibold text-slate-300">
+      <div className="border-t border-border bg-card">
+        <div className="container mx-auto px-4 py-4 flex flex-col md:flex-row items-center justify-between gap-3 text-xs text-muted-foreground">
+          <div className="flex items-center gap-2 font-semibold text-foreground">
             <span className="text-lg">🎟️</span>
             <span>ConcertBooking</span>
           </div>

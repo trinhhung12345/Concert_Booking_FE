@@ -3,15 +3,22 @@ import { Outlet } from "react-router-dom";
 import Header from "./Header";
 import CategoryNav from "./CategoryNav"; // Import mới
 import Footer from "./Footer";
+import { useThemeStore } from "@/store/useThemeStore";
 
 const MainLayout = () => {
-  // Đảm bảo trang user luôn dùng light theme
+  const { theme } = useThemeStore();
+
+  // Sync theme với document
   useEffect(() => {
-    document.documentElement.classList.remove("dark");
-  }, []);
+    if (theme === "dark") {
+      document.documentElement.classList.add("dark");
+    } else {
+      document.documentElement.classList.remove("dark");
+    }
+  }, [theme]);
 
   return (
-    <div className="flex flex-col min-h-screen font-sans bg-gray-900 text-slate-100">
+    <div className="flex flex-col min-h-screen font-sans bg-background text-foreground">
 
       {/* Khối Header Wrapper */}
       {/* Nếu muốn cả thanh category cũng dính thì bọc sticky cả 2 component này */}

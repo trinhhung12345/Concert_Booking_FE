@@ -110,14 +110,14 @@ export default function CategoryPage() {
   }, [slug, location]);
 
   return (
-    <div className="bg-gray-900 min-h-screen w-full text-slate-100">
+    <div className="bg-background min-h-screen w-full">
       <div className="container mx-auto px-4 py-8 space-y-12">
       {/* HEADER */}
       <section>
         <div className="flex items-center justify-between mb-6">
           <div>
             {category?.description && (
-              <p className="text-slate-300 mt-2">{category.description}</p>
+              <p className="text-muted-foreground mt-2">{category.description}</p>
             )}
           </div>
   
@@ -150,10 +150,10 @@ export default function CategoryPage() {
         </section>
       ) : !isLoading && events.length === 0 ? (
         <section className="text-center py-12">
-          <h3 className="text-xl font-semibold text-slate-200 mb-2">
+          <h3 className="text-xl font-semibold text-foreground mb-2">
             Không có sự kiện trong danh mục này
           </h3>
-          <p className="text-slate-400">
+          <p className="text-muted-foreground">
             Hãy quay lại và chọn một danh mục khác
           </p>
         </section>

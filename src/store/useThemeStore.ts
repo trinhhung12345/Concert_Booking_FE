@@ -12,7 +12,7 @@ interface ThemeState {
 export const useThemeStore = create<ThemeState>()(
   persist(
     (set) => ({
-      theme: "dark", // Default to dark for admin panel
+      theme: "light", // Default to light for user pages
 
       toggleTheme: () =>
         set((state) => ({
