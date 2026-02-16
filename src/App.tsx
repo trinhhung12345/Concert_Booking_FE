@@ -31,6 +31,8 @@ import { useModalStore } from "./store/useModalStore";
 import AdminSeatMapPage from "./pages/admin/AdminSeatMapPage";
 import UserManagerPage from "./pages/admin/UserManagerPage";
 import CategoryManagerPage from "./pages/admin/CategoryManagerPage";
+import ReportsPage from "./pages/admin/ReportsPage";
+import ReportsPageTest from "./pages/admin/ReportsPageTest";
 
 function App() {
   const { isLoginPromptOpen, closeLoginPrompt } = useModalStore();
@@ -92,7 +94,8 @@ function App() {
 
           <Route path="categories" element={<CategoryManagerPage />} />
 
-          <Route path="reports" element={<div className="text-white p-4">Trang Báo Cáo (Đang phát triển)</div>} />
+          {/* <Route path="reports" element={<ReportsPage/>} /> */}
+          <Route path="reports" element={<ReportsPageTest/>} />
           <Route path="policies" element={<div className="text-white p-4">Trang Điều Khoản (Đang phát triển)</div>} />
         </Route>
       </Routes>

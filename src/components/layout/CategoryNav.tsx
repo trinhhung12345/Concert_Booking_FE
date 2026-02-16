@@ -35,7 +35,7 @@ export default function CategoryNav() {
   };
 
   return (
-    <div className="w-full bg-[#3D3D49] border-t border-white/10 sticky top-16 z-40">
+    <div className="w-full bg-secondary border-t border-border sticky top-16 z-40">
       <div className="container mx-auto px-4">
         <nav className="flex items-center gap-6 md:gap-8 overflow-x-auto py-3 md:justify-center no-scrollbar">
           
@@ -43,7 +43,7 @@ export default function CategoryNav() {
           {isLoading && (
             <div className="flex gap-8">
               {[1, 2, 3, 4, 5].map((i) => (
-                <div key={i} className="h-5 w-24 bg-white/10 rounded animate-pulse" />
+                <div key={i} className="h-5 w-24 bg-muted rounded animate-pulse" />
               ))}
             </div>
           )}
@@ -56,7 +56,7 @@ export default function CategoryNav() {
               state={{ categoryId: cat.id }} // Truyền ID qua state để trang sau dễ query
               className="
                 whitespace-nowrap 
-                text-sm font-medium text-gray-200 
+                text-sm font-medium text-secondary-foreground 
                 hover:text-primary transition-colors duration-200
                 border-b-2 border-transparent hover:border-primary pb-0.5
               "
@@ -68,7 +68,7 @@ export default function CategoryNav() {
           
           {/* Xử lý trường hợp không có dữ liệu */}
           {!isLoading && categories.length === 0 && (
-            <span className="text-gray-400 text-sm">No categories available</span>
+            <span className="text-muted-foreground text-sm">No categories available</span>
           )}
         </nav>
       </div>

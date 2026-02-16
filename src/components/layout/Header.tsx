@@ -34,6 +34,7 @@ import {
 // Store & Utils
 import { useAuthStore } from "@/store/useAuthStore";
 import { eventService, type Event } from "@/features/concerts/services/eventService";
+import { ThemeToggle } from "@/components/ui/theme-toggle";
 
 export default function Header() {
   const navigate = useNavigate();
@@ -125,7 +126,7 @@ export default function Header() {
   );
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b bg-white/80 backdrop-blur-md supports-[backdrop-filter]:bg-white/60">
+    <header className="sticky top-0 z-50 w-full border-b bg-background/80 backdrop-blur-md supports-[backdrop-filter]:bg-background/60">
       <div className="container mx-auto flex h-16 items-center justify-between px-4">
 
         {/* 1. LOGO (Trái) */}
@@ -137,13 +138,13 @@ export default function Header() {
             <form className="w-full" onSubmit={handleSearch} autoComplete="off">
               <FontAwesomeIcon
                 icon={faSearch}
-                className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
+                className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground"
               />
               <Input
                 ref={inputRef}
                 type="text"
                 placeholder="Tìm kiếm sự kiện,..."
-                className="pl-10 rounded-full bg-gray-100 border-transparent focus:bg-white focus:border-primary transition-all duration-300"
+                className="pl-10 rounded-full bg-muted border-transparent focus:bg-background focus:border-primary transition-all duration-300"
                 value={searchQuery}
                 onChange={(e) => {
                   setSearchQuery(e.target.value);
@@ -156,11 +157,11 @@ export default function Header() {
             </form>
             {/* Dropdown gợi ý */}
             {showDropdown && suggestions.length > 0 && (
-              <div ref={dropdownRef} className="absolute left-0 top-12 w-full bg-white border border-gray-200 rounded-xl shadow-lg z-50 max-h-80 overflow-y-auto animate-fade-in">
+              <div ref={dropdownRef} className="absolute left-0 top-12 w-full bg-background border border-border rounded-xl shadow-lg z-50 max-h-80 overflow-y-auto animate-fade-in">
                 {suggestions.map((event) => (
                   <div
                     key={event.id}
-                    className="flex items-center gap-3 px-4 py-2 cursor-pointer hover:bg-primary/10 transition-colors"
+                    className="flex items-center gap-3 px-4 py-2 cursor-pointer hover:bg-accent transition-colors"
                     onClick={() => {
                       setShowDropdown(false);
                       setSearchQuery("");
@@ -169,16 +170,16 @@ export default function Header() {
                   >
                     <img src={event.files && event.files[0]?.thumbUrl ? event.files[0].thumbUrl : 'https://images.unsplash.com/photo-1459749411177-334811adbced?q=80&w=800&auto=format&fit=crop'} alt={event.title} className="w-10 h-10 rounded-lg object-cover border" />
                     <div className="flex-1">
-                      <div className="font-semibold text-gray-900 line-clamp-1">{event.title}</div>
-                      <div className="text-xs text-gray-500 line-clamp-1">{event.venue}</div>
+                      <div className="font-semibold text-foreground line-clamp-1">{event.title}</div>
+                      <div className="text-xs text-muted-foreground line-clamp-1">{event.venue}</div>
                     </div>
                   </div>
                 ))}
                 {searchLoading && (
-                  <div className="px-4 py-2 text-sm text-gray-400">Đang tìm kiếm...</div>
+                  <div className="px-4 py-2 text-sm text-muted-foreground">Đang tìm kiếm...</div>
                 )}
                 {!searchLoading && suggestions.length === 0 && (
-                  <div className="px-4 py-2 text-sm text-gray-400">Không tìm thấy sự kiện phù hợp.</div>
+                  <div className="px-4 py-2 text-sm text-muted-foreground">Không tìm thấy sự kiện phù hợp.</div>
                 )}
               </div>
             )}
@@ -190,6 +191,9 @@ export default function Header() {
 
           {/* Desktop Actions */}
           <div className="hidden md:flex items-center gap-4">
+            {/* Theme Toggle - Chỉ hiện ở trang user */}
+            {!isAdminPage && <ThemeToggle />}
+
             {isAuthenticated ? (
               <>
                 {/* NÚT CHUYỂN ĐỔI TRANG QUẢN LÝ (Chỉ hiện cho Admin) */}

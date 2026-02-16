@@ -23,6 +23,8 @@ import {
   faClock,
   faTicketAlt,
   faChevronLeft,
+  faChevronRight,
+  faTimes,
 } from "@fortawesome/free-solid-svg-icons";
 
 const decodeHtmlEntities = (text: string) => {
@@ -65,6 +67,8 @@ export default function EventDetailPage() {
   const [videoId, setVideoId] = useState<string | null>(null);
   const [heroImage, setHeroImage] = useState("");
   const [showingModalOpen, setShowingModalOpen] = useState(false);
+  const [selectedImage, setSelectedImage] = useState<string | null>(null);
+  const [currentSlide, setCurrentSlide] = useState(0);
 
   useEffect(() => {
     (async () => {
@@ -94,7 +98,7 @@ export default function EventDetailPage() {
     );
 
   if (!event)
-    return <div className="py-20 text-center text-white">Không tìm thấy sự kiện</div>;
+    return <div className="py-20 text-center text-foreground">Không tìm thấy sự kiện</div>;
 
   const firstShowing = event.showings?.[0];
   const startTime = firstShowing?.startTime || new Date().toISOString();
@@ -120,7 +124,7 @@ export default function EventDetailPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#05010a] text-slate-100">
+    <div className="min-h-screen bg-background">
       {/* HERO */}
       <div className="relative h-[420px] md:h-[520px] overflow-hidden bg-black">
         {videoId ? (
@@ -163,20 +167,6 @@ export default function EventDetailPage() {
                 Giới thiệu sự kiện
               </h2>
 
-              {/* IMAGE GALLERY */}
-              {introImages.length > 0 && (
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
-                  {introImages.map((img, idx) => (
-                    <img
-                      key={idx}
-                      src={img.originUrl}
-                      alt={`intro-${idx}`}
-                      className="w-full h-[220px] object-cover rounded-xl border border-pink-500/20"
-                    />
-                  ))}
-                </div>
-              )}
-
               {/* DESCRIPTION */}
               <div
                 className="
@@ -211,6 +201,82 @@ export default function EventDetailPage() {
                 )}
 
               </div>
+
+              {/* IMAGE GALLERY - CAROUSEL */}
+              {introImages.length > 0 && (
+                <div className="mt-8">
+                  <h3 className="text-lg font-semibold mb-4 text-white">
+                    Hình ảnh
+                  </h3>
+                  
+                  {/* Carousel Container */}
+                  <div className="relative">
+                    {/* Main Image Display */}
+                    <div 
+                      className="relative aspect-video rounded-xl overflow-hidden border border-pink-500/20 bg-black/50 cursor-pointer"
+                      onClick={() => setSelectedImage(introImages[currentSlide]?.originUrl || null)}
+                    >
+                      <img
+                        src={introImages[currentSlide]?.originUrl}
+                        alt={`gallery-${currentSlide}`}
+                        className="w-full h-full object-contain"
+                      />
+                      
+                      {/* Navigation Arrows */}
+                      {introImages.length > 1 && (
+                        <>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setCurrentSlide((prev) => (prev === 0 ? introImages.length - 1 : prev - 1));
+                            }}
+                            className="absolute left-2 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-black/60 hover:bg-pink-500 text-white flex items-center justify-center transition-colors"
+                          >
+                            <FontAwesomeIcon icon={faChevronLeft} />
+                          </button>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setCurrentSlide((prev) => (prev === introImages.length - 1 ? 0 : prev + 1));
+                            }}
+                            className="absolute right-2 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-black/60 hover:bg-pink-500 text-white flex items-center justify-center transition-colors"
+                          >
+                            <FontAwesomeIcon icon={faChevronRight} />
+                          </button>
+                        </>
+                      )}
+                      
+                      {/* Image Counter */}
+                      <div className="absolute bottom-2 right-2 px-3 py-1 rounded-full bg-black/60 text-white text-sm">
+                        {currentSlide + 1} / {introImages.length}
+                      </div>
+                    </div>
+
+                    {/* Thumbnail Strip */}
+                    {introImages.length > 1 && (
+                      <div className="flex gap-2 mt-4 overflow-x-auto pb-2">
+                        {introImages.map((img, idx) => (
+                          <button
+                            key={idx}
+                            onClick={() => setCurrentSlide(idx)}
+                            className={`flex-shrink-0 w-20 h-14 rounded-lg overflow-hidden border-2 transition-all ${
+                              idx === currentSlide
+                                ? "border-pink-500 opacity-100"
+                                : "border-pink-500/20 opacity-60 hover:opacity-100"
+                            }`}
+                          >
+                            <img
+                              src={img.originUrl}
+                              alt={`thumb-${idx}`}
+                              className="w-full h-full object-cover"
+                            />
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* LỊCH DIỄN */}
@@ -271,7 +337,7 @@ export default function EventDetailPage() {
         </div>
       </div>
 
-      {/* MODAL */}
+      {/* MODAL - Chọn suất diễn */}
       <Dialog open={showingModalOpen} onOpenChange={setShowingModalOpen}>
         <DialogContent className="bg-[#0a0312] border border-pink-500/20 text-white">
           <DialogHeader>
@@ -303,6 +369,63 @@ export default function EventDetailPage() {
                 </div>
               );
             })}
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* MODAL - Xem ảnh full-size */}
+      <Dialog open={!!selectedImage} onOpenChange={(open) => !open && setSelectedImage(null)}>
+        <DialogContent className="bg-transparent border-0 p-0 max-w-[90vw] max-h-[90vh] overflow-hidden">
+          <div className="relative w-full h-full flex items-center justify-center">
+            {/* Close button */}
+            <button
+              onClick={() => setSelectedImage(null)}
+              className="absolute top-4 right-4 z-50 w-10 h-10 rounded-full bg-black/60 hover:bg-pink-500 text-white flex items-center justify-center transition-colors"
+            >
+              <FontAwesomeIcon icon={faTimes} />
+            </button>
+
+            {/* Navigation buttons */}
+            {introImages.length > 1 && (
+              <>
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    const newIndex = currentSlide === 0 ? introImages.length - 1 : currentSlide - 1;
+                    setCurrentSlide(newIndex);
+                    setSelectedImage(introImages[newIndex]?.originUrl || null);
+                  }}
+                  className="absolute left-4 top-1/2 -translate-y-1/2 z-50 w-12 h-12 rounded-full bg-black/60 hover:bg-pink-500 text-white flex items-center justify-center transition-colors"
+                >
+                  <FontAwesomeIcon icon={faChevronLeft} className="text-xl" />
+                </button>
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    const newIndex = currentSlide === introImages.length - 1 ? 0 : currentSlide + 1;
+                    setCurrentSlide(newIndex);
+                    setSelectedImage(introImages[newIndex]?.originUrl || null);
+                  }}
+                  className="absolute right-4 top-1/2 -translate-y-1/2 z-50 w-12 h-12 rounded-full bg-black/60 hover:bg-pink-500 text-white flex items-center justify-center transition-colors"
+                >
+                  <FontAwesomeIcon icon={faChevronRight} className="text-xl" />
+                </button>
+              </>
+            )}
+
+            {/* Full-size image */}
+            {selectedImage && (
+              <img
+                src={selectedImage}
+                alt={`fullscreen-${currentSlide}`}
+                className="max-w-full max-h-[85vh] object-contain rounded-lg"
+              />
+            )}
+
+            {/* Image counter */}
+            <div className="absolute bottom-4 left-1/2 -translate-x-1/2 px-4 py-2 rounded-full bg-black/60 text-white text-sm">
+              {currentSlide + 1} / {introImages.length}
+            </div>
           </div>
         </DialogContent>
       </Dialog>
