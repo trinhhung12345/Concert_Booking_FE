@@ -1,359 +1,395 @@
-import React, { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import { 
+  AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, 
+  PieChart, Pie, Cell, Legend 
+} from 'recharts';
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import {
-  faCalendarCheck,
-  faCalendarPlus,
-  faCalendarXmark,
-  faChartPie,
-  faChevronRight,
-  faRefresh,
-  faCoins,
-  faTicket,
+import { 
+  faDollarSign, faTicketAlt, faCalendarCheck, faUsers, 
+  faArrowUp, faArrowDown, faEllipsisV, faDownload 
 } from "@fortawesome/free-solid-svg-icons";
-import { reportService, type EventsStats } from "@/features/admin/services/reportService";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
+import { mockDashboardData } from "@/features/admin/data/mock_data";
+import { reportService, type DashboardStats, type RevenueChartData, type CategoryStats, type RecentOrder, type TopEvent } from "@/features/admin/services/reportService";
+import { cn } from "@/lib/utils";
 
-// Màu sắc cho pie chart
-const CHART_COLORS = [
-  "#ec4899", // pink
-  "#8b5cf6", // violet
-  "#06b6d4", // cyan
-  "#10b981", // emerald
-  "#f59e0b", // amber
-  "#ef4444", // red
-  "#6366f1", // indigo
-];
+// Helper format tiền tệ
+const formatCurrency = (val: number) => 
+  new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(val);
 
-export default function ReportsPage() {
-  const [stats, setStats] = useState<EventsStats | null>(null);
+export default function ReportsPageTest() {
+  const { kpi, revenueChart: mockRevenueChart, categoryPie, recentOrders, topEvents } = mockDashboardData;
+  
+  // State cho dashboard stats từ API
+  const [statsData, setStatsData] = useState<DashboardStats | null>(null);
+  const [revenueChartData, setRevenueChartData] = useState<RevenueChartData[]>([]);
+  const [categoryData, setCategoryData] = useState<CategoryStats[]>([]);
+  const [recentOrdersData, setRecentOrdersData] = useState<RecentOrder[]>([]);
+  const [topEventsData, setTopEventsData] = useState<TopEvent[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  // Gọi API lấy dashboard stats, revenue chart, category stats, recent orders và top events
   useEffect(() => {
-    fetchStats();
+    const fetchDashboardData = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        
+        // Gọi song song cả 5 APIs
+        const [stats, revenueChart, categoryStats, recentOrders, topEvents] = await Promise.all([
+          reportService.getDashboardStats(),
+          reportService.getRevenueChart(),
+          reportService.getCategoryStats(),
+          reportService.getRecentOrders(),
+          reportService.getTopEvents()
+        ]);
+        
+        setStatsData(stats);
+        setRevenueChartData(revenueChart);
+        setCategoryData(categoryStats);
+        setRecentOrdersData(recentOrders);
+        setTopEventsData(topEvents);
+      } catch (err) {
+        console.error("Error fetching dashboard data:", err);
+        setError("Không thể tải dữ liệu thống kê");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchDashboardData();
   }, []);
 
-  const fetchStats = async () => {
-    try {
-      setLoading(true);
-      const data = await reportService.getEventsStats();
-      setStats(data);
-    } catch (err) {
-      setError("Không thể tải dữ liệu báo cáo");
-      console.error(err);
-    } finally {
-      setLoading(false);
-    }
-  };
+  // Sử dụng dữ liệu từ API nếu có, fallback về mock data
+  const displayKpi = statsData ? {
+    totalRevenue: statsData.totalRevenue,
+    totalTicketsSold: statsData.totalTicketsSold,
+    totalEvents: statsData.totalEvents,
+    totalUsers: statsData.newUsers,
+    revenueGrowth: statsData.revenueGrowth,
+  } : kpi;
 
-  // Tính tổng để tính phần trăm
-  const totalByCategory = stats?.byCategory.reduce((sum, item) => sum + item.count, 0) || 1;
+  // Sử dụng revenue chart từ API nếu có, fallback về mock data
+  const displayRevenueChart = revenueChartData.length > 0 ? revenueChartData : mockRevenueChart;
 
-  // Format date helper
-  const formatDate = (dateStr: string) => {
-    if (!dateStr) return "N/A";
-    const date = new Date(dateStr);
-    return date.toLocaleDateString("vi-VN", {
-      day: "2-digit",
-      month: "2-digit",
-      year: "numeric",
-    });
-  };
+  // Sử dụng category data từ API nếu có, fallback về mock data
+  const displayCategoryPie = categoryData.length > 0 ? categoryData : categoryPie;
 
-  // Lấy ngày diễn ra sớm nhất của event
-  const getFirstShowingDate = (event: any) => {
-    if (!event.showings || event.showings.length === 0) return null;
-    const sorted = [...event.showings].sort(
-      (a: any, b: any) => new Date(a.startTime).getTime() - new Date(b.startTime).getTime()
-    );
-    return sorted[0].startTime;
-  };
+  // Sử dụng recent orders từ API nếu có, fallback về mock data
+  const displayRecentOrders = recentOrdersData.length > 0 ? recentOrdersData : recentOrders;
 
-  // Xác định trạng thái event
-  const getEventStatus = (event: any) => {
-    const now = new Date();
-    const firstShowing = getFirstShowingDate(event);
-    
-    if (!firstShowing) return { label: "Chưa có lịch", variant: "secondary" as const };
-    
-    const showingDate = new Date(firstShowing);
-    if (showingDate < now) return { label: "Đã kết thúc", variant: "destructive" as const };
-    return { label: "Sắp diễn ra", variant: "default" as const };
-  };
-
-  if (loading) {
-    return (
-      <div className="p-6 space-y-6">
-        <div className="animate-pulse space-y-4">
-          <div className="h-8 bg-muted rounded w-48"></div>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {[1, 2, 3].map((i) => (
-              <div key={i} className="h-32 bg-muted rounded-xl"></div>
-            ))}
-          </div>
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-            <div className="h-80 bg-muted rounded-xl"></div>
-            <div className="h-80 bg-muted rounded-xl"></div>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="p-6">
-        <Card className="border-destructive">
-          <CardContent className="py-10 text-center">
-            <p className="text-destructive">{error}</p>
-            <Button onClick={fetchStats} className="mt-4">
-              Thử lại
-            </Button>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
+  // Sử dụng top events từ API nếu có, fallback về mock data
+  const displayTopEvents = topEventsData.length > 0 ? topEventsData : topEvents;
 
   return (
-    <div className="p-6 space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
+    <div className="p-6 space-y-6 bg-gray-50 dark:bg-[#121418] min-h-screen text-gray-900 dark:text-gray-100">
+      
+      {/* 1. HEADER & ACTIONS */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold">Báo cáo & Thống kê</h1>
-          <p className="text-muted-foreground mt-1">
-            Tổng quan về các sự kiện và hoạt động của hệ thống
-          </p>
+          <h1 className="text-2xl font-bold">Tổng quan kinh doanh</h1>
+          <p className="text-sm text-gray-500 dark:text-gray-400">Cập nhật lần cuối: Hôm nay, 14:30</p>
         </div>
-        <Button variant="outline" onClick={fetchStats}>
-          <FontAwesomeIcon icon={faRefresh} className="mr-2" />
-          Làm mới
-        </Button>
+        <div className="flex gap-2">
+           <Button variant="outline" className="bg-white dark:bg-[#1a1c23] border-gray-200 dark:border-gray-700">
+              Tháng này
+           </Button>
+           <Button className="bg-primary hover:bg-primary/90 text-white gap-2">
+              <FontAwesomeIcon icon={faDownload} /> Xuất báo cáo
+           </Button>
+        </div>
       </div>
 
-      {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Card className="bg-gradient-to-br from-pink-500/10 to-pink-600/5 border-pink-500/20">
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
-              Tổng sự kiện
-            </CardTitle>
-            <FontAwesomeIcon
-              icon={faCalendarCheck}
-              className="h-5 w-5 text-pink-500"
+      {/* 2. KPI CARDS */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        {loading ? (
+          // Loading skeletons
+          <>
+            <KPICardSkeleton />
+            <KPICardSkeleton />
+            <KPICardSkeleton />
+            <KPICardSkeleton />
+          </>
+        ) : error ? (
+          // Error state - hiển thị thông báo lỗi cho tất cả cards
+          <>
+            <KPICard 
+              title="Tổng doanh thu" 
+              value="Lỗi" 
+              icon={faDollarSign} 
+              trend={null} 
+              color="text-red-500"
+              bgColor="bg-red-500/10"
             />
-          </CardHeader>
-          <CardContent>
-            <div className="text-4xl font-bold text-pink-500">{stats?.total || 0}</div>
-            <p className="text-xs text-muted-foreground mt-1">
-              Sự kiện trong hệ thống
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card className="bg-gradient-to-br from-emerald-500/10 to-emerald-600/5 border-emerald-500/20">
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
-              Sắp diễn ra
-            </CardTitle>
-            <FontAwesomeIcon
-              icon={faCalendarPlus}
-              className="h-5 w-5 text-emerald-500"
+            <KPICard 
+              title="Vé đã bán" 
+              value="Lỗi" 
+              icon={faTicketAlt} 
+              trend={null} 
+              color="text-red-500"
+              bgColor="bg-red-500/10"
             />
-          </CardHeader>
-          <CardContent>
-            <div className="text-4xl font-bold text-emerald-500">{stats?.upcoming || 0}</div>
-            <p className="text-xs text-muted-foreground mt-1">
-              Sự kiện sẽ diễn ra trong tương lai
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card className="bg-gradient-to-br from-slate-500/10 to-slate-600/5 border-slate-500/20">
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
-              Đã kết thúc
-            </CardTitle>
-            <FontAwesomeIcon
-              icon={faCalendarXmark}
-              className="h-5 w-5 text-slate-500"
+            <KPICard 
+              title="Sự kiện tổ chức" 
+              value="Lỗi" 
+              icon={faCalendarCheck} 
+              trend={null} 
+              color="text-red-500"
+              bgColor="bg-red-500/10"
             />
-          </CardHeader>
-          <CardContent>
-            <div className="text-4xl font-bold text-slate-500">{stats?.completed || 0}</div>
-            <p className="text-xs text-muted-foreground mt-1">
-              Sự kiện đã hoàn thành
-            </p>
-          </CardContent>
-        </Card>
+            <KPICard 
+              title="Thành viên mới" 
+              value="Lỗi" 
+              icon={faUsers} 
+              trend={null} 
+              color="text-red-500"
+              bgColor="bg-red-500/10"
+            />
+          </>
+        ) : (
+          // Normal state - sử dụng dữ liệu từ API
+          <>
+            <KPICard 
+              title="Tổng doanh thu" 
+              value={formatCurrency(displayKpi.totalRevenue)} 
+              icon={faDollarSign} 
+              trend={displayKpi.revenueGrowth} 
+              color="text-emerald-500"
+              bgColor="bg-emerald-500/10"
+            />
+            <KPICard 
+              title="Vé đã bán" 
+              value={displayKpi.totalTicketsSold.toLocaleString()} 
+              icon={faTicketAlt} 
+              trend={displayKpi.revenueGrowth} 
+              color="text-blue-500"
+              bgColor="bg-blue-500/10"
+            />
+            <KPICard 
+              title="Sự kiện tổ chức" 
+              value={displayKpi.totalEvents.toString()} 
+              icon={faCalendarCheck} 
+              trend={0} 
+              color="text-purple-500"
+              bgColor="bg-purple-500/10"
+            />
+            <KPICard 
+              title="Thành viên mới" 
+              value={displayKpi.totalUsers.toString()} 
+              icon={faUsers} 
+              trend={displayKpi.revenueGrowth} 
+              color="text-orange-500"
+              bgColor="bg-orange-500/10"
+            />
+          </>
+        )}
       </div>
 
-      {/* Charts & Tables Row */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Pie Chart - Events by Category */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <FontAwesomeIcon icon={faChartPie} className="h-5 w-5 text-pink-500" />
-              Sự kiện theo danh mục
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            {stats && stats.byCategory.length > 0 ? (
-              <div className="flex items-center gap-8">
-                {/* Pie Chart SVG */}
-                <div className="relative w-48 h-48">
-                  <svg viewBox="0 0 100 100" className="w-full h-full transform -rotate-90">
-                    {stats.byCategory.reduce<React.ReactNode[]>(
-                      (segments, item, index) => {
-                        const percentage = (item.count / totalByCategory) * 100;
-                        const dashArray = (percentage / 100) * 100;
-                        
-                        segments.push(
-                          <circle
-                            key={index}
-                            cx="50"
-                            cy="50"
-                            r="40"
-                            fill="transparent"
-                            stroke={CHART_COLORS[index % CHART_COLORS.length]}
-                            strokeWidth="20"
-                            strokeDasharray={`${dashArray} 100`}
-                            strokeDashoffset={-((index * 100) / stats.byCategory.length)}
-                          />
-                        );
-                        return segments;
-                      },
-                      []
-                    )}
-                  </svg>
-                  {/* Center text */}
-                  <div className="absolute inset-0 flex items-center justify-center">
-                    <div className="text-center">
-                      <div className="text-2xl font-bold">{stats.byCategory.length}</div>
-                      <div className="text-xs text-muted-foreground">Danh mục</div>
-                    </div>
-                  </div>
-                </div>
+      {/* 3. CHARTS SECTION */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        
+        {/* REVENUE CHART (Chiếm 2 phần) */}
+        <div className="lg:col-span-2 bg-white dark:bg-[#1a1c23] p-6 rounded-xl border border-gray-200 dark:border-gray-800 shadow-sm">
+          <div className="flex justify-between items-center mb-6">
+            <h3 className="font-bold text-lg">Biểu đồ doanh thu</h3>
+            <Button variant="ghost" size="icon" className="h-8 w-8 text-gray-400"><FontAwesomeIcon icon={faEllipsisV} /></Button>
+          </div>
+          <div className="h-[300px] w-full">
+            <ResponsiveContainer width="100%" height="100%">
+              <AreaChart data={displayRevenueChart}>
+                <defs>
+                  <linearGradient id="colorRevenue" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#FF0082" stopOpacity={0.3}/>
+                    <stop offset="95%" stopColor="#FF0082" stopOpacity={0}/>
+                  </linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="3 3" stroke="#374151" opacity={0.1} />
+                <XAxis dataKey="name" stroke="#9CA3AF" fontSize={12} tickLine={false} axisLine={false} />
+                <YAxis stroke="#9CA3AF" fontSize={12} tickLine={false} axisLine={false} tickFormatter={(value) => `${value / 1000000}M`} />
+                <Tooltip 
+                    contentStyle={{ backgroundColor: '#1f2937', borderColor: '#374151', color: '#fff', borderRadius: '8px' }}
+                    itemStyle={{ color: '#fff' }}
+                    formatter={(value) => formatCurrency(Number(value))}
+                />
+                <Area type="monotone" dataKey="revenue" stroke="#FF0082" strokeWidth={3} fillOpacity={1} fill="url(#colorRevenue)" />
+              </AreaChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
 
-                {/* Legend */}
-                <div className="flex-1 space-y-2">
-                  {stats.byCategory.map((item, index) => (
-                    <div key={item.name} className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <div
-                          className="w-3 h-3 rounded-full"
-                          style={{
-                            backgroundColor:
-                              CHART_COLORS[index % CHART_COLORS.length],
-                          }}
-                        ></div>
-                        <span className="text-sm">{item.name}</span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <span className="font-medium">{item.count}</span>
-                        <span className="text-xs text-muted-foreground">
-                          ({((item.count / totalByCategory) * 100).toFixed(1)}%)
-                        </span>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            ) : (
-              <div className="h-48 flex items-center justify-center text-muted-foreground">
-                Chưa có dữ liệu sự kiện
-              </div>
-            )}
-          </CardContent>
-        </Card>
+        {/* CATEGORY PIE CHART (Chiếm 1 phần) */}
+        <div className="bg-white dark:bg-[#1a1c23] p-6 rounded-xl border border-gray-200 dark:border-gray-800 shadow-sm">
+          <h3 className="font-bold text-lg mb-6">Tỷ trọng thể loại</h3>
+          <div className="h-[300px] w-full relative">
+             <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie
+                    data={displayCategoryPie}
+                    innerRadius={60}
+                    outerRadius={80}
+                    paddingAngle={5}
+                    dataKey="value"
+                  >
+                    {displayCategoryPie.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={entry.color} strokeWidth={0} />
+                    ))}
+                  </Pie>
+                  <Tooltip 
+                     contentStyle={{ backgroundColor: '#1f2937', borderColor: '#374151', borderRadius: '8px', color: '#fff' }}
+                  />
+                  <Legend verticalAlign="bottom" height={36} iconType="circle" />
+                </PieChart>
+             </ResponsiveContainer>
+             {/* Center Text */}
+             <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-10 text-center pointer-events-none">
+                <div className="text-3xl font-bold">100%</div>
+                <div className="text-xs text-gray-500">Tổng quan</div>
+             </div>
+          </div>
+        </div>
+      </div>
 
-        {/* Recent Events Table */}
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between">
-            <CardTitle>Sự kiện gần đây</CardTitle>
-            <Link to="/admin/events">
-              <Button variant="ghost" size="sm">
-                Xem tất cả
-                <FontAwesomeIcon icon={faChevronRight} className="ml-1 h-4 w-4" />
-              </Button>
-            </Link>
-          </CardHeader>
-          <CardContent>
-            {stats && stats.recentEvents.length > 0 ? (
-              <div className="space-y-3">
-                {stats.recentEvents.map((event) => {
-                  const status = getEventStatus(event);
-                  const firstDate = getFirstShowingDate(event);
-                  
-                  return (
-                    <div
-                      key={event.id}
-                      className="flex items-center justify-between p-3 rounded-lg bg-muted/50 hover:bg-muted transition-colors"
-                    >
-                      <div className="flex-1 min-w-0">
-                        <p className="font-medium truncate">{event.title}</p>
-                        <p className="text-sm text-muted-foreground">
-                          {event.venue || "Chưa có địa điểm"}
-                        </p>
-                      </div>
-                      <div className="flex items-center gap-3">
-                        <div className="text-right">
-                          <p className="text-sm font-medium">
-                            {firstDate ? formatDate(firstDate) : "Chưa có lịch"}
-                          </p>
-                          <p className="text-xs text-muted-foreground">
-                            {event.showings?.length || 0} suất diễn
-                          </p>
+      {/* 4. LISTS SECTION */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        
+        {/* RECENT ORDERS TABLE */}
+        <div className="lg:col-span-2 bg-white dark:bg-[#1a1c23] p-6 rounded-xl border border-gray-200 dark:border-gray-800 shadow-sm overflow-hidden">
+           <div className="flex justify-between items-center mb-4">
+              <h3 className="font-bold text-lg">Đơn hàng gần đây</h3>
+              <Button variant="link" className="text-primary p-0 h-auto">Xem tất cả</Button>
+           </div>
+           <div className="overflow-x-auto">
+             <table className="w-full text-sm text-left">
+                <thead className="text-xs text-gray-500 uppercase bg-gray-50 dark:bg-[#121418] border-b dark:border-gray-700">
+                    <tr>
+                        <th className="px-4 py-3 rounded-tl-lg">Mã đơn</th>
+                        <th className="px-4 py-3">Khách hàng</th>
+                        <th className="px-4 py-3">Sự kiện</th>
+                        <th className="px-4 py-3">Tổng tiền</th>
+                        <th className="px-4 py-3 rounded-tr-lg">Trạng thái</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {displayRecentOrders.map((order) => (
+                        <tr key={order.id} className="border-b dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-[#1f2937] transition-colors">
+                            <td className="px-4 py-3 font-medium">#{order.id}</td>
+                            <td className="px-4 py-3">
+                                <div className="font-medium">{order.customerName}</div>
+                                <div className="text-xs text-gray-500">{order.date}</div>
+                            </td>
+                            <td className="px-4 py-3 truncate max-w-[150px]">{order.eventName}</td>
+                            <td className="px-4 py-3 font-bold">{formatCurrency(order.amount)}</td>
+                            <td className="px-4 py-3">
+                                <StatusBadge status={order.status} />
+                            </td>
+                        </tr>
+                    ))}
+                </tbody>
+             </table>
+           </div>
+        </div>
+
+        {/* TOP EVENTS */}
+        <div className="bg-white dark:bg-[#1a1c23] p-6 rounded-xl border border-gray-200 dark:border-gray-800 shadow-sm">
+            <h3 className="font-bold text-lg mb-4">Top Sự Kiện</h3>
+            <div className="space-y-4">
+                {displayTopEvents.map((event) => (
+                    <div key={event.id} className="flex items-center gap-4 border-b border-gray-100 dark:border-gray-800 pb-4 last:border-0 last:pb-0">
+                        <div className="w-12 h-12 rounded-lg bg-gray-200 dark:bg-gray-800 flex items-center justify-center font-bold text-xl text-gray-500">
+                            {event.title.charAt(0)}
                         </div>
-                        <Badge variant={status.variant}>{status.label}</Badge>
-                      </div>
+                        <div className="flex-1 min-w-0">
+                            <h4 className="font-medium truncate">{event.title}</h4>
+                            <div className="flex items-center gap-2 text-xs text-gray-500 mt-1">
+                                <span>{event.date}</span>
+                                <span>•</span>
+                                <span className={event.status === 'ACTIVE' ? "text-emerald-500" : "text-gray-400"}>
+                                    {event.status}
+                                </span>
+                            </div>
+                            {/* Mini Progress Bar */}
+                            <div className="mt-2 h-1.5 w-full bg-gray-100 dark:bg-gray-700 rounded-full overflow-hidden">
+                                <div 
+                                    className="h-full bg-primary rounded-full" 
+                                    style={{ width: `${(event.ticketsSold / event.totalTickets) * 100}%` }}
+                                />
+                            </div>
+                            <div className="flex justify-between text-[10px] text-gray-400 mt-1">
+                                <span>{event.ticketsSold} vé đã bán</span>
+                                <span>{formatCurrency(event.revenue)}</span>
+                            </div>
+                        </div>
                     </div>
-                  );
-                })}
-              </div>
-            ) : (
-              <div className="h-48 flex items-center justify-center text-muted-foreground">
-                Chưa có sự kiện nào
-              </div>
-            )}
-          </CardContent>
-        </Card>
-      </div>
+                ))}
+            </div>
+        </div>
 
-      {/* Placeholder for Other Reports */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <Card className="border-dashed">
-          <CardContent className="py-10 text-center">
-            <FontAwesomeIcon
-              icon={faCoins}
-              className="h-12 w-12 text-muted-foreground/50 mb-4"
-            />
-            <h3 className="font-medium mb-2">Báo cáo doanh thu</h3>
-            <p className="text-sm text-muted-foreground mb-4">
-              Đang chờ API từ backend
-            </p>
-            <Badge variant="outline">Coming Soon</Badge>
-          </CardContent>
-        </Card>
-
-        <Card className="border-dashed">
-          <CardContent className="py-10 text-center">
-            <FontAwesomeIcon
-              icon={faTicket}
-              className="h-12 w-12 text-muted-foreground/50 mb-4"
-            />
-            <h3 className="font-medium mb-2">Báo cáo bán vé</h3>
-            <p className="text-sm text-muted-foreground mb-4">
-              Đang chờ API từ backend
-            </p>
-            <Badge variant="outline">Coming Soon</Badge>
-          </CardContent>
-        </Card>
       </div>
     </div>
   );
 }
+
+// --- SUB COMPONENTS ---
+
+const KPICard = ({ title, value, icon, trend, color, bgColor }: { 
+  title: string; 
+  value: string; 
+  icon: any; 
+  trend: number | null; 
+  color: string; 
+  bgColor: string;
+}) => (
+    <div className="bg-white dark:bg-[#1a1c23] p-6 rounded-xl border border-gray-200 dark:border-gray-800 shadow-sm flex items-start justify-between">
+        <div>
+            <p className="text-sm text-gray-500 font-medium mb-1">{title}</p>
+            <p className="text-2xl font-bold">{value}</p>
+            <div className="flex items-center gap-1 mt-2 text-xs font-medium">
+                {trend !== null && trend > 0 ? (
+                    <span className="text-emerald-500 flex items-center gap-1">
+                        <FontAwesomeIcon icon={faArrowUp} /> {trend}%
+                    </span>
+                ) : trend !== null && trend < 0 ? (
+                    <span className="text-red-500 flex items-center gap-1">
+                        <FontAwesomeIcon icon={faArrowDown} /> {Math.abs(trend)}%
+                    </span>
+                ) : (
+                    <span className="text-gray-400">---</span>
+                )}
+                <span className="text-gray-400 ml-1">so với tháng trước</span>
+            </div>
+        </div>
+        <div className={cn("w-10 h-10 rounded-lg flex items-center justify-center", bgColor, color)}>
+            <FontAwesomeIcon icon={icon} className="text-lg" />
+        </div>
+    </div>
+);
+
+// Loading skeleton cho KPI Card
+const KPICardSkeleton = () => (
+    <div className="bg-white dark:bg-[#1a1c23] p-6 rounded-xl border border-gray-200 dark:border-gray-800 shadow-sm flex items-start justify-between animate-pulse">
+        <div className="flex-1">
+            <div className="h-4 w-24 bg-gray-200 dark:bg-gray-700 rounded mb-3"></div>
+            <div className="h-8 w-32 bg-gray-200 dark:bg-gray-700 rounded mb-3"></div>
+            <div className="h-3 w-20 bg-gray-200 dark:bg-gray-700 rounded"></div>
+        </div>
+        <div className="w-10 h-10 rounded-lg bg-gray-200 dark:bg-gray-700"></div>
+    </div>
+);
+
+const StatusBadge = ({ status }: { status: string }) => {
+    const styles: Record<string, string> = {
+        SUCCESS: "bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-400",
+        PENDING: "bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-400",
+        CANCELLED: "bg-red-100 text-red-700 dark:bg-red-500/20 dark:text-red-400"
+    };
+    const labels: Record<string, string> = {
+        SUCCESS: "Thành công", PENDING: "Chờ thanh toán", CANCELLED: "Đã hủy"
+    };
+
+    return (
+        <span className={cn("px-2.5 py-0.5 rounded-full text-xs font-bold", styles[status] || styles.PENDING)}>
+            {labels[status] || status}
+        </span>
+    );
+};
