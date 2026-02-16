@@ -94,8 +94,8 @@ function App() {
 
           <Route path="categories" element={<CategoryManagerPage />} />
 
-          {/* <Route path="reports" element={<ReportsPage/>} /> */}
-          <Route path="reports" element={<ReportsPageTest/>} />
+          <Route path="reports" element={<ReportsPage/>} />
+          {/* <Route path="reports" element={<ReportsPageTest/>} /> */}
           <Route path="policies" element={<div className="text-white p-4">Trang Điều Khoản (Đang phát triển)</div>} />
         </Route>
       </Routes>

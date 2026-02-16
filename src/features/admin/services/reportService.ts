@@ -9,7 +9,171 @@ export interface EventsStats {
   recentEvents: Event[];
 }
 
+export interface DashboardStats {
+  totalRevenue: number;
+  totalTicketsSold: number;
+  totalEvents: number;
+  newUsers: number;
+  revenueGrowth: number | null;
+}
+
+export interface RevenueChartData {
+  name: string;
+  revenue: number;
+  tickets: number;
+}
+
+export interface CategoryStats {
+  name: string;
+  value: number;
+  color: string;
+}
+
+export interface RecentOrder {
+  id: number;
+  customerName: string;
+  eventName: string;
+  date: string;
+  amount: number;
+  status: string;
+}
+
+export interface TopEvent {
+  id: number;
+  title: string;
+  date: string;
+  ticketsSold: number;
+  totalTickets: number;
+  revenue: number;
+  status: string;
+}
+
 export const reportService = {
+  // Lấy top events từ API
+  getTopEvents: async (): Promise<TopEvent[]> => {
+    try {
+      const response = await apiClient.get<any>("/dashboard/top-events");
+      
+      // Backend trả về format { code: 200, data: [...], message: "..." }
+      if (response.data && Array.isArray(response.data)) {
+        return response.data.map((item: any) => ({
+          id: item.id || 0,
+          title: item.title || "",
+          date: item.date || "",
+          ticketsSold: item.ticketsSold || 0,
+          totalTickets: item.totalTickets || 0,
+          revenue: item.revenue || 0,
+          status: item.status || "ACTIVE",
+        }));
+      }
+      
+      console.warn("Unexpected top events response:", response);
+      return [];
+    } catch (error) {
+      console.error("Error fetching top events:", error);
+      throw error;
+    }
+  },
+
+  // Lấy recent orders từ API
+  getRecentOrders: async (): Promise<RecentOrder[]> => {
+    try {
+      const response = await apiClient.get<any>("/dashboard/recent-orders");
+      
+      // Backend trả về format { code: 200, data: [...], total_record: 7, current_page: 1 }
+      if (response.data && Array.isArray(response.data)) {
+        return response.data.map((item: any) => ({
+          id: item.id || 0,
+          customerName: item.customerName || "",
+          eventName: item.eventName || "",
+          date: item.date || "",
+          amount: item.amount || 0,
+          status: item.status || "PENDING",
+        }));
+      }
+      
+      console.warn("Unexpected recent orders response:", response);
+      return [];
+    } catch (error) {
+      console.error("Error fetching recent orders:", error);
+      throw error;
+    }
+  },
+
+  // Lấy category stats từ API
+  getCategoryStats: async (): Promise<CategoryStats[]> => {
+    try {
+      const response = await apiClient.get<any>("/dashboard/category-stats");
+      
+      // Backend trả về format { code: 200, data: [...], message: "..." }
+      if (response.data && Array.isArray(response.data)) {
+        return response.data.map((item: any) => ({
+          name: item.name || "",
+          value: item.value || 0,
+          color: item.color || "#8884d8",
+        }));
+      }
+      
+      console.warn("Unexpected category stats response:", response);
+      return [];
+    } catch (error) {
+      console.error("Error fetching category stats:", error);
+      throw error;
+    }
+  },
+
+  // Lấy revenue chart từ API
+  getRevenueChart: async (): Promise<RevenueChartData[]> => {
+    try {
+      const response = await apiClient.get<any>("/dashboard/revenue-chart");
+      
+      // Backend trả về format { code: 200, data: [...], message: "..." }
+      if (response.data && Array.isArray(response.data)) {
+        return response.data.map((item: any) => ({
+          name: item.name || "",
+          revenue: item.revenue || 0,
+          tickets: item.tickets || 0,
+        }));
+      }
+      
+      console.warn("Unexpected revenue chart response:", response);
+      return [];
+    } catch (error) {
+      console.error("Error fetching revenue chart:", error);
+      throw error;
+    }
+  },
+
+  // Lấy dashboard stats từ API
+  getDashboardStats: async (): Promise<DashboardStats> => {
+    try {
+      const response = await apiClient.get<any>("/dashboard/stats");
+      
+      // Backend trả về format { code: 200, data: {...}, message: "..." }
+      if (response.data) {
+        return {
+          totalRevenue: response.data.totalRevenue || 0,
+          totalTicketsSold: response.data.totalTicketsSold || 0,
+          totalEvents: response.data.totalEvents || 0,
+          newUsers: response.data.newUsers || 0,
+          revenueGrowth: response.data.revenueGrowth ?? null,
+        };
+      }
+      
+      console.warn("Unexpected dashboard stats response:", response);
+      return {
+        totalRevenue: 0,
+        totalTicketsSold: 0,
+        totalEvents: 0,
+        newUsers: 0,
+        revenueGrowth: null,
+      };
+    } catch (error) {
+      console.error("Error fetching dashboard stats:", error);
+      throw error;
+    }
+  },
+
   // Lấy thống kê events cho dashboard
   getEventsStats: async (): Promise<EventsStats> => {
     try {
