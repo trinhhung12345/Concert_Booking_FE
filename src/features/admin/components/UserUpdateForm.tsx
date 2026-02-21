@@ -1,56 +1,113 @@
 import React, { useState } from "react";
-import { createUser } from "../services/userService";
+import { updateUser } from "../services/userService";
 
-const initial = {
-  name: "",
-  email: "",
-  phone: "",
-  address: "",
-  password: "",
-  birthday: "",
-  // Mặc định: USER (2)
-  roleId: 2,
+type UserStatus = 1 | null;
+
+export type UserUpdateFormValues = {
+  phone: string;
+  email: string;
+  name: string;
+  address: string;
+  birthday: string; // format: YYYY-MM-DD
+  status: UserStatus;
 };
 
-type UserFormProps = {
+type UserUpdateFormProps = {
+  userId: number | string;
+  initialData: UserUpdateFormValues;
   onSuccess?: () => void;
 };
 
-const UserForm: React.FC<UserFormProps> = ({ onSuccess }) => {
-  const [form, setForm] = useState(initial);
+const UserUpdateForm: React.FC<UserUpdateFormProps> = ({ userId, initialData, onSuccess }) => {
+  const [form, setForm] = useState<UserUpdateFormValues>(initialData);
   const [loading, setLoading] = useState(false);
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
+  ) => {
     const { name, value } = e.target;
-    setForm((f) => ({ ...f, [name]: value }));
+
+    if (name === "status") {
+      setForm((prev) => ({
+        ...prev,
+        status: value === "" ? null : (Number(value) as UserStatus),
+      }));
+      return;
+    }
+
+    setForm((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
   };
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setLoading(true);
+
     try {
-      await createUser(form);
-      setForm(initial);
+      await updateUser(userId, {
+        phone: form.phone,
+        email: form.email,
+        name: form.name,
+        address: form.address,
+        birthday: form.birthday,
+        status: form.status,
+      });
+
       onSuccess && onSuccess();
     } finally {
       setLoading(false);
     }
   };
 
+  const isActivated = form.status === 1;
+
   return (
     <form
-      className="mt-4 bg-gray-900 border border-gray-800 rounded-xl p-4 space-y-4 text-sm"
       onSubmit={handleSubmit}
+      className="mt-4 bg-gray-900 border border-gray-800 rounded-xl p-4 space-y-4 text-sm"
     >
       <div className="flex items-center justify-between gap-2 mb-1">
-        <h2 className="font-semibold text-slate-100 text-base">Tạo người dùng mới</h2>
-        <span className="text-[11px] text-slate-400">Điền đầy đủ thông tin bắt buộc (*)</span>
+        <h2 className="font-semibold text-slate-100 text-base">Cập nhật người dùng</h2>
+      </div>
+
+      {/* Thanh hiển thị trạng thái kích hoạt */}
+      <div
+        className={
+          "w-full rounded-lg px-3 py-2 text-xs font-medium flex items-center justify-between " +
+          (isActivated
+            ? "bg-emerald-900/60 border border-emerald-700 text-emerald-200"
+            : "bg-amber-900/40 border border-amber-700 text-amber-100")
+        }
+      >
+        <span>
+          {isActivated
+            ? "Tài khoản đã được kích hoạt"
+            : "Tài khoản chưa được kích hoạt"}
+        </span>
+        <span
+          className={
+            "inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] " +
+            (isActivated
+              ? "bg-emerald-500/20 text-emerald-100"
+              : "bg-amber-500/20 text-amber-100")
+          }
+        >
+          <span
+            className={
+              "w-1.5 h-1.5 rounded-full " +
+              (isActivated ? "bg-emerald-400" : "bg-amber-400")
+            }
+          />
+          {isActivated ? "Đã kích hoạt" : "Chưa kích hoạt"}
+        </span>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
           <label className="block text-slate-300 mb-1 text-xs" htmlFor="name">
-            Họ và tên <span className="text-red-400">*</span>
+            Họ và tên
           </label>
           <input
             id="name"
@@ -59,13 +116,12 @@ const UserForm: React.FC<UserFormProps> = ({ onSuccess }) => {
             onChange={handleChange}
             placeholder="Nguyễn Văn A"
             className="w-full rounded-lg border border-gray-700 bg-gray-800 px-3 py-2 text-sm text-slate-100 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
-            required
           />
         </div>
 
         <div>
           <label className="block text-slate-300 mb-1 text-xs" htmlFor="email">
-            Email <span className="text-red-400">*</span>
+            Email
           </label>
           <input
             id="email"
@@ -75,59 +131,40 @@ const UserForm: React.FC<UserFormProps> = ({ onSuccess }) => {
             onChange={handleChange}
             placeholder="user@example.com"
             className="w-full rounded-lg border border-gray-700 bg-gray-800 px-3 py-2 text-sm text-slate-100 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
-            required
           />
         </div>
 
         <div>
           <label className="block text-slate-300 mb-1 text-xs" htmlFor="phone">
-            Số điện thoại <span className="text-red-400">*</span>
+            Số điện thoại
           </label>
           <input
             id="phone"
             name="phone"
             value={form.phone}
             onChange={handleChange}
-            placeholder="0909 000 000"
+            placeholder="0987 654 321"
             className="w-full rounded-lg border border-gray-700 bg-gray-800 px-3 py-2 text-sm text-slate-100 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
-            required
           />
         </div>
 
         <div>
           <label className="block text-slate-300 mb-1 text-xs" htmlFor="address">
-            Địa chỉ <span className="text-red-400">*</span>
+            Địa chỉ
           </label>
           <input
             id="address"
             name="address"
             value={form.address}
             onChange={handleChange}
-            placeholder="Quận 1, TP. Hồ Chí Minh"
+            placeholder="Hà Nội, Việt Nam"
             className="w-full rounded-lg border border-gray-700 bg-gray-800 px-3 py-2 text-sm text-slate-100 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
-            required
-          />
-        </div>
-
-        <div>
-          <label className="block text-slate-300 mb-1 text-xs" htmlFor="password">
-            Mật khẩu tạm <span className="text-red-400">*</span>
-          </label>
-          <input
-            id="password"
-            name="password"
-            type="password"
-            value={form.password}
-            onChange={handleChange}
-            placeholder="Ít nhất 6 ký tự"
-            className="w-full rounded-lg border border-gray-700 bg-gray-800 px-3 py-2 text-sm text-slate-100 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
-            required
           />
         </div>
 
         <div>
           <label className="block text-slate-300 mb-1 text-xs" htmlFor="birthday">
-            Ngày sinh <span className="text-red-400">*</span>
+            Ngày sinh
           </label>
           <input
             id="birthday"
@@ -136,24 +173,22 @@ const UserForm: React.FC<UserFormProps> = ({ onSuccess }) => {
             value={form.birthday}
             onChange={handleChange}
             className="w-full rounded-lg border border-gray-700 bg-gray-800 px-3 py-2 text-sm text-slate-100 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
-            required
           />
         </div>
 
         <div>
-          <label className="block text-slate-300 mb-1 text-xs" htmlFor="roleId">
-            Vai trò
+          <label className="block text-slate-300 mb-1 text-xs" htmlFor="status">
+            Trạng thái kích hoạt
           </label>
           <select
-            id="roleId"
-            name="roleId"
-            value={form.roleId}
+            id="status"
+            name="status"
+            value={form.status === null ? "" : String(form.status)}
             onChange={handleChange}
             className="w-full rounded-lg border border-gray-700 bg-gray-800 px-3 py-2 text-sm text-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
           >
-            <option value={0}>SUPER_ADMIN</option>
-            <option value={1}>ADMIN</option>
-            <option value={2}>USER</option>
+            <option value="">Chưa kích hoạt</option>
+            <option value="1">Đã kích hoạt</option>
           </select>
         </div>
       </div>
@@ -164,11 +199,11 @@ const UserForm: React.FC<UserFormProps> = ({ onSuccess }) => {
           className="inline-flex items-center px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium shadow-md shadow-blue-500/20 disabled:opacity-60"
           disabled={loading}
         >
-          {loading ? "Đang tạo..." : "Tạo người dùng"}
+          {loading ? "Đang cập nhật..." : "Lưu thay đổi"}
         </button>
       </div>
     </form>
   );
 };
 
-export default UserForm;
+export default UserUpdateForm;
