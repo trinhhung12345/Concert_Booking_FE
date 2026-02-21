@@ -159,13 +159,13 @@ const UserTable: React.FC<UserTableProps> = ({ users, loading, onDelete, onRoleC
                     <div className="flex items-center gap-2">
                       <span
                         className={`px-2 inline-flex text-[11px] leading-5 font-semibold rounded-full ${getRoleColor(
-                          u.roleType
+                          u.roleId
                         )}`}
                       >
-                        {getRoleLabel(u.roleType)}
+                        {getRoleLabel(u.roleId)}
                       </span>
                       <select
-                        value={u.roleType}
+                        value={u.roleId}
                         onChange={(e) => onRoleChange(u.id, Number(e.target.value))}
                         className="text-xs bg-gray-900 border border-gray-700 rounded px-2 py-1 text-slate-200 focus:outline-none focus:ring-1 focus:ring-blue-500"
                       >
