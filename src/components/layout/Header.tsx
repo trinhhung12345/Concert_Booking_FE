@@ -108,7 +108,7 @@ export default function Header() {
   };
 
   // Check xem user có phải admin không
-  const isAdmin = user?.role?.roleName === "ADMIN";
+  const isAdmin = user?.role?.roleName === "ADMIN" || user?.role?.roleName === "SUPER_ADMIN";
 
   // Check xem đang ở trang admin hay trang thường
   const isAdminPage = location.pathname.startsWith("/admin");
@@ -245,7 +245,8 @@ export default function Header() {
                           {user?.email}
                         </p>
                         {/* Hiện Role trong menu cho ngầu */}
-                        {isAdmin && <span className="text-[10px] font-bold text-white bg-primary px-2 py-0.5 rounded-full w-fit mt-1">ADMIN</span>}
+                        {user?.role?.roleName === "ADMIN" && <span className="text-[10px] font-bold text-white bg-primary px-2 py-0.5 rounded-full w-fit mt-1">ADMIN</span>}
+                        {user?.role?.roleName === "SUPER_ADMIN" && <span className="text-[10px] font-bold text-white bg-red-600 px-2 py-0.5 rounded-full w-fit mt-1">SUPER ADMIN</span>}
                       </div>
                     </DropdownMenuLabel>
                     <DropdownMenuSeparator />
