@@ -26,12 +26,6 @@ export default function AdminHeader({ title }: { title: string }) {
             </Button>
         </Link>
 
-        {/* Nút Tạo sự kiện (Màu xanh lá hoặc Hồng tùy bạn, ở đây để Hồng cho đồng bộ Brand) */}
-        <Button className="bg-primary hover:bg-primary/90 text-primary-foreground gap-2 rounded-full px-5">
-            <FontAwesomeIcon icon={faPlus} />
-            Tạo sự kiện
-        </Button>
-
         {/* Avatar nhỏ */}
         <div className="flex items-center gap-2 pl-4 border-l border-border">
             <Avatar className="h-8 w-8">
