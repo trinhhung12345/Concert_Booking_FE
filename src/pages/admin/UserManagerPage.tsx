@@ -9,6 +9,7 @@ type AdminUser = {
   name: string;
   email: string;
   phone: string;
+  // roleId: id của bản ghi role trong DB
   roleId: number;
   address: string;
   birthday: string;
@@ -39,9 +40,16 @@ const UserManagerPage = () => {
           status: (u.status === 1 ? 1 : null) as 1 | null,
         }));
         setUsers(mapped);
+        // Nếu user đang được chọn, đồng bộ lại dữ liệu sau khi reload
+        if (selectedUser) {
+          const updated = mapped.find((m) => m.id === selectedUser.id);
+          if (updated) {
+            setSelectedUser(updated);
+          }
+        }
       })
       .finally(() => setLoading(false));
-  }, [reload]);
+  }, [reload, selectedUser]);
 
   const handleDelete = async (userId: number) => {
     await deleteUser(userId);
