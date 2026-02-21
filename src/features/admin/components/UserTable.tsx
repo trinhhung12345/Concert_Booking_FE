@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from "react";
-import { FiTrash2, FiSearch } from "react-icons/fi";
+import { FiTrash2, FiSearch, FiEdit2 } from "react-icons/fi";
 import { BsArrowUp, BsArrowDown } from "react-icons/bs";
 
 type User = {
@@ -7,19 +7,26 @@ type User = {
   name: string;
   email: string;
   phone: string;
+  // roleId: id của bản ghi role trong DB
   roleId: number;
+  // roleType: 0 - SUPER_ADMIN, 1 - ADMIN, 2 - USER
+  roleType: number;
+  address?: string;
+  birthday?: string;
+  status?: number | null;
 };
 
 interface UserTableProps {
   users: User[];
   loading: boolean;
   onDelete: (id: number) => void;
-  onRoleChange: (id: number, roleId: number) => void;
+  onRoleChange: (id: number, roleType: number) => void;
+  onEdit?: (user: User) => void;
 }
 
 type SortKey = "id" | "name" | "email" | "phone" | null;
 
-const UserTable: React.FC<UserTableProps> = ({ users, loading, onDelete, onRoleChange }) => {
+const UserTable: React.FC<UserTableProps> = ({ users, loading, onDelete, onRoleChange, onEdit }) => {
   const [searchTerm, setSearchTerm] = useState("");
   const [sortConfig, setSortConfig] = useState<{ key: SortKey; direction: "ascending" | "descending" }>({
     key: null,
@@ -65,13 +72,15 @@ const UserTable: React.FC<UserTableProps> = ({ users, loading, onDelete, onRoleC
   const indexOfFirstItem = indexOfLastItem - itemsPerPage;
   const currentUsers = filteredUsers.slice(indexOfFirstItem, indexOfLastItem);
 
-  const getRoleLabel = (roleId: number) => {
-    if (roleId === 1) return "Admin";
-    return "User";
+  const getRoleLabel = (roleType: number) => {
+    if (roleType === 0) return "SUPER_ADMIN";
+    if (roleType === 1) return "ADMIN";
+    return "USER";
   };
 
-  const getRoleColor = (roleId: number) => {
-    if (roleId === 1) return "bg-purple-100 text-purple-800";
+  const getRoleColor = (roleType: number) => {
+    if (roleType === 0) return "bg-red-100 text-red-800";
+    if (roleType === 1) return "bg-purple-100 text-purple-800";
     return "bg-blue-100 text-blue-800";
   };
 
@@ -152,29 +161,41 @@ const UserTable: React.FC<UserTableProps> = ({ users, loading, onDelete, onRoleC
                     <div className="flex items-center gap-2">
                       <span
                         className={`px-2 inline-flex text-[11px] leading-5 font-semibold rounded-full ${getRoleColor(
-                          u.roleId
+                          u.roleType
                         )}`}
                       >
-                        {getRoleLabel(u.roleId)}
+                        {getRoleLabel(u.roleType)}
                       </span>
                       <select
-                        value={u.roleId}
+                        value={u.roleType}
                         onChange={(e) => onRoleChange(u.id, Number(e.target.value))}
                         className="text-xs bg-gray-900 border border-gray-700 rounded px-2 py-1 text-slate-200 focus:outline-none focus:ring-1 focus:ring-blue-500"
                       >
-                        <option value={2}>User</option>
-                        <option value={1}>Admin</option>
+                        <option value={0}>SUPER_ADMIN</option>
+                        <option value={1}>ADMIN</option>
+                        <option value={2}>USER</option>
                       </select>
                     </div>
                   </td>
                   <td className="px-4 py-3 whitespace-nowrap text-sm font-medium">
-                    <button
-                      className="inline-flex items-center gap-1 text-red-400 hover:text-red-300 transition-colors"
-                      onClick={() => onDelete(u.id)}
-                    >
-                      <FiTrash2 className="w-4 h-4" />
-                      <span>Xóa</span>
-                    </button>
+                    <div className="flex items-center gap-3">
+                      {onEdit && (
+                        <button
+                          className="inline-flex items-center gap-1 text-blue-400 hover:text-blue-300 transition-colors"
+                          onClick={() => onEdit(u)}
+                        >
+                          <FiEdit2 className="w-4 h-4" />
+                          <span>Sửa</span>
+                        </button>
+                      )}
+                      <button
+                        className="inline-flex items-center gap-1 text-red-400 hover:text-red-300 transition-colors"
+                        onClick={() => onDelete(u.id)}
+                      >
+                        <FiTrash2 className="w-4 h-4" />
+                        <span>Xóa</span>
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ))
