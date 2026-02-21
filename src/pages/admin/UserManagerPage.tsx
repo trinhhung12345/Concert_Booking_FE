@@ -9,10 +9,7 @@ type AdminUser = {
   name: string;
   email: string;
   phone: string;
-  // roleId: id của bản ghi role trong DB
   roleId: number;
-  // roleType: 0 - SUPER_ADMIN, 1 - ADMIN, 2 - USER
-  roleType: number;
   address: string;
   birthday: string;
   status: 1 | null;
@@ -34,32 +31,28 @@ const UserManagerPage = () => {
           name: u.name,
           email: u.email,
           phone: u.phone,
-          roleId: u.role?.roleId ?? 0,
-          roleType: u.role?.roleType ?? 2,
+          // Backend: roleType 0 - SUPER_ADMIN, 1 - ADMIN, 2 - USER
+          // FE hiển thị đúng 0/1/2 nên dùng trực tiếp roleType
+          roleId: u.role?.roleType ?? 2,
           address: u.address ?? "",
           birthday: u.birthday ? u.birthday.slice(0, 10) : "",
-          status: u.status === 1 ? 1 : null,
+          status: (u.status === 1 ? 1 : null) as 1 | null,
         }));
         setUsers(mapped);
-        // Nếu user đang được chọn, đồng bộ lại dữ liệu sau khi reload
-        if (selectedUser) {
-          const updated = mapped.find((m) => m.id === selectedUser.id);
-          if (updated) {
-            setSelectedUser(updated);
-          }
-        }
       })
       .finally(() => setLoading(false));
-  }, [reload, selectedUser]);
+  }, [reload]);
 
   const handleDelete = async (userId: number) => {
     await deleteUser(userId);
     setReload((r) => !r);
   };
 
-  const handleRoleChange = async (userId: number, roleType: number) => {
-    // Backend schema: 0 - SUPER_ADMIN, 1 - ADMIN, 2 - USER
-    await updateUserRole(userId, { roleType });
+  const handleRoleChange = async (userId: number, roleId: number) => {
+    // roleId trên FE: 0 - SUPER_ADMIN, 1 - ADMIN, 2 - USER
+    // Backend nhận 1 - SUPER_ADMIN, 2 - ADMIN, 3 - USER
+    const backendRole = roleId + 1;
+    await updateUserRole(userId, { roleId: backendRole });
     setReload((r) => !r);
   };
 
@@ -90,6 +83,7 @@ const UserManagerPage = () => {
               } as UserUpdateFormValues}
               onSuccess={() => {
                 setReload((r) => !r);
+                setSelectedUser(null);
               }}
             />
           </div>
@@ -99,7 +93,18 @@ const UserManagerPage = () => {
           loading={loading}
           onDelete={handleDelete}
           onRoleChange={handleRoleChange}
-          onEdit={(user) => setSelectedUser(user)}
+          onEdit={(user) =>
+            setSelectedUser({
+              id: user.id,
+              name: user.name,
+              email: user.email,
+              phone: user.phone,
+              roleId: user.roleId,
+              address: user.address ?? "",
+              birthday: user.birthday ?? "",
+              status: (user.status === 1 ? 1 : null) as 1 | null,
+            })
+          }
         />
       </div>
     </div>
