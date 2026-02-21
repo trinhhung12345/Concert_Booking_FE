@@ -29,7 +29,14 @@ const UserForm: React.FC<UserFormProps> = ({ onSuccess }) => {
     e.preventDefault();
     setLoading(true);
     try {
-      await createUser(form);
+      // FE đang dùng roleId: 0 - SUPER_ADMIN, 1 - ADMIN, 2 - USER
+      // Backend yêu cầu: 1 - SUPER_ADMIN, 2 - ADMIN, 3 - USER
+      const backendPayload = {
+        ...form,
+        roleId: Number(form.roleId) + 1,
+      };
+
+      await createUser(backendPayload);
       setForm(initial);
       onSuccess && onSuccess();
     } finally {

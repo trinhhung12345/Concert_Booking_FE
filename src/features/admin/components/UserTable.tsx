@@ -7,10 +7,8 @@ type User = {
   name: string;
   email: string;
   phone: string;
-  // roleId: id của bản ghi role trong DB
+  // roleId: 0 - SUPER_ADMIN, 1 - ADMIN, 2 - USER
   roleId: number;
-  // roleType: 0 - SUPER_ADMIN, 1 - ADMIN, 2 - USER
-  roleType: number;
   address?: string;
   birthday?: string;
   status?: number | null;
@@ -20,7 +18,7 @@ interface UserTableProps {
   users: User[];
   loading: boolean;
   onDelete: (id: number) => void;
-  onRoleChange: (id: number, roleType: number) => void;
+  onRoleChange: (id: number, roleId: number) => void;
   onEdit?: (user: User) => void;
 }
 
@@ -72,16 +70,16 @@ const UserTable: React.FC<UserTableProps> = ({ users, loading, onDelete, onRoleC
   const indexOfFirstItem = indexOfLastItem - itemsPerPage;
   const currentUsers = filteredUsers.slice(indexOfFirstItem, indexOfLastItem);
 
-  const getRoleLabel = (roleType: number) => {
-    if (roleType === 0) return "SUPER_ADMIN";
-    if (roleType === 1) return "ADMIN";
-    return "USER";
+  const getRoleLabel = (roleId: number) => {
+    if (roleId === 0) return "SUPER_ADMIN";
+    if (roleId === 1) return "ADMIN";
+    return "USER"; // 2
   };
 
-  const getRoleColor = (roleType: number) => {
-    if (roleType === 0) return "bg-red-100 text-red-800";
-    if (roleType === 1) return "bg-purple-100 text-purple-800";
-    return "bg-blue-100 text-blue-800";
+  const getRoleColor = (roleId: number) => {
+    if (roleId === 0) return "bg-red-100 text-red-800"; // SUPER_ADMIN
+    if (roleId === 1) return "bg-purple-100 text-purple-800"; // ADMIN
+    return "bg-blue-100 text-blue-800"; // USER
   };
 
   if (loading) {
