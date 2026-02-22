@@ -38,7 +38,19 @@ interface LoginResponse {
   };
 }
 
+interface ForgotPasswordResponse {
+  code: number;
+  message: string;
+}
+
 export const authService = {
+  // API: Quên mật khẩu
+  forgotPassword: async (email: string) => {
+    return apiClient.post<any, ForgotPasswordResponse>("/forgot-password", {
+      email,
+    });
+  },
+
   // API 1: Gửi OTP
   sendOtp: async (email: string, phone: string) => {
     const payload = {
