@@ -2,19 +2,25 @@ import { useEffect, useState } from "react";
 import { getUsers, deleteUser, updateUserRole, type UserListResponse } from "../../features/admin/services/userService";
 import UserTable from "../../features/admin/components/UserTable";
 import UserForm from "../../features/admin/components/UserForm";
+import UserUpdateForm, { type UserUpdateFormValues } from "../../features/admin/components/UserUpdateForm";
 
 type AdminUser = {
   id: number;
   name: string;
   email: string;
   phone: string;
+  // roleId: id của bản ghi role trong DB
   roleId: number;
+  address: string;
+  birthday: string;
+  status: 1 | null;
 };
 
 const UserManagerPage = () => {
   const [users, setUsers] = useState<AdminUser[]>([]);
   const [loading, setLoading] = useState(false);
   const [reload, setReload] = useState(false);
+  const [selectedUser, setSelectedUser] = useState<AdminUser | null>(null);
 
   useEffect(() => {
     setLoading(true);
@@ -26,12 +32,24 @@ const UserManagerPage = () => {
           name: u.name,
           email: u.email,
           phone: u.phone,
-          roleId: u.role?.roleId ?? 1,
+          // Backend: roleType 0 - SUPER_ADMIN, 1 - ADMIN, 2 - USER
+          // FE hiển thị đúng 0/1/2 nên dùng trực tiếp roleType
+          roleId: u.role?.roleType ?? 2,
+          address: u.address ?? "",
+          birthday: u.birthday ? u.birthday.slice(0, 10) : "",
+          status: (u.status === 1 ? 1 : null) as 1 | null,
         }));
         setUsers(mapped);
+        // Nếu user đang được chọn, đồng bộ lại dữ liệu sau khi reload
+        if (selectedUser) {
+          const updated = mapped.find((m) => m.id === selectedUser.id);
+          if (updated) {
+            setSelectedUser(updated);
+          }
+        }
       })
       .finally(() => setLoading(false));
-  }, [reload]);
+  }, [reload, selectedUser]);
 
   const handleDelete = async (userId: number) => {
     await deleteUser(userId);
@@ -39,7 +57,10 @@ const UserManagerPage = () => {
   };
 
   const handleRoleChange = async (userId: number, roleId: number) => {
-    await updateUserRole(userId, { roleId });
+    // roleId trên FE: 0 - SUPER_ADMIN, 1 - ADMIN, 2 - USER
+    // Backend nhận 1 - SUPER_ADMIN, 2 - ADMIN, 3 - USER
+    const backendRole = roleId + 1;
+    await updateUserRole(userId, { roleId: backendRole });
     setReload((r) => !r);
   };
 
@@ -56,7 +77,43 @@ const UserManagerPage = () => {
         </div>
 
         <UserForm onSuccess={() => setReload((r) => !r)} />
-        <UserTable users={users} loading={loading} onDelete={handleDelete} onRoleChange={handleRoleChange} />
+        {selectedUser && (
+          <div className="mt-6">
+            <UserUpdateForm
+              userId={selectedUser.id}
+              initialData={{
+                phone: selectedUser.phone,
+                email: selectedUser.email,
+                name: selectedUser.name,
+                address: selectedUser.address,
+                birthday: selectedUser.birthday,
+                status: selectedUser.status,
+              } as UserUpdateFormValues}
+              onSuccess={() => {
+                setReload((r) => !r);
+                setSelectedUser(null);
+              }}
+            />
+          </div>
+        )}
+        <UserTable
+          users={users}
+          loading={loading}
+          onDelete={handleDelete}
+          onRoleChange={handleRoleChange}
+          onEdit={(user) =>
+            setSelectedUser({
+              id: user.id,
+              name: user.name,
+              email: user.email,
+              phone: user.phone,
+              roleId: user.roleId,
+              address: user.address ?? "",
+              birthday: user.birthday ?? "",
+              status: (user.status === 1 ? 1 : null) as 1 | null,
+            })
+          }
+        />
       </div>
     </div>
   );
