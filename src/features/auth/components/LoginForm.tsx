@@ -7,6 +7,7 @@ import { Button } from "../../../components/ui/button";
 import { Input } from "../../../components/ui/input";
 import { Label } from "../../../components/ui/label";
 import { Eye, EyeOff } from "lucide-react";
+import ForgotPasswordDialog from "./ForgotPasswordDialog";
 
 type LoginFormData = z.infer<typeof LoginSchema>;
 
@@ -18,6 +19,7 @@ interface LoginFormProps {
 
 export default function LoginForm({ onSubmitAPI, isLoading }: LoginFormProps) {
   const [showPassword, setShowPassword] = useState(false);
+  const [isForgotPasswordOpen, setIsForgotPasswordOpen] = useState(false);
 
   const {
     register,
@@ -75,10 +77,19 @@ export default function LoginForm({ onSubmitAPI, isLoading }: LoginFormProps) {
       </div>
 
       <div className="flex justify-end">
-        <a href="#" className="text-sm font-medium text-primary hover:underline">
+        <button
+          type="button"
+          onClick={() => setIsForgotPasswordOpen(true)}
+          className="text-sm font-medium text-primary hover:underline bg-transparent border-none p-0 cursor-pointer"
+        >
           Quên mật khẩu?
-        </a>
+        </button>
       </div>
+
+      <ForgotPasswordDialog
+        isOpen={isForgotPasswordOpen}
+        onClose={() => setIsForgotPasswordOpen(false)}
+      />
 
       <Button
         type="submit"
