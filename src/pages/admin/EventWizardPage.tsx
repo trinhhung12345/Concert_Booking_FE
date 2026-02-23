@@ -7,6 +7,7 @@ import StepEventInfo, { type EventInfoFormValues } from "@/features/admin/compon
 import StepTimeTickets from "@/features/admin/components/event-wizard/StepTimeTickets";
 import StepSeatMap from "@/features/admin/components/event-wizard/StepSeatMap";
 import { eventService, type Event, type Showing, type TicketType } from "@/features/concerts/services/eventService";
+import { seatMapService } from "@/features/admin/services/seatMapService";
 
 export default function EventWizardPage() {
   const { id } = useParams(); // Nếu có ID -> Chế độ Edit
@@ -17,6 +18,7 @@ export default function EventWizardPage() {
 
   // State for cancel confirmation dialog
   const [showCancelDialog, setShowCancelDialog] = useState(false);
+  const [showSeatMapPrompt, setShowSeatMapPrompt] = useState(false);
 
   // State lưu dữ liệu của từng step trong wizard session
   const [step1Data, setStep1Data] = useState<EventInfoFormValues | null>(null);
@@ -688,9 +690,39 @@ export default function EventWizardPage() {
             }
         }
 
-        // Chuyển bước nếu cần
         if (andNext) {
-            setCurrentStep((prev) => prev + 1);
+            if (currentStep === 3) {
+                // If currently at step 3 (Seat Map), navigate to admin dashboard instead of next step
+                alert("Hoàn tất tạo sự kiện!");
+                navigate("/admin/events");
+            } else if (currentStep === 2) {
+                // Check if any showing already has a seat map
+                let hasExistingSeatMap = false;
+                if (createdEventId) {
+                    try {
+                        const showings = await eventService.getShowingsByEventId(createdEventId);
+                        for (const showing of showings) {
+                            const seatMaps = await seatMapService.getSeatMapsByShowingId(showing.id);
+                            if (seatMaps && seatMaps.length > 0) {
+                                hasExistingSeatMap = true;
+                                break;
+                            }
+                        }
+                    } catch (error) {
+                        console.error("Error checking existing seat maps:", error);
+                    }
+                }
+                
+                if (hasExistingSeatMap) {
+                    // Event already has seat map, go directly to step 3
+                    setCurrentStep(3);
+                } else {
+                    // No seat map exists, show prompt dialog
+                    setShowSeatMapPrompt(true);
+                }
+            } else {
+                setCurrentStep((prev) => prev + 1);
+            }
         } else {
             alert("Lưu thành công!");
         }
@@ -703,12 +735,32 @@ export default function EventWizardPage() {
     }
   };
 
+  // --- ACTIONS ---
+
+  const handleCreateNew = async () => {
+    // Save current step data before trying to proceed
+    if (currentStep === 1) {
+      await handleSave(true);
+    } else if (currentStep === 2) {
+      await handleSave(true);
+    } else {
+      // For Step 3, just move next as it likely auto-saves or doesn't need explicit save here
+      // But based on user request "Lưu & Tiếp tục", we should probably save if applicable
+      // For now, let's stick to the existing 'andNext' logic
+      handleSave(true);
+    }
+  };
+
+  const handleSaveDraft = async () => {
+    await handleSave(false);
+  };
+
   return (
     <div className="min-h-screen bg-background text-foreground pb-20">
         <EventWizardHeader
             currentStep={currentStep}
-            onSave={() => handleSave(false)}
-            onNext={() => handleSave(true)}
+            onSave={handleSaveDraft}
+            onNext={handleCreateNew}
             onCancel={handleCancel}
             onStepChange={handleStepChange}
             loading={loading}
@@ -750,13 +802,6 @@ export default function EventWizardPage() {
                           showingsData={step2Data || loadedShowingsData}
                         />
                     )}
-
-                    {currentStep === 4 && (
-                        <div className="text-center py-20 bg-card rounded-xl border border-border">
-                            <h3 className="text-xl font-bold text-foreground">Thanh toán & Publish</h3>
-                            <p className="text-muted-foreground mt-2">Tính năng đang phát triển...</p>
-                        </div>
-                    )}
                 </>
             )}
         </div>
@@ -777,6 +822,38 @@ export default function EventWizardPage() {
                     </Button>
                     <Button variant="destructive" onClick={confirmCancel}>
                         Hủy và thoát
+                    </Button>
+                </DialogFooter>
+            </DialogContent>
+        </Dialog>
+
+        {/* SEAT MAP PROMPT DIALOG (STEP 2 -> 3) */}
+        <Dialog open={showSeatMapPrompt} onOpenChange={(open) => {
+            // Prevent closing by clicking outside if needed, 
+            // but allowing it is fine as data is already saved.
+            setShowSeatMapPrompt(open);
+        }}>
+            <DialogContent>
+                <DialogHeader>
+                    <DialogTitle>Cấu hình Sơ đồ ghế ngồi</DialogTitle>
+                    <DialogDescription>
+                        Bạn đã lưu thành công thông tin sự kiện và vé. <br/>
+                        Bạn có muốn tiếp tục thiết kế <strong>Sơ đồ ghế ngồi</strong> cho sự kiện này không?
+                    </DialogDescription>
+                </DialogHeader>
+                <DialogFooter className="flex flex-col sm:flex-row gap-2">
+                    <Button variant="outline" onClick={() => {
+                        setShowSeatMapPrompt(false);
+                        alert("Hoàn tất quy trình tạo sự kiện!");
+                        navigate("/admin/events");
+                    }}>
+                        Hoàn tất ngay (Không dùng sơ đồ ghế)
+                    </Button>
+                    <Button onClick={() => {
+                         setShowSeatMapPrompt(false);
+                         setCurrentStep(3);
+                    }}>
+                        Tiếp tục tạo sơ đồ ghế
                     </Button>
                 </DialogFooter>
             </DialogContent>
