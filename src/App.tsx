@@ -33,6 +33,7 @@ import UserManagerPage from "./pages/admin/UserManagerPage";
 import CategoryManagerPage from "./pages/admin/CategoryManagerPage";
 import ReportsPage from "./pages/admin/ReportsPage";
 import ReportsPageTest from "./pages/admin/ReportsPageTest";
+import AdminProfilePage from "./pages/admin/AdminProfilePage";
 
 function App() {
   const { isLoginPromptOpen, closeLoginPrompt } = useModalStore();
@@ -93,6 +94,8 @@ function App() {
           <Route path="users" element={<UserManagerPage />} />
 
           <Route path="categories" element={<CategoryManagerPage />} />
+
+          <Route path="profile" element={<AdminProfilePage />} />
 
           <Route path="reports" element={<ReportsPage/>} />
           {/* <Route path="reports" element={<ReportsPageTest/>} /> */}
