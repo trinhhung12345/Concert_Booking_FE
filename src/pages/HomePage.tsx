@@ -78,12 +78,22 @@ export default function HomePage() {
     const fetchData = async () => {
       setIsLoading(true);
       try {
-        const cats = await categoryService.getAll();
-        setCategories(cats);
+        // Normalize categories response to always be an array
+        const catsResponse = await categoryService.getAll();
+        const normalizedCategories: Category[] = Array.isArray(catsResponse)
+          ? catsResponse
+          : (catsResponse as any)?.data && Array.isArray((catsResponse as any).data)
+          ? (catsResponse as any).data
+          : [];
+        setCategories(normalizedCategories);
 
-        const data: Event[] = searchResults
-          ? searchResults
-          : await eventService.getAll();
+        // Normalize events/search results response to always be an array
+        const eventsResponse = searchResults ?? (await eventService.getAll());
+        const data: Event[] = Array.isArray(eventsResponse)
+          ? eventsResponse
+          : (eventsResponse as any)?.data && Array.isArray((eventsResponse as any).data)
+          ? (eventsResponse as any).data
+          : [];
 
         const grouped: Record<number, EventProps[]> = {};
 
