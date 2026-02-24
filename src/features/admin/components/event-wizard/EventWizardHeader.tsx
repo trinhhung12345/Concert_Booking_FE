@@ -74,24 +74,50 @@ export default function EventWizardHeader({
                 onClick={onCancel}
                 disabled={loading}
             >
-                Hủy
+                Hủy bỏ
             </Button>
+            
+            {/* Nút Quay lại - Chỉ hiện khi không phải bước 1 */}
+            {currentStep > 1 && (
+                <Button
+                    variant="outline"
+                    size="sm"
+                    className="border-border text-muted-foreground hover:bg-muted hover:text-foreground"
+                    onClick={() => onStepChange?.(currentStep - 1)}
+                    disabled={loading}
+                >
+                    <FontAwesomeIcon icon={faCheck} className="mr-2 rotate-180 hidden" /> {/* Placeholder icon to fix alignment if needed */}
+                    Quay lại
+                </Button>
+            )}
+
+            {/* Nút Lưu nháp - Luôn hiện nhưng ít nổi bật hơn */}
             <Button
-                variant="outline"
+                variant="secondary"
                 size="sm"
-                className="border-border text-muted-foreground hover:bg-muted hover:text-foreground"
+                className="bg-secondary text-secondary-foreground hover:bg-secondary/80 hidden sm:flex"
                 onClick={onSave}
                 disabled={loading}
             >
-                Lưu
+                Lưu tiến trình hiện tại
             </Button>
+
+            {/* Nút Tiếp tục / Hoàn tất - Nổi bật nhất */}
             <Button
                 size="sm"
-                className="bg-primary hover:bg-primary/90 text-primary-foreground"
+                className={cn(
+                  "min-w-[120px] shadow-sm transition-all",
+                  "bg-primary hover:bg-primary/90 text-primary-foreground shadow-primary/20"
+                )}
                 onClick={onNext}
                 disabled={loading}
             >
-                {currentStep === 3 ? "Hoàn tất" : "Tiếp tục"}
+                {loading 
+                  ? <><FontAwesomeIcon icon={faCheck} spin className="mr-2" /> Đang xử lý...</> 
+                  : currentStep === 3 
+                    ? <><FontAwesomeIcon icon={faCheck} className="mr-2" /> Hoàn tất</> 
+                    : "Lưu & Tiếp tục"
+                }
             </Button>
         </div>
       </div>

@@ -60,6 +60,7 @@ export default function SeatMapEditor({ showingId, onSave }: SeatMapEditorProps)
   const [ticketTypes, setTicketTypes] = useState<TicketType[]>([]);
   const [loadingTicketTypes, setLoadingTicketTypes] = useState(false);
   const [loadingSeatMap, setLoadingSeatMap] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [dialogType, setDialogType] = useState<'delete' | 'soft-delete'>('delete');
@@ -384,12 +385,16 @@ export default function SeatMapEditor({ showingId, onSave }: SeatMapEditorProps)
       return;
     }
 
+    if (isSaving) return;
+
     // Validate seats against ticket quantity before saving
     const validation = validateSeatsAgainstTicketQuantity();
     if (!validation.valid) {
       alert("Lỗi ràng buộc dữ liệu:\n\n" + validation.errors.join("\n"));
       return;
     }
+
+    setIsSaving(true);
 
     try {
       // GET lại seatmap hiện tại từ server để đảm bảo dữ liệu mới nhất
@@ -562,6 +567,8 @@ export default function SeatMapEditor({ showingId, onSave }: SeatMapEditorProps)
     } catch (error) {
       console.error("Lỗi khi lưu sơ đồ ghế:", error);
       alert("Lỗi khi lưu sơ đồ ghế: " + (error as Error).message);
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -774,8 +781,17 @@ export default function SeatMapEditor({ showingId, onSave }: SeatMapEditorProps)
       <div className="w-72 border-l border-border bg-card flex flex-col">
         <div className="p-4 border-b border-border flex justify-between items-center bg-card z-10">
           <h3 className="font-bold">Thuộc tính</h3>
-          <Button size="sm" onClick={handleSaveWithExistingCheck} className="bg-primary hover:bg-primary/90">
-            <FontAwesomeIcon icon={faSave} className="mr-2" /> Lưu
+          <Button 
+            size="sm" 
+            onClick={handleSaveWithExistingCheck} 
+            className="bg-primary hover:bg-primary/90"
+            disabled={isSaving}
+          >
+            {isSaving ? (
+              <><FontAwesomeIcon icon={faRefresh} spin className="mr-2" /> Đang lưu...</>
+            ) : (
+              <><FontAwesomeIcon icon={faSave} className="mr-2" /> Lưu</>
+            )}
           </Button>
         </div>
 
