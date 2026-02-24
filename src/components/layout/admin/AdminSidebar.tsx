@@ -9,15 +9,22 @@ import {
 } from "@fortawesome/free-solid-svg-icons";
 import { cn } from "@/lib/utils";
 
-const MENU_ITEMS = [
-  { path: "/admin/events", icon: faCalendarAlt, label: "Sự kiện của tôi" },
-  { path: "/admin/users", icon: faTicket, label: "Quản lý người dùng" },
-  { path: "/admin/categories", icon: faTags, label: "Quản lý danh mục" },
-  { path: "/admin/reports", icon: faChartLine, label: "Quản lý báo cáo" },
-  { path: "/admin/policies", icon: faFileContract, label: "Điều khoản tổ chức" },
-];
+import { useAuthStore } from "@/store/useAuthStore";
 
 export default function AdminSidebar() {
+  const { user } = useAuthStore();
+  // Check role
+  const isSuperAdmin = user?.role?.roleName === "SUPER_ADMIN";
+
+  const MENU_ITEMS = [
+    { path: "/admin/events", icon: faCalendarAlt, label: "Sự kiện của tôi" },
+    // Chỉ hiện menu Quản lý người dùng nếu là SUPER_ADMIN
+    ...(isSuperAdmin ? [{ path: "/admin/users", icon: faTicket, label: "Quản lý người dùng" }] : []),
+    { path: "/admin/categories", icon: faTags, label: "Quản lý danh mục" },
+    { path: "/admin/reports", icon: faChartLine, label: "Quản lý báo cáo" },
+    { path: "/admin/policies", icon: faFileContract, label: "Điều khoản tổ chức" },
+  ];
+
   return (
     <aside className="w-64 bg-card text-card-foreground flex flex-col min-h-screen border-r border-border">
       {/* 1. BRAND LOGO */}
