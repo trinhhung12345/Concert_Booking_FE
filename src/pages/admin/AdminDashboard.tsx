@@ -18,6 +18,7 @@ import {
   mockCategories,
   getMockUserById,
 } from "@/lib/mock_data";
+import { useAuthStore } from "@/store/useAuthStore";
 
 // Helper function to format currency
 const formatCurrency = (amount: number): string => {
@@ -53,6 +54,9 @@ const getStatusLabel = (status: number): { label: string; color: string } => {
 };
 
 export default function AdminDashboard() {
+  const { user } = useAuthStore();
+  const isSuperAdmin = user?.role?.roleName === "SUPER_ADMIN";
+
   // Calculate stats from mock data
   const totalEvents = mockEvents.length;
   const totalUsers = mockUsers.length;
@@ -110,12 +114,16 @@ export default function AdminDashboard() {
       href: "/admin/events",
       color: "hover:bg-purple-500/10 hover:text-purple-400",
     },
-    {
-      label: "Quản lý người dùng",
-      icon: Users,
-      href: "/admin/users",
-      color: "hover:bg-blue-500/10 hover:text-blue-400",
-    },
+    ...(isSuperAdmin
+      ? [
+        {
+          label: "Quản lý người dùng",
+          icon: Users,
+          href: "/admin/users",
+          color: "hover:bg-blue-500/10 hover:text-blue-400",
+        },
+      ]
+      : []),
     {
       label: "Quản lý danh mục",
       icon: Settings,
@@ -318,11 +326,10 @@ export default function AdminDashboard() {
                 </p>
                 <div className="mt-2">
                   <span
-                    className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs ${
-                      category.active
+                    className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs ${category.active
                         ? "bg-green-500/20 text-green-400"
                         : "bg-red-500/20 text-red-400"
-                    }`}
+                      }`}
                   >
                     {category.active ? "Hoạt động" : "Không hoạt động"}
                   </span>

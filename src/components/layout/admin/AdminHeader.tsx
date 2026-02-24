@@ -1,14 +1,11 @@
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faPlus, faGlobe } from "@fortawesome/free-solid-svg-icons";
-import { useAuthStore } from "@/store/useAuthStore";
+import { faGlobe } from "@fortawesome/free-solid-svg-icons";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
+import AdminProfilePopup from "./AdminProfilePopup";
 
 export default function AdminHeader({ title }: { title: string }) {
-  const { user } = useAuthStore();
-
   return (
     <header className="h-16 bg-card border-b border-border flex items-center justify-between px-6 sticky top-0 z-40 text-card-foreground">
       {/* LEFT: Page Title */}
@@ -26,15 +23,9 @@ export default function AdminHeader({ title }: { title: string }) {
             </Button>
         </Link>
 
-        {/* Avatar nhỏ */}
-        <div className="flex items-center gap-2 pl-4 border-l border-border">
-            <Avatar className="h-8 w-8">
-                <AvatarImage src="" />
-                <AvatarFallback className="bg-primary text-primary-foreground text-xs">
-                    {user?.name?.charAt(0)}
-                </AvatarFallback>
-            </Avatar>
-            <span className="text-sm font-medium hidden sm:block">{user?.name}</span>
+        {/* Profile Popup */}
+        <div className="pl-4 border-l border-border">
+            <AdminProfilePopup />
         </div>
       </div>
     </header>
