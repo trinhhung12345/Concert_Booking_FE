@@ -12,6 +12,7 @@ import { Button } from "@/components/ui/button";
 import { mockDashboardData } from "@/features/admin/data/mock_data";
 import { reportService, type DashboardStats, type RevenueChartData, type CategoryStats, type RecentOrder, type TopEvent } from "@/features/admin/services/reportService";
 import { cn } from "@/lib/utils";
+import * as XLSX from "xlsx";
 
 // Helper format tiền tệ
 const formatCurrency = (val: number) => 
@@ -82,6 +83,80 @@ export default function ReportsPageTest() {
   // Sử dụng top events từ API nếu có, fallback về mock data
   const displayTopEvents = topEventsData.length > 0 ? topEventsData : topEvents;
 
+  const handleExportReport = () => {
+    try {
+      const summarySheetData = [
+        {
+          "Chỉ tiêu": "Tổng doanh thu",
+          "Giá trị": displayKpi.totalRevenue,
+          "Hiển thị": formatCurrency(displayKpi.totalRevenue),
+        },
+        {
+          "Chỉ tiêu": "Vé đã bán",
+          "Giá trị": displayKpi.totalTicketsSold,
+          "Hiển thị": displayKpi.totalTicketsSold.toLocaleString(),
+        },
+        {
+          "Chỉ tiêu": "Sự kiện tổ chức",
+          "Giá trị": displayKpi.totalEvents,
+          "Hiển thị": displayKpi.totalEvents.toString(),
+        },
+        {
+          "Chỉ tiêu": "Thành viên mới",
+          "Giá trị": displayKpi.totalUsers,
+          "Hiển thị": displayKpi.totalUsers.toString(),
+        },
+      ];
+
+      const revenueSheetData = displayRevenueChart.map((item) => ({
+        "Kỳ": item.name,
+        "Doanh thu": item.revenue,
+        "Số vé": item.tickets,
+      }));
+
+      const categorySheetData = displayCategoryPie.map((item) => ({
+        "Thể loại": item.name,
+        "Tỷ trọng": item.value,
+      }));
+
+      const recentOrdersSheetData = displayRecentOrders.map((order) => ({
+        "Mã đơn": order.id,
+        "Khách hàng": order.customerName,
+        "Sự kiện": order.eventName,
+        "Ngày": order.date,
+        "Tổng tiền": order.amount,
+        "Trạng thái": order.status,
+      }));
+
+      const topEventsSheetData = displayTopEvents.map((event) => ({
+        "Sự kiện": event.title,
+        "Ngày": event.date,
+        "Vé đã bán": event.ticketsSold,
+        "Tổng vé": event.totalTickets,
+        "Doanh thu": event.revenue,
+        "Trạng thái": event.status,
+      }));
+
+      const workbook = XLSX.utils.book_new();
+      const summarySheet = XLSX.utils.json_to_sheet(summarySheetData);
+      const revenueSheet = XLSX.utils.json_to_sheet(revenueSheetData);
+      const categorySheet = XLSX.utils.json_to_sheet(categorySheetData);
+      const ordersSheet = XLSX.utils.json_to_sheet(recentOrdersSheetData);
+      const topEventsSheet = XLSX.utils.json_to_sheet(topEventsSheetData);
+
+      XLSX.utils.book_append_sheet(workbook, summarySheet, "Tong_quan");
+      XLSX.utils.book_append_sheet(workbook, revenueSheet, "Doanh_thu");
+      XLSX.utils.book_append_sheet(workbook, categorySheet, "The_loai");
+      XLSX.utils.book_append_sheet(workbook, ordersSheet, "Don_hang");
+      XLSX.utils.book_append_sheet(workbook, topEventsSheet, "Top_su_kien");
+
+      const today = new Date().toISOString().slice(0, 10);
+      XLSX.writeFile(workbook, `bao_cao_tong_quan_${today}.xlsx`);
+    } catch (err) {
+      console.error("Export report failed", err);
+    }
+  };
+
   return (
     <div className="p-6 space-y-6 bg-gray-50 dark:bg-[#121418] min-h-screen text-gray-900 dark:text-gray-100">
       
@@ -95,7 +170,7 @@ export default function ReportsPageTest() {
            <Button variant="outline" className="bg-white dark:bg-[#1a1c23] border-gray-200 dark:border-gray-700">
               Tháng này
            </Button>
-           <Button className="bg-primary hover:bg-primary/90 text-white gap-2">
+            <Button className="bg-primary hover:bg-primary/90 text-white gap-2" onClick={handleExportReport}>
               <FontAwesomeIcon icon={faDownload} /> Xuất báo cáo
            </Button>
         </div>
