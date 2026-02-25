@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { eventService, type Event } from "@/features/concerts/services/eventService";
+import { eventService, EVENT_STATUS, type Event } from "@/features/concerts/services/eventService";
 import { categoryService, type Category } from "@/features/concerts/services/categoryService";
 import ChatBot from "@/components/ChatBot";
 import { cleanImageUrl } from "@/lib/utils";
@@ -89,11 +89,16 @@ export default function HomePage() {
 
         // Normalize events/search results response to always be an array
         const eventsResponse = searchResults ?? (await eventService.getAll());
-        const data: Event[] = Array.isArray(eventsResponse)
+        const rawData: Event[] = Array.isArray(eventsResponse)
           ? eventsResponse
           : (eventsResponse as any)?.data && Array.isArray((eventsResponse as any).data)
           ? (eventsResponse as any).data
           : [];
+
+        // Only show approved & non-deleted events on user side
+        const data = rawData.filter(
+          (e) => e.status === EVENT_STATUS.APPROVED && e.deleted !== true
+        );
 
         const grouped: Record<number, EventProps[]> = {};
 

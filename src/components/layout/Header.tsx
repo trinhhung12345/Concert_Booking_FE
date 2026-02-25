@@ -33,7 +33,7 @@ import {
 
 // Store & Utils
 import { useAuthStore } from "@/store/useAuthStore";
-import { eventService, type Event } from "@/features/concerts/services/eventService";
+import { eventService, EVENT_STATUS, type Event } from "@/features/concerts/services/eventService";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
 
 export default function Header() {
@@ -57,7 +57,10 @@ export default function Header() {
       setSearchLoading(true);
       try {
         const events = await eventService.search(searchQuery.trim());
-        setSuggestions(events.slice(0, 6)); // Hiện tối đa 6 gợi ý
+        const approved = events.filter(
+          (e: Event) => e.status === EVENT_STATUS.APPROVED && e.deleted !== true
+        );
+        setSuggestions(approved.slice(0, 6)); // Hiện tối đa 6 gợi ý
         setShowDropdown(true);
       } catch (e) {
         setSuggestions([]);
@@ -91,9 +94,12 @@ export default function Header() {
     setSearchLoading(true);
     try {
       const events: Event[] = await eventService.search(searchQuery.trim());
+      const approved = events.filter(
+        (e) => e.status === EVENT_STATUS.APPROVED && e.deleted !== true
+      );
 
       // Chuyển hướng sang trang chủ với state chứa kết quả tìm kiếm (Event[])
-      navigate("/", { state: { searchResults: events, searchQuery } });
+      navigate("/", { state: { searchResults: approved, searchQuery } });
     } catch (error) {
       // Có thể hiển thị toast lỗi ở đây
       console.error("Lỗi tìm kiếm sự kiện:", error);

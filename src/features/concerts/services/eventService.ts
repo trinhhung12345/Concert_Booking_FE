@@ -39,6 +39,15 @@ export interface Showing {
   types: TicketType[];
 }
 
+// Event status constants
+export const EVENT_STATUS = {
+  APPROVED: 0,
+  NOT_APPROVED: 1,
+  PENDING: 2,
+} as const;
+
+export type EventStatus = typeof EVENT_STATUS[keyof typeof EVENT_STATUS];
+
 // 2. Định nghĩa Interface chính cho Event
 export interface Event {
   id: number;
@@ -46,11 +55,13 @@ export interface Event {
   venue: string;
   address: string;
   description: string;
+  status?: EventStatus; // 0=approved, 1=not approved, 2=pending
   categoryId: number;
   categoryName: string;
   files: EventFile[];
   showings: Showing[];
   youtubeUrl?: string; // Optional YouTube URL field
+  deleted?: boolean; // Soft delete flag
 }
 
 // 3. Service gọi API
@@ -278,6 +289,24 @@ export const eventService = {
       console.error("EventService - HideTicketType API returned invalid response:", response);
       throw new Error('Invalid response format from server when hiding ticket type');
     }
+  },
+
+  // API lấy danh sách sự kiện cho admin (bao gồm status & deleted)
+  getAdminEvents: async (): Promise<Event[]> => {
+    const res: any = await apiClient.get("/events/admin");
+    return res?.data || res;
+  },
+
+  // API duyệt sự kiện (chỉ super_admin)
+  approveEvent: async (eventId: number): Promise<Event> => {
+    const res: any = await apiClient.put(`/events/${eventId}/approve`);
+    return res?.data || res;
+  },
+
+  // API không duyệt sự kiện (chỉ super_admin)
+  notApproveEvent: async (eventId: number): Promise<Event> => {
+    const res: any = await apiClient.put(`/events/${eventId}/not-approve`);
+    return res?.data || res;
   },
 
   // API Cập nhật sự kiện (FormData)

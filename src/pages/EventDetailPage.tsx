@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
-import { eventService, type Event, type EventFile } from "@/features/concerts/services/eventService";
+import { eventService, EVENT_STATUS, type Event, type EventFile } from "@/features/concerts/services/eventService";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import parse from "html-react-parser";
@@ -85,6 +85,13 @@ export default function EventDetailPage() {
           data = response;
         }
         
+        // Block access to non-approved or deleted events
+        if (data.status !== EVENT_STATUS.APPROVED || data.deleted === true) {
+          setEvent(null);
+          setLoading(false);
+          return;
+        }
+
         setEvent(data);
 
         if (data) {
