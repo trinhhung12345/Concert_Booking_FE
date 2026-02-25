@@ -112,13 +112,17 @@ export default function CheckoutPage() {
 
       const response = await orderService.createOrder(payload);
 
-      if (response.code === 200) {
-        setCreatedOrder(response.data);
+      // Handle response format: could be object directly or { code, data, message }
+      const orderData = response?.data || response;
+      
+      if (orderData && orderData.id) {
+        setCreatedOrder(orderData);
       } else {
-        setError(response.message || "Có lỗi xảy ra");
+        setError(response?.message || "Có lỗi xảy ra");
       }
     } catch (err: any) {
-      setError(err.response?.data?.message || "Không thể tạo đơn hàng");
+      console.error("Create order error:", err);
+      setError(err.message || "Không thể tạo đơn hàng");
     } finally {
       setIsCreatingOrder(false);
     }
@@ -132,15 +136,20 @@ export default function CheckoutPage() {
 
     try {
       const response = await orderService.checkout({ orderId: createdOrder.id });
-      if (response.code === 200 && response.message) {
+      
+      // Handle response format: could be { code, message, data } or direct object
+      const checkoutData = response?.data || response;
+      
+      if (checkoutData?.message || response?.message) {
         // Xóa thông tin order trên FE trước khi chuyển sang PayOS
         setCreatedOrder(null);
-        window.location.href = response.message;
+        window.location.href = checkoutData?.message || response?.message;
       } else {
         setError("Không thể lấy link thanh toán");
       }
     } catch (err: any) {
-      setError(err.response?.data?.message || "Không thể thanh toán");
+      console.error("Checkout error:", err);
+      setError(err.message || "Không thể thanh toán");
     } finally {
       setIsCheckingOut(false);
     }

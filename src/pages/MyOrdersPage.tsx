@@ -27,10 +27,14 @@ export default function MyOrdersPage() {
       try {
         setLoading(true);
         const response = await orderService.getMyOrders();
-        if (response.code === 200) {
+        
+        // Handle response format: could be array directly or { code, data, message }
+        if (Array.isArray(response)) {
+          setOrders(response);
+        } else if (response?.data && Array.isArray(response.data)) {
           setOrders(response.data);
         } else {
-          setError(response.message);
+          setError(response?.message || "Không có dữ liệu");
         }
       } catch (err: any) {
         console.error("Lỗi tải đơn hàng:", err);
@@ -48,14 +52,18 @@ export default function MyOrdersPage() {
     setCheckingOutId(orderId);
     try {
       const response = await orderService.checkout({ orderId });
-      if (response.code === 200 && response.message) {
-        window.location.href = response.message;
+      
+      // Handle response format: could be { code, message, data } or direct object
+      const checkoutData = response?.data || response;
+      
+      if (checkoutData?.message || response?.message) {
+        window.location.href = checkoutData?.message || response?.message;
       } else {
         alert("Không thể lấy link thanh toán");
       }
     } catch (err: any) {
       console.error("Lỗi checkout:", err);
-      alert(err.response?.data?.message || "Không thể thanh toán. Vui lòng thử lại.");
+      alert(err.message || "Không thể thanh toán. Vui lòng thử lại.");
     } finally {
       setCheckingOutId(null);
     }

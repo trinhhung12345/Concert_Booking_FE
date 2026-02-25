@@ -56,33 +56,55 @@ export interface Event {
 // 3. Service gọi API
 export const eventService = {
   getAll: async (): Promise<Event[]> => {
-    // API trả về mảng Event[] trực tiếp (đã được interceptor xử lý)
-    return apiClient.get("/events");
+    const res: any = await apiClient.get("/events");
+    // Handle wrapped response { code, data: [...], message }
+    return res?.data || res;
   },
 
   // THÊM HÀM NÀY:
   getById: async (id: string | number): Promise<Event> => {
-    return apiClient.get(`/events/${id}`);
+    const res: any = await apiClient.get(`/events/${id}`);
+    return res?.data || res;
   },
 
   // Lấy danh sách events theo category
   getByCategory: async (categoryId: string | number): Promise<Event[]> => {
-    return apiClient.get(`/events/category/${categoryId}`);
+    const res: any = await apiClient.get(`/events/category/${categoryId}`);
+    return res?.data || res;
   },
 
   // Lấy danh sách lịch diễn theo Event ID
   getShowingsByEventId: async (eventId: string | number): Promise<Showing[]> => {
-    return apiClient.get(`/showings/event/${eventId}`);
+    const response: any = await apiClient.get<any, any>(`/showings/event/${eventId}`);
+    // Handle wrapped response { code: 200, data: [...], message: "..."}
+    if (response?.data && Array.isArray(response.data)) {
+        return response.data;
+    }
+    // Handle direct array response [...]
+    if (Array.isArray(response)) {
+        return response;
+    }
+    return [];
   },
 
   // Lấy danh sách loại vé theo Showing ID
   getTicketTypesByShowingId: async (showingId: string | number): Promise<TicketType[]> => {
-    return apiClient.get(`/ticket-types/showing/${showingId}`);
+    const response: any = await apiClient.get<any, any>(`/ticket-types/showing/${showingId}`);
+    // Handle wrapped response { code: 200, data: [...], message: "..."}
+    if (response?.data && Array.isArray(response.data)) {
+        return response.data;
+    }
+    // Handle direct array response [...]
+    if (Array.isArray(response)) {
+        return response;
+    }
+    return [];
   },
 
   // Tìm kiếm sự kiện theo keyword
   search: async (keyword: string): Promise<Event[]> => {
-    return apiClient.get(`/events/search?keyword=${encodeURIComponent(keyword)}`);
+    const res: any = await apiClient.get(`/events/search?keyword=${encodeURIComponent(keyword)}`);
+    return res?.data || res;
   },
 
   // API Tạo sự kiện (FormData)

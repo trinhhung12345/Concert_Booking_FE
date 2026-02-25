@@ -4,7 +4,7 @@ import AuthLayout from "../features/auth/components/AuthLayout";
 import RegisterForm from "../features/auth/components/RegisterForm";
 import OtpModal from "../features/auth/components/OtpModal";
 import ErrorDialog from "../features/auth/components/ErrorDialog";
-import { authService } from "../features/auth/services/authService";
+import { authService, type SendOtpResponse, type RegisterResponse } from "../features/auth/services/authService";
 import { useAuthStore } from "@/store/useAuthStore";
 
 export default function RegisterPage() {
@@ -26,7 +26,8 @@ export default function RegisterPage() {
     try {
       // Gọi API gửi OTP
       console.log("Sending OTP to:", formData.email);
-      const res = await authService.sendOtp(formData.email, formData.phone);
+      const res = await authService.sendOtp(formData.email, formData.phone) as SendOtpResponse;
+      console.log("Send OTP response:", res);
 
       if (res.code === 200) {
         // Nếu gửi thành công -> Lưu tạm dữ liệu và mở Modal nhập OTP
@@ -41,10 +42,11 @@ export default function RegisterPage() {
         });
       }
     } catch (error: any) {
+      console.error("Send OTP error:", error);
       setErrorDialog({
         isOpen: true,
-        message: error.response?.data?.message || "Lỗi kết nối máy chủ. Vui lòng thử lại.",
-        code: error.response?.status || 500
+        message: error.message || "Lỗi kết nối máy chủ. Vui lòng thử lại.",
+        code: error.code
       });
     } finally {
       setIsLoading(false);
@@ -58,7 +60,8 @@ export default function RegisterPage() {
     try {
       console.log("Verifying OTP & Registering...");
       // Gọi API Đăng ký chính thức
-      const res = await authService.register(tempFormData, otp);
+      const res = await authService.register(tempFormData, otp) as RegisterResponse;
+      console.log("Register response:", res);
 
       if (res.code === 200) {
         // Đăng ký thành công -> Lưu Token vào Store
@@ -91,10 +94,11 @@ export default function RegisterPage() {
         });
       }
     } catch (error: any) {
+      console.error("Register error:", error);
       setErrorDialog({
         isOpen: true,
-        message: error.response?.data?.message || "Mã OTP không đúng hoặc đã hết hạn",
-        code: error.response?.status || 400
+        message: error.message || "Mã OTP không đúng hoặc đã hết hạn",
+        code: error.code
       });
     }
   };

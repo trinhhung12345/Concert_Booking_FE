@@ -53,10 +53,11 @@ export const reportService = {
   getTopEvents: async (): Promise<TopEvent[]> => {
     try {
       const response = await apiClient.get<any>("/dashboard/top-events");
-      
-      // Backend trả về format { code: 200, data: [...], message: "..." }
-      if (response.data && Array.isArray(response.data)) {
-        return response.data.map((item: any) => ({
+      const data = response?.data || response;
+
+      // Backend trả về format { code, data: [...], message }
+      if (data && Array.isArray(data)) {
+        return data.map((item: any) => ({
           id: item.id || 0,
           title: item.title || "",
           date: item.date || "",
@@ -66,7 +67,7 @@ export const reportService = {
           status: item.status || "ACTIVE",
         }));
       }
-      
+
       console.warn("Unexpected top events response:", response);
       return [];
     } catch (error) {
@@ -79,10 +80,11 @@ export const reportService = {
   getRecentOrders: async (): Promise<RecentOrder[]> => {
     try {
       const response = await apiClient.get<any>("/dashboard/recent-orders");
-      
+      const data = response?.data || response;
+
       // Backend trả về format { code: 200, data: [...], total_record: 7, current_page: 1 }
-      if (response.data && Array.isArray(response.data)) {
-        return response.data.map((item: any) => ({
+      if (data && Array.isArray(data)) {
+        return data.map((item: any) => ({
           id: item.id || 0,
           customerName: item.customerName || "",
           eventName: item.eventName || "",
@@ -91,7 +93,7 @@ export const reportService = {
           status: item.status || "PENDING",
         }));
       }
-      
+
       console.warn("Unexpected recent orders response:", response);
       return [];
     } catch (error) {
@@ -104,16 +106,17 @@ export const reportService = {
   getCategoryStats: async (): Promise<CategoryStats[]> => {
     try {
       const response = await apiClient.get<any>("/dashboard/category-stats");
-      
+      const data = response?.data || response;
+
       // Backend trả về format { code: 200, data: [...], message: "..." }
-      if (response.data && Array.isArray(response.data)) {
-        return response.data.map((item: any) => ({
+      if (data && Array.isArray(data)) {
+        return data.map((item: any) => ({
           name: item.name || "",
           value: item.value || 0,
           color: item.color || "#8884d8",
         }));
       }
-      
+
       console.warn("Unexpected category stats response:", response);
       return [];
     } catch (error) {
@@ -126,16 +129,17 @@ export const reportService = {
   getRevenueChart: async (): Promise<RevenueChartData[]> => {
     try {
       const response = await apiClient.get<any>("/dashboard/revenue-chart");
-      
+      const data = response?.data || response;
+
       // Backend trả về format { code: 200, data: [...], message: "..." }
-      if (response.data && Array.isArray(response.data)) {
-        return response.data.map((item: any) => ({
+      if (data && Array.isArray(data)) {
+        return data.map((item: any) => ({
           name: item.name || "",
           revenue: item.revenue || 0,
           tickets: item.tickets || 0,
         }));
       }
-      
+
       console.warn("Unexpected revenue chart response:", response);
       return [];
     } catch (error) {
@@ -148,18 +152,19 @@ export const reportService = {
   getDashboardStats: async (): Promise<DashboardStats> => {
     try {
       const response = await apiClient.get<any>("/dashboard/stats");
-      
+      const data = response?.data || response;
+
       // Backend trả về format { code: 200, data: {...}, message: "..." }
-      if (response.data) {
+      if (data) {
         return {
-          totalRevenue: response.data.totalRevenue || 0,
-          totalTicketsSold: response.data.totalTicketsSold || 0,
-          totalEvents: response.data.totalEvents || 0,
-          newUsers: response.data.newUsers || 0,
-          revenueGrowth: response.data.revenueGrowth ?? null,
+          totalRevenue: data.totalRevenue || 0,
+          totalTicketsSold: data.totalTicketsSold || 0,
+          totalEvents: data.totalEvents || 0,
+          newUsers: data.newUsers || 0,
+          revenueGrowth: data.revenueGrowth ?? null,
         };
       }
-      
+
       console.warn("Unexpected dashboard stats response:", response);
       return {
         totalRevenue: 0,
@@ -178,16 +183,12 @@ export const reportService = {
   getEventsStats: async (): Promise<EventsStats> => {
     try {
       const response = await apiClient.get<any>("/events");
-      
-      // Backend có thể trả về format { code: 200, data: [...], message: "..." } 
-      // hoặc mảng trực tiếp [...], cần handle cả 2 trường hợp
+      const data = response?.data || response;
+
+      // Backend có thể trả về format { code, data: [...], message } hoặc mảng trực tiếp
       let events: Event[];
-      if (Array.isArray(response)) {
-        events = response;
-      } else if (response.data && Array.isArray(response.data)) {
-        events = response.data;
-      } else if (response.data && response.data.data && Array.isArray(response.data.data)) {
-        events = response.data.data;
+      if (Array.isArray(data)) {
+        events = data;
       } else {
         console.warn("Unexpected response format:", response);
         events = [];

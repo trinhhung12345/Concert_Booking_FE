@@ -73,20 +73,36 @@ export default function EventDetailPage() {
   useEffect(() => {
     (async () => {
       if (!id) return;
-      const data = await eventService.getById(id);
-      setEvent(data);
+      try {
+        const response: any = await eventService.getById(id);
+        
+        let data: Event;
+        // Handle wrapped response { code: 200, data: {...}, message: "..." }
+        if (response?.data && typeof response.data === 'object' && !Array.isArray(response.data)) {
+          data = response.data;
+        } else {
+          // Handle direct response {...}
+          data = response;
+        }
+        
+        setEvent(data);
 
-      const videoFile = data.files?.find(
-        (f) => f.type === 1 || (f.originUrl && getYouTubeId(f.originUrl))
-      );
-      const ytId = getYouTubeId(videoFile?.originUrl);
-      setVideoId(ytId);
+        if (data) {
+          const videoFile = data.files?.find(
+            (f) => f.type === 1 || (f.originUrl && getYouTubeId(f.originUrl))
+          );
+          const ytId = getYouTubeId(videoFile?.originUrl);
+          setVideoId(ytId);
 
-      const imageFile = data.files?.find((f) => f.type === 0 && !isVideo(f));
-      if (imageFile?.originUrl) setHeroImage(imageFile.originUrl);
-      else if (ytId) setHeroImage(getYouTubeThumbnail(ytId));
-
-      setLoading(false);
+          const imageFile = data.files?.find((f) => f.type === 0 && !isVideo(f));
+          if (imageFile?.originUrl) setHeroImage(imageFile.originUrl);
+          else if (ytId) setHeroImage(getYouTubeThumbnail(ytId));
+        }
+      } catch (error) {
+        console.error("Failed to fetch event details:", error);
+      } finally {
+        setLoading(false);
+      }
     })();
   }, [id]);
 
