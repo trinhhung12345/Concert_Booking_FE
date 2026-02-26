@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
-import { eventService, type Event, type EventFile } from "@/features/concerts/services/eventService";
+import { eventService, EVENT_STATUS, type Event, type EventFile } from "@/features/concerts/services/eventService";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import parse from "html-react-parser";
@@ -73,20 +73,43 @@ export default function EventDetailPage() {
   useEffect(() => {
     (async () => {
       if (!id) return;
-      const data = await eventService.getById(id);
-      setEvent(data);
+      try {
+        const response: any = await eventService.getById(id);
+        
+        let data: Event;
+        // Handle wrapped response { code: 200, data: {...}, message: "..." }
+        if (response?.data && typeof response.data === 'object' && !Array.isArray(response.data)) {
+          data = response.data;
+        } else {
+          // Handle direct response {...}
+          data = response;
+        }
+        
+        // Block access to non-approved or deleted events
+        if (data.status !== EVENT_STATUS.APPROVED || data.deleted === true) {
+          setEvent(null);
+          setLoading(false);
+          return;
+        }
 
-      const videoFile = data.files?.find(
-        (f) => f.type === 1 || (f.originUrl && getYouTubeId(f.originUrl))
-      );
-      const ytId = getYouTubeId(videoFile?.originUrl);
-      setVideoId(ytId);
+        setEvent(data);
 
-      const imageFile = data.files?.find((f) => f.type === 0 && !isVideo(f));
-      if (imageFile?.originUrl) setHeroImage(imageFile.originUrl);
-      else if (ytId) setHeroImage(getYouTubeThumbnail(ytId));
+        if (data) {
+          const videoFile = data.files?.find(
+            (f) => f.type === 1 || (f.originUrl && getYouTubeId(f.originUrl))
+          );
+          const ytId = getYouTubeId(videoFile?.originUrl);
+          setVideoId(ytId);
 
-      setLoading(false);
+          const imageFile = data.files?.find((f) => f.type === 0 && !isVideo(f));
+          if (imageFile?.originUrl) setHeroImage(imageFile.originUrl);
+          else if (ytId) setHeroImage(getYouTubeThumbnail(ytId));
+        }
+      } catch (error) {
+        console.error("Failed to fetch event details:", error);
+      } finally {
+        setLoading(false);
+      }
     })();
   }, [id]);
 

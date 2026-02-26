@@ -26,3 +26,6 @@ dist-ssr
 # .clinerules folder (memory bank)
 .clinerules/
 .env
+
+# Documentation
+skills.md

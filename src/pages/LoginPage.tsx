@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import AuthLayout from "../features/auth/components/AuthLayout";
 import LoginForm from "../features/auth/components/LoginForm";
 import ErrorDialog from "../features/auth/components/ErrorDialog";
-import { authService } from "../features/auth/services/authService";
+import { authService, type LoginResponse } from "../features/auth/services/authService";
 import { useAuthStore } from "@/store/useAuthStore";
 
 export default function LoginPage() {
@@ -22,7 +22,8 @@ export default function LoginPage() {
       console.log("Submitting Login:", data.email);
 
       // 1. Gọi API
-      const res = await authService.login(data.email, data.password);
+      const res = await authService.login(data.email, data.password) as LoginResponse;
+      console.log("Login response:", res);
 
       // 2. Kiểm tra kết quả trả về
       if (res.code === 200) {
@@ -46,8 +47,8 @@ export default function LoginPage() {
       console.error("Login Error:", error);
       setErrorDialog({
         isOpen: true,
-        message: error.response?.data?.message || "Sai email hoặc mật khẩu",
-        code: error.response?.status || 401
+        message: error.message || "Sai email hoặc mật khẩu",
+        code: error.code
       });
     } finally {
       setIsLoading(false);

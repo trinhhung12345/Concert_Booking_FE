@@ -39,6 +39,15 @@ export interface Showing {
   types: TicketType[];
 }
 
+// Event status constants
+export const EVENT_STATUS = {
+  APPROVED: 0,
+  NOT_APPROVED: 1,
+  PENDING: 2,
+} as const;
+
+export type EventStatus = typeof EVENT_STATUS[keyof typeof EVENT_STATUS];
+
 // 2. Định nghĩa Interface chính cho Event
 export interface Event {
   id: number;
@@ -46,43 +55,67 @@ export interface Event {
   venue: string;
   address: string;
   description: string;
+  status?: EventStatus; // 0=approved, 1=not approved, 2=pending
   categoryId: number;
   categoryName: string;
   files: EventFile[];
   showings: Showing[];
   youtubeUrl?: string; // Optional YouTube URL field
+  deleted?: boolean; // Soft delete flag
 }
 
 // 3. Service gọi API
 export const eventService = {
   getAll: async (): Promise<Event[]> => {
-    // API trả về mảng Event[] trực tiếp (đã được interceptor xử lý)
-    return apiClient.get("/events");
+    const res: any = await apiClient.get("/events");
+    // Handle wrapped response { code, data: [...], message }
+    return res?.data || res;
   },
 
   // THÊM HÀM NÀY:
   getById: async (id: string | number): Promise<Event> => {
-    return apiClient.get(`/events/${id}`);
+    const res: any = await apiClient.get(`/events/${id}`);
+    return res?.data || res;
   },
 
   // Lấy danh sách events theo category
   getByCategory: async (categoryId: string | number): Promise<Event[]> => {
-    return apiClient.get(`/events/category/${categoryId}`);
+    const res: any = await apiClient.get(`/events/category/${categoryId}`);
+    return res?.data || res;
   },
 
   // Lấy danh sách lịch diễn theo Event ID
   getShowingsByEventId: async (eventId: string | number): Promise<Showing[]> => {
-    return apiClient.get(`/showings/event/${eventId}`);
+    const response: any = await apiClient.get<any, any>(`/showings/event/${eventId}`);
+    // Handle wrapped response { code: 200, data: [...], message: "..."}
+    if (response?.data && Array.isArray(response.data)) {
+        return response.data;
+    }
+    // Handle direct array response [...]
+    if (Array.isArray(response)) {
+        return response;
+    }
+    return [];
   },
 
   // Lấy danh sách loại vé theo Showing ID
   getTicketTypesByShowingId: async (showingId: string | number): Promise<TicketType[]> => {
-    return apiClient.get(`/ticket-types/showing/${showingId}`);
+    const response: any = await apiClient.get<any, any>(`/ticket-types/showing/${showingId}`);
+    // Handle wrapped response { code: 200, data: [...], message: "..."}
+    if (response?.data && Array.isArray(response.data)) {
+        return response.data;
+    }
+    // Handle direct array response [...]
+    if (Array.isArray(response)) {
+        return response;
+    }
+    return [];
   },
 
   // Tìm kiếm sự kiện theo keyword
   search: async (keyword: string): Promise<Event[]> => {
-    return apiClient.get(`/events/search?keyword=${encodeURIComponent(keyword)}`);
+    const res: any = await apiClient.get(`/events/search?keyword=${encodeURIComponent(keyword)}`);
+    return res?.data || res;
   },
 
   // API Tạo sự kiện (FormData)
@@ -256,6 +289,30 @@ export const eventService = {
       console.error("EventService - HideTicketType API returned invalid response:", response);
       throw new Error('Invalid response format from server when hiding ticket type');
     }
+  },
+
+  // API lấy danh sách sự kiện cho admin (bao gồm status & deleted)
+  getAdminEvents: async (): Promise<Event[]> => {
+    const res: any = await apiClient.get("/events/admin");
+    return res?.data || res;
+  },
+
+  // API lấy danh sách sự kiện của admin hiện tại
+  getAdminMyEvents: async (): Promise<Event[]> => {
+    const res: any = await apiClient.get("/events/admin/my-events");
+    return res?.data || res;
+  },
+
+  // API duyệt sự kiện (chỉ super_admin)
+  approveEvent: async (eventId: number): Promise<Event> => {
+    const res: any = await apiClient.put(`/events/${eventId}/approve`);
+    return res?.data || res;
+  },
+
+  // API không duyệt sự kiện (chỉ super_admin)
+  notApproveEvent: async (eventId: number, reason?: string): Promise<Event> => {
+    const res: any = await apiClient.put(`/events/${eventId}/not-approve`, { reason });
+    return res?.data || res;
   },
 
   // API Cập nhật sự kiện (FormData)

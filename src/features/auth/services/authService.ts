@@ -1,7 +1,7 @@
 import apiClient from "../../../lib/axios";
 
 // Kiểu dữ liệu trả về từ Backend
-interface SendOtpResponse {
+export interface SendOtpResponse {
   code: number;
   message: string;
   data: {
@@ -10,7 +10,7 @@ interface SendOtpResponse {
   };
 }
 
-interface RegisterResponse {
+export interface RegisterResponse {
   code: number;
   message: string;
   data: {
@@ -24,7 +24,7 @@ interface RegisterResponse {
 }
 
 // Interface cho kết quả API Login
-interface LoginResponse {
+export interface LoginResponse {
   code: number;
   message: string;
   data: {

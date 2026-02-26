@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { eventService, type Event } from "@/features/concerts/services/eventService";
+import { eventService, EVENT_STATUS, type Event } from "@/features/concerts/services/eventService";
 import { categoryService, type Category } from "@/features/concerts/services/categoryService";
 import ChatBot from "@/components/ChatBot";
 import { cleanImageUrl } from "@/lib/utils";
@@ -78,12 +78,27 @@ export default function HomePage() {
     const fetchData = async () => {
       setIsLoading(true);
       try {
-        const cats = await categoryService.getAll();
-        setCategories(cats);
+        // Normalize categories response to always be an array
+        const catsResponse = await categoryService.getAll();
+        const normalizedCategories: Category[] = Array.isArray(catsResponse)
+          ? catsResponse
+          : (catsResponse as any)?.data && Array.isArray((catsResponse as any).data)
+          ? (catsResponse as any).data
+          : [];
+        setCategories(normalizedCategories);
 
-        const data: Event[] = searchResults
-          ? searchResults
-          : await eventService.getAll();
+        // Normalize events/search results response to always be an array
+        const eventsResponse = searchResults ?? (await eventService.getAll());
+        const rawData: Event[] = Array.isArray(eventsResponse)
+          ? eventsResponse
+          : (eventsResponse as any)?.data && Array.isArray((eventsResponse as any).data)
+          ? (eventsResponse as any).data
+          : [];
+
+        // Only show approved & non-deleted events on user side
+        const data = rawData.filter(
+          (e) => e.status === EVENT_STATUS.APPROVED && e.deleted !== true
+        );
 
         const grouped: Record<number, EventProps[]> = {};
 

@@ -37,7 +37,11 @@ apiClient.interceptors.request.use(
 
 // 2. Response Interceptor: Xử lý data và lỗi trả về
 apiClient.interceptors.response.use(
-  (response) => response.data,
+  (response) => {
+    // Always return the full response data object { code, message, data }
+    // Components will access response.code, response.data, response.message
+    return response.data;
+  },
   (error) => {
     // Xử lý lỗi 401 (Unauthorized) - Token hết hạn hoặc chưa đăng nhập
     if (error.response?.status === 401) {

@@ -12,7 +12,7 @@ import {
 import { Button } from "../../../components/ui/button";
 import { Input } from "../../../components/ui/input";
 import { Label } from "../../../components/ui/label";
-import { authService } from "../services/authService";
+import { authService, type ForgotPasswordResponse } from "../services/authService";
 import { Loader2 } from "lucide-react";
 
 // Schema validate email
@@ -47,18 +47,20 @@ export default function ForgotPasswordDialog({
     setServerError(null);
     setSuccessMessage(null);
     try {
-      const res = await authService.forgotPassword(data.email);
-       // Check status code if needed, axios usually throws on non-2xx but the service implies custom response structure
-      if (res && (res as any).code === 200) {
-          setSuccessMessage((res as any).message || "Mật khẩu mới đã được gửi đến email của bạn.");
+      const res = await authService.forgotPassword(data.email) as ForgotPasswordResponse;
+      console.log("Forgot password response:", res);
+      
+      if (res.code === 200) {
+          setSuccessMessage(res.message || "Mật khẩu mới đã được gửi đến email của bạn.");
            // Optional: close dialog after a delay
            // setTimeout(onClose, 3000);
       } else {
-          setServerError((res as any).message || "Có lỗi xảy ra.");
+          setServerError(res.message || "Có lỗi xảy ra.");
       }
     } catch (error: any) {
+      console.error("Forgot password error:", error);
       setServerError(
-        error.response?.data?.message || "Gửi yêu cầu thất bại. Vui lòng thử lại."
+        error.message || "Gửi yêu cầu thất bại. Vui lòng thử lại."
       );
     }
   };

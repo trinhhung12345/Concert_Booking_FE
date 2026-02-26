@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Link } from "react-router-dom";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
@@ -7,11 +8,26 @@ import {
   faCouch,
   faChartPie,
   faUsers,
-  faReceipt
+  faReceipt,
+  faCheckCircle,
+  faClock,
+  faTimesCircle,
+  faTrash,
+  faSpinner,
+  faExclamationTriangle,
+  faShieldAlt,
 } from "@fortawesome/free-solid-svg-icons";
 import { Button } from "@/components/ui/button";
-import type { Event } from "@/features/concerts/services/eventService";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
+import { EVENT_STATUS, type Event } from "@/features/concerts/services/eventService";
 import { cleanImageUrl } from "@/lib/utils";
+import { useAuthStore } from "@/store/useAuthStore";
 
 // Helper format ngày giờ
 const formatDateTime = (dateString: string) => {
@@ -22,16 +38,62 @@ const formatDateTime = (dateString: string) => {
   return `${time}, ${day}`;
 };
 
+// Status badge component
+const EventStatusBadge = ({ status, deleted }: { status?: number; deleted?: boolean }) => {
+  if (deleted) {
+    return (
+      <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400 border border-gray-200 dark:border-gray-700">
+        <FontAwesomeIcon icon={faTrash} className="text-[10px]" />
+        Đã xóa
+      </span>
+    );
+  }
+  switch (status) {
+    case EVENT_STATUS.APPROVED:
+      return (
+        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800">
+          <FontAwesomeIcon icon={faCheckCircle} className="text-[10px]" />
+          Đã duyệt
+        </span>
+      );
+    case EVENT_STATUS.NOT_APPROVED:
+      return (
+        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-red-50 text-red-700 dark:bg-red-900/30 dark:text-red-400 border border-red-200 dark:border-red-800">
+          <FontAwesomeIcon icon={faTimesCircle} className="text-[10px]" />
+          Không duyệt
+        </span>
+      );
+    case EVENT_STATUS.PENDING:
+      return (
+        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-amber-50 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400 border border-amber-200 dark:border-amber-800">
+          <FontAwesomeIcon icon={faClock} className="text-[10px]" />
+          Chờ duyệt
+        </span>
+      );
+    default:
+      return null;
+  }
+};
+
 interface AdminEventCardProps {
   event: Event;
+  onApprove?: (eventId: number) => Promise<void>;
+  onNotApprove?: (eventId: number, reason?: string) => Promise<void>;
 }
 
-export default function AdminEventCard({ event }: AdminEventCardProps) {
+export default function AdminEventCard({ event, onApprove, onNotApprove }: AdminEventCardProps) {
+  const user = useAuthStore((s) => s.user);
+  const isSuperAdmin = user?.role?.roleName === "SUPER_ADMIN";
+  const [actionLoading, setActionLoading] = useState<"approve" | "reject" | null>(null);
+
+  // Dialog states
+  const [approveDialogOpen, setApproveDialogOpen] = useState(false);
+  const [rejectDialogOpen, setRejectDialogOpen] = useState(false);
+  const [rejectReason, setRejectReason] = useState("");
+
   // 1. Xử lý lấy ảnh Thumbnail
-  // Dùng cleanImageUrl để xử lý thumbUrl từ backend (có thể bị lỗi YouTube)
   const thumbnailFile = event.files?.find(f => f.type === 0) || event.files?.[0];
   const imageUrl = cleanImageUrl(thumbnailFile?.thumbUrl || thumbnailFile?.originUrl);
-  console.log("🖼 Event Image URL:", imageUrl);
 
   // 2. Lấy thông tin hiển thị (Thời gian & Địa điểm)
   const firstShowing = event.showings?.[0];
@@ -40,26 +102,57 @@ export default function AdminEventCard({ event }: AdminEventCardProps) {
   // Ghép địa điểm
   const location = [event.venue, event.address].filter(Boolean).join(", ");
 
+  const handleApproveConfirm = async () => {
+    if (!onApprove) return;
+    setActionLoading("approve");
+    try {
+      await onApprove(event.id);
+      setApproveDialogOpen(false);
+    } finally {
+      setActionLoading(null);
+    }
+  };
+
+  const handleNotApproveConfirm = async () => {
+    if (!onNotApprove) return;
+    setActionLoading("reject");
+    try {
+      await onNotApprove(event.id, rejectReason.trim() || undefined);
+      setRejectDialogOpen(false);
+      setRejectReason("");
+    } finally {
+      setActionLoading(null);
+    }
+  };
+
   return (
-    <div className="w-full bg-card text-card-foreground rounded-xl shadow-sm border border-border overflow-hidden flex flex-col transition-all hover:shadow-md">
+    <div className={`w-full bg-card text-card-foreground rounded-xl shadow-sm border overflow-hidden flex flex-col transition-all hover:shadow-md ${
+      event.deleted ? "border-gray-300 opacity-70" : "border-border"
+    }`}>
 
       {/* --- PHẦN TRÊN: ẢNH & THÔNG TIN --- */}
       <div className="flex flex-col md:flex-row p-4 gap-4 md:gap-6">
 
         {/* Cột trái: Ảnh */}
-        <div className="w-full md:w-64 h-40 flex-shrink-0">
+        <div className="w-full md:w-64 h-40 flex-shrink-0 relative">
           <img
             src={imageUrl}
             alt={event.title}
-            className="w-full h-full object-cover rounded-lg border border-border"
+            className={`w-full h-full object-cover rounded-lg border border-border ${event.deleted ? "grayscale" : ""}`}
           />
+          {/* Status badge overlay on image */}
+          <div className="absolute top-2 left-2">
+            <EventStatusBadge status={event.status} deleted={event.deleted} />
+          </div>
         </div>
 
         {/* Cột phải: Thông tin */}
         <div className="flex-1 space-y-3">
-          <h3 className="text-xl font-bold text-foreground">
-            {event.title}
-          </h3>
+          <div className="flex items-start justify-between gap-3">
+            <h3 className="text-xl font-bold text-foreground">
+              {event.title}
+            </h3>
+          </div>
 
           <div className="space-y-2 text-sm">
             {/* Thời gian */}
@@ -75,19 +168,167 @@ export default function AdminEventCard({ event }: AdminEventCardProps) {
             </div>
 
              {/* Category Badge */}
-             <div className="pt-1">
+             <div className="pt-1 flex items-center gap-2 flex-wrap">
                 <span className="inline-block px-2 py-1 bg-muted text-muted-foreground text-xs rounded-md">
                     {event.categoryName}
                 </span>
+                {event.showings && event.showings.length > 0 && (
+                  <span className="inline-block px-2 py-1 bg-blue-50 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400 text-xs rounded-md">
+                    {event.showings.length} suất diễn
+                  </span>
+                )}
              </div>
           </div>
+
+          {/* Nút duyệt cho Super Admin */}
+          {isSuperAdmin && !event.deleted && (
+            <div className="flex items-center gap-2 pt-2">
+              {event.status !== EVENT_STATUS.APPROVED && (
+                <Button
+                  size="sm"
+                  className="bg-emerald-600 hover:bg-emerald-700 text-white gap-1.5 text-xs h-8"
+                  onClick={() => setApproveDialogOpen(true)}
+                  disabled={actionLoading !== null}
+                >
+                  <FontAwesomeIcon icon={faCheckCircle} className="text-xs" />
+                  Duyệt
+                </Button>
+              )}
+              {event.status !== EVENT_STATUS.NOT_APPROVED && (
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="border-red-300 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 gap-1.5 text-xs h-8"
+                  onClick={() => { setRejectReason(""); setRejectDialogOpen(true); }}
+                  disabled={actionLoading !== null}
+                >
+                  <FontAwesomeIcon icon={faTimesCircle} className="text-xs" />
+                  Không duyệt
+                </Button>
+              )}
+            </div>
+          )}
         </div>
       </div>
+
+      {/* --- DIALOG DUYỆT SỰ KIỆN --- */}
+      <Dialog open={approveDialogOpen} onOpenChange={setApproveDialogOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-emerald-100 dark:bg-emerald-900/30 mb-2">
+              <FontAwesomeIcon icon={faShieldAlt} className="text-emerald-600 dark:text-emerald-400 text-lg" />
+            </div>
+            <DialogTitle className="text-center text-lg">Xác nhận duyệt sự kiện</DialogTitle>
+            <DialogDescription className="text-center">
+              Bạn có chắc chắn muốn <span className="font-semibold text-emerald-600">duyệt</span> sự kiện này?
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="bg-muted/50 rounded-lg p-3 border border-border">
+            <p className="font-semibold text-sm text-foreground">{event.title}</p>
+            <p className="text-xs text-muted-foreground mt-1">{location || "Chưa cập nhật địa điểm"}</p>
+          </div>
+
+          <p className="text-xs text-muted-foreground text-center">
+            Sự kiện sau khi duyệt sẽ được hiển thị công khai cho người dùng.
+          </p>
+
+          <div className="flex gap-3 justify-end pt-2">
+            <Button
+              variant="outline"
+              onClick={() => setApproveDialogOpen(false)}
+              disabled={actionLoading === "approve"}
+            >
+              Hủy
+            </Button>
+            <Button
+              className="bg-emerald-600 hover:bg-emerald-700 text-white gap-2"
+              onClick={handleApproveConfirm}
+              disabled={actionLoading === "approve"}
+            >
+              {actionLoading === "approve" ? (
+                <>
+                  <FontAwesomeIcon icon={faSpinner} spin className="text-sm" />
+                  Đang xử lý...
+                </>
+              ) : (
+                <>
+                  <FontAwesomeIcon icon={faCheckCircle} className="text-sm" />
+                  Xác nhận duyệt
+                </>
+              )}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* --- DIALOG KHÔNG DUYỆT SỰ KIỆN --- */}
+      <Dialog open={rejectDialogOpen} onOpenChange={(open) => { setRejectDialogOpen(open); if (!open) setRejectReason(""); }}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-red-100 dark:bg-red-900/30 mb-2">
+              <FontAwesomeIcon icon={faExclamationTriangle} className="text-red-600 dark:text-red-400 text-lg" />
+            </div>
+            <DialogTitle className="text-center text-lg">Từ chối duyệt sự kiện</DialogTitle>
+            <DialogDescription className="text-center">
+              Bạn có chắc chắn muốn <span className="font-semibold text-red-600">từ chối</span> sự kiện này?
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="bg-muted/50 rounded-lg p-3 border border-border">
+            <p className="font-semibold text-sm text-foreground">{event.title}</p>
+            <p className="text-xs text-muted-foreground mt-1">{location || "Chưa cập nhật địa điểm"}</p>
+          </div>
+
+          <div className="space-y-2">
+            <label htmlFor={`reject-reason-${event.id}`} className="text-sm font-medium text-foreground">
+              Lý do từ chối <span className="text-red-500">*</span>
+            </label>
+            <textarea
+              id={`reject-reason-${event.id}`}
+              className="w-full min-h-[100px] rounded-lg border border-border bg-input p-3 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-red-500/50 focus:border-red-500 resize-none transition-colors"
+              placeholder="Nhập lý do từ chối sự kiện..."
+              value={rejectReason}
+              onChange={(e) => setRejectReason(e.target.value)}
+            />
+            {rejectReason.trim() === "" && (
+              <p className="text-xs text-muted-foreground">Vui lòng nhập lý do để người tổ chức sự kiện biết.</p>
+            )}
+          </div>
+
+          <div className="flex gap-3 justify-end pt-2">
+            <Button
+              variant="outline"
+              onClick={() => { setRejectDialogOpen(false); setRejectReason(""); }}
+              disabled={actionLoading === "reject"}
+            >
+              Hủy
+            </Button>
+            <Button
+              className="bg-red-600 hover:bg-red-700 text-white gap-2"
+              onClick={handleNotApproveConfirm}
+              disabled={actionLoading === "reject" || rejectReason.trim() === ""}
+            >
+              {actionLoading === "reject" ? (
+                <>
+                  <FontAwesomeIcon icon={faSpinner} spin className="text-sm" />
+                  Đang xử lý...
+                </>
+              ) : (
+                <>
+                  <FontAwesomeIcon icon={faTimesCircle} className="text-sm" />
+                  Xác nhận từ chối
+                </>
+              )}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       {/* --- PHẦN DƯỚI: ACTION BAR --- */}
       <div className="bg-muted/50 border-t border-border p-2 grid grid-cols-5 gap-1">
 
-        {/* Các nút chức năng (Giống ảnh mẫu) */}
+        {/* Các nút chức năng */}
         <ActionButton icon={faChartPie} label="Tổng quan" disabled />
         <ActionButton icon={faUsers} label="Thành viên" disabled />
         <ActionButton icon={faReceipt} label="Đơn hàng" disabled />

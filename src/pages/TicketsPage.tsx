@@ -32,11 +32,14 @@ const TicketsPage = () => {
       try {
         setLoading(true);
         const response = await orderService.getMyOrders();
-        
-        if (response.code === 200) {
+
+        // Handle response format: could be array directly or { code, data, message }
+        if (Array.isArray(response)) {
+          setOrders(response);
+        } else if (response?.data && Array.isArray(response.data)) {
           setOrders(response.data);
         } else {
-          setError(response.message);
+          setError("Dữ liệu không hợp lệ");
         }
       } catch (err: any) {
         console.error("Lỗi tải đơn hàng:", err);

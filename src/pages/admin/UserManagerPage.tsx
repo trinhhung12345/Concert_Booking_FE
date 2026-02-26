@@ -27,7 +27,10 @@ const UserManagerPage = () => {
     getUsers({ page: 1, size: 50 })
       .then((res: UserListResponse) => {
         console.log("[UserManagerPage] getUsers result:", res);
-        const mapped = (res.data || []).map((u) => ({
+        console.log("[UserManagerPage] res.code:", res?.code);
+        console.log("[UserManagerPage] res.data:", res?.data);
+        console.log("[UserManagerPage] res.message:", res?.message);
+        const mapped = (res?.data || []).map((u) => ({
           id: u.id,
           name: u.name,
           email: u.email,
@@ -39,7 +42,11 @@ const UserManagerPage = () => {
           birthday: u.birthday ? u.birthday.slice(0, 10) : "",
           status: (u.status === 1 ? 1 : null) as 1 | null,
         }));
+        console.log("[UserManagerPage] mapped users:", mapped);
         setUsers(mapped);
+      })
+      .catch((err) => {
+        console.error("[UserManagerPage] getUsers error:", err);
       })
       .finally(() => setLoading(false));
   }, [reload]);

@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useParams, useLocation } from "react-router-dom";
 import EventCard, { type EventProps } from "@/features/concerts/components/EventCard";
 import { Skeleton } from "@/components/ui/skeleton";
-import { eventService, type Event } from "@/features/concerts/services/eventService";
+import { eventService, EVENT_STATUS, type Event } from "@/features/concerts/services/eventService";
 import { categoryService, type Category } from "@/features/concerts/services/categoryService";
 import { cleanImageUrl } from "@/lib/utils";
 
@@ -40,8 +40,11 @@ export default function CategoryPage() {
           throw new Error("Category not found");
         }
 
-        // Fetch events theo category
-        const data: Event[] = await eventService.getByCategory(categoryId);
+        // Fetch events theo category & filter approved only
+        const rawData: Event[] = await eventService.getByCategory(categoryId);
+        const data: Event[] = rawData.filter(
+          (e) => e.status === EVENT_STATUS.APPROVED && e.deleted !== true
+        );
 
         // Fetch category info để hiển thị tên + mô tả (luôn cập nhật theo categoryId hiện tại)
         const allCategories = await categoryService.getAll();

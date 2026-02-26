@@ -50,11 +50,14 @@ const OrderDetailPage = () => {
       try {
         setLoading(true);
         const response = await orderService.getOrderById(Number(orderId));
+
+        // Handle response format: could be object directly or { code, data, message }
+        const orderData = response?.data || response;
         
-        if (response.code === 200) {
-          setOrder(response.data);
+        if (orderData && orderData.id) {
+          setOrder(orderData);
         } else {
-          setError(response.message);
+          setError(response?.message || "Không tìm thấy đơn hàng");
         }
       } catch (err: any) {
         console.error("Lỗi tải đơn hàng:", err);

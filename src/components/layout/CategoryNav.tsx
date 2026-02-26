@@ -10,11 +10,21 @@ export default function CategoryNav() {
   useEffect(() => {
     const fetchCategories = async () => {
       try {
-        const data = await categoryService.getAll();
-        // Kiểm tra xem data có phải là mảng không (đề phòng API thay đổi)
-        if (Array.isArray(data)) {
-          // Chỉ lấy những category đang active
-          setCategories(data.filter((c) => c.active));
+        const response: any = await categoryService.getAll();
+        let cats: Category[] = [];
+
+        if (Array.isArray(response)) {
+          cats = response;
+        } else if (response?.data && Array.isArray(response.data)) {
+          cats = response.data;
+        }
+
+        // Chỉ lấy những category đang active
+        if (cats.length > 0) {
+           // Type assertion needed if typescript complains about filter on unverified type, 
+           // but we just verified it is an array.
+           // However TS might infer 'any' from response.
+           setCategories((cats as any[]).filter((c: any) => c.active));
         }
       } catch (error) {
         console.error("Failed to fetch categories:", error);
