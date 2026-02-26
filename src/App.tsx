@@ -1,5 +1,5 @@
 import React from "react";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import MainLayout from "./components/layout/MainLayout";
 import HomePage from "./pages/HomePage";
 import CategoryPage from "./pages/CategoryPage";
@@ -23,6 +23,7 @@ import MarketingSolutionsPage from "./pages/static/MarketingSolutionsPage";
 import BusinessContactPage from "./pages/static/BusinessContactPage";
 import AboutPage from "./pages/static/AboutPage";
 import PaymentMethodsPage from "./pages/static/PaymentMethodsPage";
+import PoliciesPage from "./pages/static/PoliciesPage";
 import AdminLayout from "@/components/layout/admin/AdminLayout";
 import EventManagerPage from "@/pages/admin/EventManagerPage";
 import EventWizardPage from "@/pages/admin/EventWizardPage";
@@ -32,8 +33,20 @@ import AdminSeatMapPage from "./pages/admin/AdminSeatMapPage";
 import UserManagerPage from "./pages/admin/UserManagerPage";
 import CategoryManagerPage from "./pages/admin/CategoryManagerPage";
 import ReportsPage from "./pages/admin/ReportsPage";
-import ReportsPageTest from "./pages/admin/ReportsPageTest";
 import AdminProfilePage from "./pages/admin/AdminProfilePage";
+import { useAuthStore } from "./store/useAuthStore";
+
+function SuperAdminRoute({ children }: { children: React.ReactElement }) {
+  const user = useAuthStore((s) => s.user);
+  const roleName = (user?.role?.roleName || "").toUpperCase();
+  const isSuperAdmin = roleName === "SUPER_ADMIN" || roleName === "SUPERADMIN";
+
+  if (!isSuperAdmin) {
+    return <Navigate to="/admin/events" replace />;
+  }
+
+  return children;
+}
 
 function App() {
   const { isLoginPromptOpen, closeLoginPrompt } = useModalStore();
@@ -93,13 +106,27 @@ function App() {
 
           <Route path="users" element={<UserManagerPage />} />
 
-          <Route path="categories" element={<CategoryManagerPage />} />
+          <Route
+            path="categories"
+            element={
+              <SuperAdminRoute>
+                <CategoryManagerPage />
+              </SuperAdminRoute>
+            }
+          />
 
           <Route path="profile" element={<AdminProfilePage />} />
 
-          <Route path="reports" element={<ReportsPage/>} />
+          <Route
+            path="reports"
+            element={
+              <SuperAdminRoute>
+                <ReportsPage />
+              </SuperAdminRoute>
+            }
+          />
           {/* <Route path="reports" element={<ReportsPageTest/>} /> */}
-          <Route path="policies" element={<div className="text-white p-4">Trang Điều Khoản (Đang phát triển)</div>} />
+          <Route path="policies" element={<PoliciesPage />} />
         </Route>
       </Routes>
     </BrowserRouter>
