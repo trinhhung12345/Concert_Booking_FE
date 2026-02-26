@@ -297,6 +297,12 @@ export const eventService = {
     return res?.data || res;
   },
 
+  // API lấy danh sách sự kiện của admin hiện tại
+  getAdminMyEvents: async (): Promise<Event[]> => {
+    const res: any = await apiClient.get("/events/admin/my-events");
+    return res?.data || res;
+  },
+
   // API duyệt sự kiện (chỉ super_admin)
   approveEvent: async (eventId: number): Promise<Event> => {
     const res: any = await apiClient.put(`/events/${eventId}/approve`);
@@ -304,8 +310,8 @@ export const eventService = {
   },
 
   // API không duyệt sự kiện (chỉ super_admin)
-  notApproveEvent: async (eventId: number): Promise<Event> => {
-    const res: any = await apiClient.put(`/events/${eventId}/not-approve`);
+  notApproveEvent: async (eventId: number, reason?: string): Promise<Event> => {
+    const res: any = await apiClient.put(`/events/${eventId}/not-approve`, { reason });
     return res?.data || res;
   },
 

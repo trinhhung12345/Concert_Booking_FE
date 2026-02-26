@@ -15,6 +15,7 @@ import {
   faRotateRight,
 } from "@fortawesome/free-solid-svg-icons";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useAuthStore } from "@/store/useAuthStore";
 
 // Services & Components
 import { eventService, EVENT_STATUS, type Event } from "@/features/concerts/services/eventService";
@@ -23,16 +24,22 @@ import AdminEventCard from "@/features/admin/components/AdminEventCard";
 type TabValue = "all" | "approved" | "not_approved" | "pending" | "deleted";
 
 export default function EventManagerPage() {
+  const user = useAuthStore((s) => s.user);
   const [events, setEvents] = useState<Event[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [activeTab, setActiveTab] = useState<TabValue>("all");
 
+  const roleName = (user?.role?.roleName || "").toUpperCase();
+  const isSuperAdmin = roleName === "SUPER_ADMIN" || roleName === "SUPERADMIN";
+
   // Gọi API lấy danh sách sự kiện (admin)
   const fetchEvents = async () => {
     try {
       setLoading(true);
-      const data = await eventService.getAdminEvents();
+      const data = isSuperAdmin
+        ? await eventService.getAdminEvents()
+        : await eventService.getAdminMyEvents();
       setEvents(data);
     } catch (error) {
       console.error("Lỗi tải sự kiện:", error);
@@ -43,7 +50,7 @@ export default function EventManagerPage() {
 
   useEffect(() => {
     fetchEvents();
-  }, []);
+  }, [isSuperAdmin]);
 
   // Handle approve event
   const handleApprove = async (eventId: number) => {
@@ -59,9 +66,9 @@ export default function EventManagerPage() {
   };
 
   // Handle not approve event
-  const handleNotApprove = async (eventId: number) => {
+  const handleNotApprove = async (eventId: number, reason?: string) => {
     try {
-      const updated = await eventService.notApproveEvent(eventId);
+      const updated = await eventService.notApproveEvent(eventId, reason);
       setEvents((prev) =>
         prev.map((e) => (e.id === eventId ? { ...e, status: updated.status ?? EVENT_STATUS.NOT_APPROVED, deleted: updated.deleted } : e))
       );
