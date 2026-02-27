@@ -9,6 +9,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faLock, faSignInAlt } from "@fortawesome/free-solid-svg-icons";
+import { useAuthStore } from "@/store/useAuthStore";
 
 interface LoginPromptModalProps {
   isOpen: boolean;
@@ -17,6 +18,8 @@ interface LoginPromptModalProps {
 
 export default function LoginPromptModal({ isOpen, onClose }: LoginPromptModalProps) {
   const navigate = useNavigate();
+  const user = useAuthStore((state) => state.user);
+  const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
 
   const handleLogin = () => {
     onClose();
@@ -25,6 +28,11 @@ export default function LoginPromptModal({ isOpen, onClose }: LoginPromptModalPr
 
   const handleCancel = () => {
     onClose();
+
+    // Nếu người dùng chưa đăng nhập hoặc không có quyền, quay về trang chủ
+    if (!isAuthenticated || !user || !user.role) {
+      navigate("/");
+    }
   };
 
   return (
