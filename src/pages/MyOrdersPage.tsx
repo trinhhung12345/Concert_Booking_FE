@@ -13,6 +13,7 @@ import {
 } from "@fortawesome/free-solid-svg-icons";
 import { orderService } from "@/features/booking/services/orderService";
 import type { Order } from "@/features/booking/types/order";
+import OrderTimer from "@/features/booking/components/OrderTimer";
 
 export default function MyOrdersPage() {
   const navigate = useNavigate();
@@ -232,23 +233,37 @@ export default function MyOrdersPage() {
                   </div>
 
                   {order.status === "UNPAID" && (
-                    <Button 
-                      className="bg-pink-600 hover:bg-pink-700"
-                      onClick={() => handleCheckout(order.id)}
-                      disabled={checkingOutId === order.id}
-                    >
-                      {checkingOutId === order.id ? (
-                        <>
-                          <FontAwesomeIcon icon={faSpinner} spin className="mr-2" />
-                          Đang xử lý...
-                        </>
-                      ) : (
-                        <>
-                          <FontAwesomeIcon icon={faCreditCard} className="mr-2" />
-                          Thanh toán ngay
-                        </>
+                    <div className="flex items-center gap-3">
+                      {order.createdAt && (
+                        <OrderTimer 
+                          createdAt={order.createdAt} 
+                          size="sm" 
+                          variant="inline"
+                          onExpired={() => {
+                            setOrders(prev => prev.map(o => 
+                              o.id === order.id ? { ...o, status: "CANCELLED" } : o
+                            ));
+                          }}
+                        />
                       )}
-                    </Button>
+                      <Button 
+                        className="bg-pink-600 hover:bg-pink-700"
+                        onClick={() => handleCheckout(order.id)}
+                        disabled={checkingOutId === order.id}
+                      >
+                        {checkingOutId === order.id ? (
+                          <>
+                            <FontAwesomeIcon icon={faSpinner} spin className="mr-2" />
+                            Đang xử lý...
+                          </>
+                        ) : (
+                          <>
+                            <FontAwesomeIcon icon={faCreditCard} className="mr-2" />
+                            Thanh toán ngay
+                          </>
+                        )}
+                      </Button>
+                    </div>
                   )}
                 </div>
               </div>

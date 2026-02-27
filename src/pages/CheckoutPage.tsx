@@ -18,6 +18,7 @@ import { orderService } from "@/features/booking/services/orderService";
 import type { Seat } from "@/features/booking/types/seatmap";
 import type { Order } from "@/features/booking/types/order";
 import { useAuthStore } from "@/store/useAuthStore";
+import OrderTimer from "@/features/booking/components/OrderTimer";
 
 interface TicketSelection {
   ticketTypeId: number;
@@ -291,6 +292,20 @@ export default function CheckoutPage() {
                 </div>
               )}
 
+              {createdOrder && createdOrder.status === "UNPAID" && createdOrder.createdAt && (
+                <div className="mb-4">
+                  <OrderTimer 
+                    createdAt={createdOrder.createdAt} 
+                    variant="block"
+                    size="lg"
+                    onExpired={() => {
+                      setCreatedOrder({ ...createdOrder, status: "CANCELLED" });
+                      setError("Đơn hàng đã bị hủy do hết thời gian thanh toán. Vui lòng đặt lại vé.");
+                    }}
+                  />
+                </div>
+              )}
+
               {!createdOrder ? (
                 <Button className="w-full h-12 text-lg font-bold" onClick={handleCreateOrder} disabled={isCreatingOrder}>
                   {isCreatingOrder ? (
@@ -301,6 +316,13 @@ export default function CheckoutPage() {
                   ) : (
                     "Xác nhận đặt vé"
                   )}
+                </Button>
+              ) : createdOrder.status === "CANCELLED" ? (
+                <Button
+                  className="w-full h-12 text-lg font-bold"
+                  onClick={() => navigate(-1)}
+                >
+                  Quay lại đặt vé
                 </Button>
               ) : (
                 <Button

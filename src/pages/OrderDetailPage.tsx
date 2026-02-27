@@ -21,6 +21,7 @@ import {
 import { orderService } from "@/features/booking/services/orderService";
 import type { Order, OrderDetail } from "@/features/booking/types/order";
 import { Button } from "@/components/ui/button";
+import OrderTimer from "@/features/booking/components/OrderTimer";
 import {
   Dialog,
   DialogContent,
@@ -185,6 +186,19 @@ const OrderDetailPage = () => {
             </div>
             {getStatusBadge(order.status)}
           </div>
+
+          {order.status === "UNPAID" && order.createdAt && (
+            <div className="mb-6">
+              <OrderTimer 
+                createdAt={order.createdAt}
+                variant="block"
+                size="lg"
+                onExpired={() => {
+                  setOrder({ ...order, status: "CANCELLED" });
+                }}
+              />
+            </div>
+          )}
 
           {/* Thông tin người nhận */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 p-4 bg-slate-900 rounded-lg border border-slate-800">
