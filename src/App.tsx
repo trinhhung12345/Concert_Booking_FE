@@ -1,5 +1,5 @@
-import React from "react";
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import React, { useEffect } from "react";
+import { BrowserRouter, Routes, Route, Navigate, useNavigate } from "react-router-dom";
 import MainLayout from "./components/layout/MainLayout";
 import HomePage from "./pages/HomePage";
 import CategoryPage from "./pages/CategoryPage";
@@ -35,6 +35,8 @@ import CategoryManagerPage from "./pages/admin/CategoryManagerPage";
 import ReportsPage from "./pages/admin/ReportsPage";
 import AdminProfilePage from "./pages/admin/AdminProfilePage";
 import { useAuthStore } from "./store/useAuthStore";
+import Error404Page from "./pages/Error404Page";
+import { setNavigator } from "@/lib/navigation";
 
 function AdminRoute({ children }: { children: React.ReactElement }) {
   const user = useAuthStore((s) => s.user);
@@ -58,10 +60,21 @@ function SuperAdminRoute({ children }: { children: React.ReactElement }) {
   const isSuperAdmin = roleName === "SUPER_ADMIN" || roleName === "SUPERADMIN";
 
   if (!isSuperAdmin) {
-    return <Navigate to="/admin/events" replace />;
+    // Không đủ quyền: chuyển thẳng sang trang 404
+    return <Navigate to="/404" replace />;
   }
 
   return children;
+}
+
+function NavigationRegistrar() {
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    setNavigator(navigate);
+  }, [navigate]);
+
+  return null;
 }
 
 function App() {
@@ -69,6 +82,9 @@ function App() {
 
   return (
     <BrowserRouter>
+      {/* Đăng ký hàm navigate toàn cục cho axios interceptor, v.v. */}
+      <NavigationRegistrar />
+
       {/* Global Login Prompt Modal - Luôn có sẵn trong toàn app */}
       <LoginPromptModal
         isOpen={isLoginPromptOpen}
@@ -99,6 +115,9 @@ function App() {
           <Route path="/business-contact" element={<BusinessContactPage />} />
           <Route path="/about" element={<AboutPage />} />
           <Route path="/payment-methods" element={<PaymentMethodsPage />} />
+
+          {/* 404 Page (hiển thị trong MainLayout) */}
+          <Route path="/404" element={<Error404Page />} />
         </Route>
 
         {/* Các trang Auth nằm riêng (Không có Header/Footer của MainLayout) */}
@@ -120,7 +139,14 @@ function App() {
           <Route path="events/:id/edit" element={<EventWizardPage />} />
           <Route path="events/:id/seatmap" element={<AdminSeatMapPage />} />
 
-          <Route path="users" element={<UserManagerPage />} />
+          <Route
+            path="users"
+            element={
+              <SuperAdminRoute>
+                <UserManagerPage />
+              </SuperAdminRoute>
+            }
+          />
 
           <Route
             path="categories"
@@ -144,6 +170,9 @@ function App() {
           {/* <Route path="reports" element={<ReportsPageTest/>} /> */}
           <Route path="policies" element={<PoliciesPage />} />
         </Route>
+
+        {/* Catch-all cho các route không khớp */}
+        <Route path="*" element={<Error404Page />} />
       </Routes>
     </BrowserRouter>
   );
