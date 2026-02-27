@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useLayoutEffect } from "react";
 import { Stage, Layer, Rect, Transformer, Group, Text } from "react-konva";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -55,6 +55,8 @@ interface SeatMapEditorProps {
 }
 
 export default function SeatMapEditor({ showingId, onSave }: SeatMapEditorProps) {
+  const GRID_SIZE = 40;
+
   const [shapes, setShapes] = useState<ShapeData[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [ticketTypes, setTicketTypes] = useState<TicketType[]>([]);
@@ -65,6 +67,37 @@ export default function SeatMapEditor({ showingId, onSave }: SeatMapEditorProps)
   const [dialogOpen, setDialogOpen] = useState(false);
   const [dialogType, setDialogType] = useState<'delete' | 'soft-delete'>('delete');
   const [dialogAction, setDialogAction] = useState<(() => void) | null>(null);
+  const canvasContainerRef = useRef<HTMLDivElement | null>(null);
+  const [stageSize, setStageSize] = useState({ width: 800, height: 600 });
+
+  // Đo kích thước container ngay khi mount (trước paint) để tránh flash
+  useLayoutEffect(() => {
+    const el = canvasContainerRef.current;
+    if (el && el.clientWidth > 0 && el.clientHeight > 0) {
+      setStageSize({ width: el.clientWidth, height: el.clientHeight });
+    }
+  }, []);
+
+  // Theo dõi thay đổi kích thước container
+  useEffect(() => {
+    const el = canvasContainerRef.current;
+    if (!el) return;
+
+    const ro = new ResizeObserver((entries) => {
+      for (const entry of entries) {
+        const { width, height } = entry.contentRect;
+        if (width > 0 && height > 0) {
+          setStageSize((prev) =>
+            prev.width === Math.floor(width) && prev.height === Math.floor(height)
+              ? prev
+              : { width: Math.floor(width), height: Math.floor(height) }
+          );
+        }
+      }
+    });
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
 
   // Hàm xử lý xóa mềm section
   const softDeleteSection = async (sectionId: string) => {
@@ -670,7 +703,7 @@ export default function SeatMapEditor({ showingId, onSave }: SeatMapEditorProps)
 
   if (loadingSeatMap) {
     return (
-      <div className="flex h-[600px] items-center justify-center bg-card border border-border rounded-xl">
+      <div className="flex h-[calc(100vh-180px)] min-h-[480px] items-center justify-center bg-card border border-border rounded-xl">
         <div className="text-center">
           <FontAwesomeIcon icon={faRefresh} spin className="text-2xl text-primary mb-2" />
           <p className="text-muted-foreground">Đang tải...</p>
@@ -681,7 +714,7 @@ export default function SeatMapEditor({ showingId, onSave }: SeatMapEditorProps)
 
   if (error) {
     return (
-      <div className="flex h-[600px] flex-col items-center justify-center bg-card border border-border rounded-xl p-4">
+      <div className="flex h-[calc(100vh-180px)] min-h-[480px] flex-col items-center justify-center bg-card border border-border rounded-xl p-4">
         <div className="text-red-500 text-center mb-4">
           <p className="font-medium">Lỗi: {error}</p>
         </div>
@@ -693,9 +726,9 @@ export default function SeatMapEditor({ showingId, onSave }: SeatMapEditorProps)
   }
 
   return (
-    <div className="flex h-[600px] border border-border rounded-xl overflow-hidden bg-card">
+    <div className="flex flex-row h-[calc(100vh-180px)] min-h-[480px] border border-border rounded-xl overflow-hidden bg-card">
       {/* 1. TOOLBAR TRÁI */}
-      <div className="w-16 border-r border-border flex flex-col items-center py-4 gap-4 bg-card">
+      <div className="w-14 shrink-0 border-r border-border flex flex-col items-center py-4 gap-3 bg-card">
         <Button
           size="icon"
           onClick={addSection}
@@ -725,35 +758,36 @@ export default function SeatMapEditor({ showingId, onSave }: SeatMapEditorProps)
       </div>
 
       {/* 2. CANVAS CHÍNH */}
-      <div className="flex-1 bg-muted/30 relative">
-        <Stage
-          width={800}
-          height={600}
-          onMouseDown={(e) => {
-            if (e.target === e.target.getStage()) setSelectedId(null);
-          }}
-        >
+      <div ref={canvasContainerRef} className="flex-1 bg-muted/30 relative overflow-hidden">
+        <div className="absolute inset-0">
+          <Stage
+            width={stageSize.width}
+            height={stageSize.height}
+            onMouseDown={(e) => {
+              if (e.target === e.target.getStage()) setSelectedId(null);
+            }}
+          >
           <Layer>
             {/* Background */}
-            <Rect x={0} y={0} width={800} height={600} fill="#f8fafc" />
+            <Rect x={0} y={0} width={stageSize.width} height={stageSize.height} fill="#f8fafc" />
             
             {/* Grid pattern */}
-            {Array.from({ length: 20 }).map((_, i) => (
+            {Array.from({ length: Math.ceil(stageSize.width / GRID_SIZE) + 1 }).map((_, i) => (
               <Rect
                 key={`vgrid-${i}`}
-                x={i * 40}
+                x={i * GRID_SIZE}
                 y={0}
                 width={1}
-                height={600}
+                height={stageSize.height}
                 fill="#e2e8f0"
               />
             ))}
-            {Array.from({ length: 15 }).map((_, i) => (
+            {Array.from({ length: Math.ceil(stageSize.height / GRID_SIZE) + 1 }).map((_, i) => (
               <Rect
                 key={`hgrid-${i}`}
                 x={0}
-                y={i * 40}
-                width={800}
+                y={i * GRID_SIZE}
+                width={stageSize.width}
                 height={1}
                 fill="#e2e8f0"
               />
@@ -775,10 +809,11 @@ export default function SeatMapEditor({ showingId, onSave }: SeatMapEditorProps)
             ))}
           </Layer>
         </Stage>
+        </div>
       </div>
 
       {/* 3. PROPERTIES PANEL (BÊN PHẢI) */}
-      <div className="w-72 border-l border-border bg-card flex flex-col">
+      <div className="w-72 shrink-0 border-l border-border bg-card flex flex-col overflow-hidden">
         <div className="p-4 border-b border-border flex justify-between items-center bg-card z-10">
           <h3 className="font-bold">Thuộc tính</h3>
           <Button 
