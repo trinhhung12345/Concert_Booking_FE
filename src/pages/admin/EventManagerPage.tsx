@@ -91,6 +91,27 @@ export default function EventManagerPage() {
     }
   };
 
+  // Handle restore deleted event
+  const handleRestore = async (eventId: number) => {
+    try {
+      const restored = await eventService.restoreEvent(eventId);
+      setEvents((prev) =>
+        prev.map((e) =>
+          e.id === eventId
+            ? {
+                ...e,
+                ...restored,
+                deleted: false,
+              }
+            : e
+        )
+      );
+    } catch (error) {
+      console.error("Lỗi phục hồi sự kiện:", error);
+      alert("Không thể phục hồi sự kiện. Vui lòng thử lại.");
+    }
+  };
+
   // Filter events by search query
   const searchFiltered = useMemo(() => {
     if (!searchQuery.trim()) return events;
@@ -214,6 +235,7 @@ export default function EventManagerPage() {
                     onApprove={handleApprove}
                     onNotApprove={handleNotApprove}
                     onDelete={handleDelete}
+                    onRestore={handleRestore}
                   />
                 ))
               : !loading && (

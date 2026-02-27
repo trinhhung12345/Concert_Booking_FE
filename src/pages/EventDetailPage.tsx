@@ -124,6 +124,9 @@ export default function EventDetailPage() {
     return <div className="py-20 text-center text-foreground">Không tìm thấy sự kiện</div>;
 
   const firstShowing = event.showings?.[0];
+  const hasSalableShowing = event.showings?.some((s) => s.isSalable !== false) ?? false;
+  const isSingleShowingLocked =
+    (event.showings?.length ?? 0) === 1 && firstShowing?.isSalable === false;
   const startTime = firstShowing?.startTime || new Date().toISOString();
   const prices =
     event.showings?.flatMap((s) => s.types?.map((t) => t.price) || []) || [0];
@@ -347,13 +350,21 @@ export default function EventDetailPage() {
 
               <Button
                 className="w-full h-12 rounded-xl bg-pink-500 hover:bg-pink-400 text-white font-semibold"
+                disabled={!hasSalableShowing || isSingleShowingLocked}
                 onClick={() => {
-                  if (event.showings?.length === 1)
+                  if (event.showings?.length === 1) {
+                    if (event.showings[0].isSalable === false) {
+                      return;
+                    }
                     navigate(`/booking/${event.id}?showingId=${event.showings[0].id}`);
-                  else setShowingModalOpen(true);
+                    return;
+                  }
+                  setShowingModalOpen(true);
                 }}
               >
-                Đặt vé ngay
+                {!hasSalableShowing || isSingleShowingLocked
+                  ? "Suất diễn đã khóa"
+                  : "Đặt vé ngay"}
               </Button>
             </div>
           </div>
@@ -373,21 +384,37 @@ export default function EventDetailPage() {
           <div className="space-y-3 mt-4">
             {event.showings?.map((s) => {
               const { time, date } = formatScheduleShort(s.startTime, s.endTime);
+              const isShowingLocked = s.isSalable === false;
               return (
                 <div
                   key={s.id}
                   onClick={() => {
+                    if (isShowingLocked) {
+                      return;
+                    }
                     setShowingModalOpen(false);
                     navigate(`/booking/${event.id}?showingId=${s.id}`);
                   }}
-                  className="cursor-pointer rounded-xl border border-pink-500/20 hover:border-pink-400 bg-[#12061f] px-4 py-3"
+                  className={`rounded-xl border px-4 py-3 ${
+                    isShowingLocked
+                      ? "cursor-not-allowed border-pink-500/10 bg-[#12061f]/60 opacity-60"
+                      : "cursor-pointer border-pink-500/20 hover:border-pink-400 bg-[#12061f]"
+                  }`}
+                  title={isShowingLocked ? "Suất diễn đã khóa" : undefined}
                 >
                   <div className="flex justify-between items-center">
                     <div>
                       <p className="font-semibold text-white">{time}</p>
                       <p className="text-sm text-slate-400">{date}</p>
                     </div>
-                    <FontAwesomeIcon icon={faTicketAlt} className="text-pink-400" />
+                    <div className="flex items-center gap-2">
+                      {isShowingLocked && (
+                        <span className="rounded bg-black/50 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-red-300">
+                          Đã khóa
+                        </span>
+                      )}
+                      <FontAwesomeIcon icon={faTicketAlt} className="text-pink-400" />
+                    </div>
                   </div>
                 </div>
               );

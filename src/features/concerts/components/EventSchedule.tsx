@@ -100,31 +100,57 @@ export default function EventSchedule({ eventId }: EventScheduleProps) {
       {showings.map((show) => {
         const { time, date } = formatSchedule(show.startTime, show.endTime);
         const isOpen = expandedShowingId === show.id;
+        const isShowingLocked = show.isSalable === false;
 
         return (
           <div
             key={show.id}
             className={cn(
                 "border rounded-2xl overflow-hidden transition-all duration-300",
-                isOpen ? "border-primary ring-1 ring-primary bg-white shadow-md" : "border-gray-200 bg-white hover:border-primary/50"
+                isShowingLocked
+                  ? "border-gray-200 bg-gray-50"
+                  : isOpen
+                  ? "border-primary ring-1 ring-primary bg-white shadow-md"
+                  : "border-gray-200 bg-white hover:border-primary/50"
             )}
           >
             {/* HEADER CỦA LỊCH DIỄN (Click để mở) */}
             <div
-                className="p-4 md:p-5 flex flex-col md:flex-row md:items-center justify-between cursor-pointer gap-4"
-                onClick={() => handleToggle(show.id)}
+                className={cn(
+                  "p-4 md:p-5 flex flex-col md:flex-row md:items-center justify-between gap-4",
+                  isShowingLocked ? "cursor-not-allowed opacity-70" : "cursor-pointer"
+                )}
+                onClick={() => {
+                  if (isShowingLocked) {
+                    return;
+                  }
+                  handleToggle(show.id);
+                }}
             >
                 {/* Time Info */}
                 <div className="flex items-start gap-4">
                     <div className={cn(
                         "w-12 h-12 rounded-xl flex items-center justify-center transition-colors",
-                        isOpen ? "bg-primary text-white" : "bg-gray-100 text-gray-500"
+                        isShowingLocked
+                          ? "bg-gray-200 text-gray-400"
+                          : isOpen
+                          ? "bg-primary text-white"
+                          : "bg-gray-100 text-gray-500"
                     )}>
                          <FontAwesomeIcon icon={faCalendarDays} className="text-xl" />
                     </div>
                     <div>
                         <p className="font-bold text-lg text-gray-900">{time}</p>
-                        <p className={cn("font-medium", isOpen ? "text-primary" : "text-gray-500")}>
+                        <p
+                          className={cn(
+                            "font-medium",
+                            isShowingLocked
+                              ? "text-gray-500"
+                              : isOpen
+                              ? "text-primary"
+                              : "text-gray-500"
+                          )}
+                        >
                             {date}
                         </p>
                     </div>
@@ -133,21 +159,28 @@ export default function EventSchedule({ eventId }: EventScheduleProps) {
                 {/* Action Button */}
                 <div className="flex items-center justify-between md:justify-end gap-3 w-full md:w-auto mt-2 md:mt-0">
                     <span className="text-sm text-gray-400 md:hidden">
-                        {isOpen ? "Thu gọn" : "Xem vé"}
+                        {isShowingLocked ? "Đã khóa" : isOpen ? "Thu gọn" : "Xem vé"}
                     </span>
                     <Button
                         onClick={(e) => handleBookNow(e, show.id)}
+                        disabled={isShowingLocked}
                         className={cn(
                             "rounded-full px-6 font-bold transition-all",
-                            isOpen ? "bg-primary text-white" : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                            isShowingLocked
+                              ? "bg-gray-200 text-gray-500 cursor-not-allowed"
+                              : isOpen
+                              ? "bg-primary text-white"
+                              : "bg-gray-100 text-gray-600 hover:bg-gray-200"
                         )}
                     >
-                        Mua vé ngay
+                        {isShowingLocked ? "Đã khóa" : "Mua vé ngay"}
                     </Button>
-                    <FontAwesomeIcon
-                        icon={isOpen ? faChevronUp : faChevronDown}
-                        className="text-gray-400 hidden md:block"
-                    />
+                    {!isShowingLocked && (
+                      <FontAwesomeIcon
+                          icon={isOpen ? faChevronUp : faChevronDown}
+                          className="text-gray-400 hidden md:block"
+                      />
+                    )}
                 </div>
             </div>
 

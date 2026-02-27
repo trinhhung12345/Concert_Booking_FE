@@ -16,6 +16,7 @@ import {
   faSpinner,
   faExclamationTriangle,
   faShieldAlt,
+  faRotateRight,
 } from "@fortawesome/free-solid-svg-icons";
 import { Button } from "@/components/ui/button";
 import {
@@ -80,18 +81,20 @@ interface AdminEventCardProps {
   onApprove?: (eventId: number) => Promise<void>;
   onNotApprove?: (eventId: number, reason?: string) => Promise<void>;
   onDelete?: (eventId: number) => Promise<void>;
+  onRestore?: (eventId: number) => Promise<void>;
 }
 
-export default function AdminEventCard({ event, onApprove, onNotApprove, onDelete }: AdminEventCardProps) {
+export default function AdminEventCard({ event, onApprove, onNotApprove, onDelete, onRestore }: AdminEventCardProps) {
   const user = useAuthStore((s) => s.user);
   const isSuperAdmin = user?.role?.roleName === "SUPER_ADMIN";
-  const [actionLoading, setActionLoading] = useState<"approve" | "reject" | "delete" | null>(null);
+  const [actionLoading, setActionLoading] = useState<"approve" | "reject" | "delete" | "restore" | null>(null);
 
   // Dialog states
   const [approveDialogOpen, setApproveDialogOpen] = useState(false);
   const [rejectDialogOpen, setRejectDialogOpen] = useState(false);
   const [rejectReason, setRejectReason] = useState("");
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [restoreDialogOpen, setRestoreDialogOpen] = useState(false);
 
   // 1. Xử lý lấy ảnh Thumbnail
   const thumbnailFile = event.files?.find(f => f.type === 0) || event.files?.[0];
@@ -133,6 +136,17 @@ export default function AdminEventCard({ event, onApprove, onNotApprove, onDelet
     try {
       await onDelete(event.id);
       setDeleteDialogOpen(false);
+    } finally {
+      setActionLoading(null);
+    }
+  };
+
+  const handleRestoreConfirm = async () => {
+    if (!onRestore) return;
+    setActionLoading("restore");
+    try {
+      await onRestore(event.id);
+      setRestoreDialogOpen(false);
     } finally {
       setActionLoading(null);
     }
@@ -392,13 +406,74 @@ export default function AdminEventCard({ event, onApprove, onNotApprove, onDelet
         </DialogContent>
       </Dialog>
 
+      {/* --- DIALOG PHỤC HỒI SỰ KIỆN --- */}
+      <Dialog open={restoreDialogOpen} onOpenChange={setRestoreDialogOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-emerald-100 dark:bg-emerald-900/30 mb-2">
+              <FontAwesomeIcon icon={faRotateRight} className="text-emerald-600 dark:text-emerald-400 text-lg" />
+            </div>
+            <DialogTitle className="text-center text-lg">Xác nhận phục hồi sự kiện</DialogTitle>
+            <DialogDescription className="text-center">
+              Bạn có chắc chắn muốn <span className="font-semibold text-emerald-600">phục hồi</span> sự kiện này không?
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="bg-muted/50 rounded-lg p-3 border border-border">
+            <p className="font-semibold text-sm text-foreground">{event.title}</p>
+            <p className="text-xs text-muted-foreground mt-1">{location || "Chưa cập nhật địa điểm"}</p>
+          </div>
+
+          <p className="text-xs text-muted-foreground text-center">
+            Sự kiện sau khi phục hồi sẽ hiển thị lại trên hệ thống theo trạng thái hiện tại.
+          </p>
+
+          <div className="flex gap-3 justify-end pt-2">
+            <Button
+              variant="outline"
+              onClick={() => setRestoreDialogOpen(false)}
+              disabled={actionLoading === "restore"}
+            >
+              Hủy
+            </Button>
+            <Button
+              className="bg-emerald-600 hover:bg-emerald-700 text-white gap-2"
+              onClick={handleRestoreConfirm}
+              disabled={actionLoading === "restore"}
+            >
+              {actionLoading === "restore" ? (
+                <>
+                  <FontAwesomeIcon icon={faSpinner} spin className="text-sm" />
+                  Đang xử lý...
+                </>
+              ) : (
+                <>
+                  <FontAwesomeIcon icon={faRotateRight} className="text-sm" />
+                  Xác nhận phục hồi
+                </>
+              )}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
       {/* --- PHẦN DƯỚI: ACTION BAR --- */}
-      <div className={`bg-muted/50 border-t border-border p-2 grid ${!event.deleted ? 'grid-cols-6' : 'grid-cols-5'} gap-1`}>
+      <div className="bg-muted/50 border-t border-border p-2 grid grid-cols-6 gap-1">
 
         {/* Các nút chức năng */}
-        <ActionButton icon={faChartPie} label="Tổng quan" disabled />
+        <Link to={`/admin/events/${event.id}/revenue`} className="contents">
+          <Button variant="ghost" className="flex flex-col h-auto py-2 gap-1 text-muted-foreground hover:text-primary hover:bg-background">
+            <FontAwesomeIcon icon={faChartPie} className="text-lg" />
+            <span className="text-xs font-normal">Tổng quan</span>
+          </Button>
+        </Link>
         <ActionButton icon={faUsers} label="Thành viên" disabled />
-        <ActionButton icon={faReceipt} label="Đơn hàng" disabled />
+        <Link to={`/admin/events/${event.id}/orders`} className="contents">
+          <Button variant="ghost" className="flex flex-col h-auto py-2 gap-1 text-muted-foreground hover:text-primary hover:bg-background">
+            <FontAwesomeIcon icon={faReceipt} className="text-lg" />
+            <span className="text-xs font-normal">Đơn hàng</span>
+          </Button>
+        </Link>
 
         {/* NÚT QUAN TRỌNG: Sơ đồ ghế */}
         <Link to={`/admin/events/${event.id}/seatmap`} className="contents">
@@ -426,6 +501,19 @@ export default function AdminEventCard({ event, onApprove, onNotApprove, onDelet
           >
             <FontAwesomeIcon icon={faTrash} className="text-lg" />
             <span className="text-xs font-normal">Xóa</span>
+          </Button>
+        )}
+
+        {/* NÚT PHỤC HỒI */}
+        {event.deleted && (
+          <Button
+            variant="ghost"
+            className="flex flex-col h-auto py-2 gap-1 text-muted-foreground hover:text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-900/20"
+            onClick={() => setRestoreDialogOpen(true)}
+            disabled={actionLoading !== null}
+          >
+            <FontAwesomeIcon icon={faRotateRight} className="text-lg" />
+            <span className="text-xs font-normal">Phục hồi</span>
           </Button>
         )}
 

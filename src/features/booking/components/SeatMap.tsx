@@ -146,17 +146,22 @@ export default function SeatMap({
 
             {/* ZONES */}
             {seatSections.map(
-              (section) =>
+              (section) => {
+                const isSectionLocked = section.isSalable === false;
+                const isBlockedByActiveZone =
+                  activeZoneId !== null && activeZoneId !== section.id;
+                const isSectionDisabled = isSectionLocked || isBlockedByActiveZone;
+
+                return (
                 section.attribute && (
                   <div
                     key={section.id}
                     className={`
-                      absolute flex flex-col items-center justify-center
-                      border-2 rounded-lg cursor-pointer transition
+                      absolute relative overflow-hidden flex flex-col items-center justify-center
+                      border-2 rounded-lg transition
                       ${
-                        activeZoneId !== null &&
-                        activeZoneId !== section.id
-                          ? 'opacity-40 cursor-not-allowed'
+                        isSectionDisabled
+                          ? 'cursor-not-allowed'
                           : ''
                       }
                     `}
@@ -168,22 +173,36 @@ export default function SeatMap({
                       background: section.attribute.fill || '#666',
                     }}
                     onClick={() => {
-                      if (
-                        activeZoneId !== null &&
-                        activeZoneId !== section.id
-                      )
+                      if (isSectionDisabled) {
                         return;
+                      }
 
                       setSelectedSection(section);
                       setViewMode('SEATS');
                     }}
+                    title={
+                      isSectionLocked
+                        ? `Khu vực đã khóa${section.message ? `: ${section.message}` : ''}`
+                        : section.name
+                    }
                   >
-                    <div className="font-bold">{section.name}</div>
-                    <div className="text-xs opacity-80">
+                    {isSectionDisabled && (
+                      <div className="pointer-events-none absolute inset-0 bg-black/45" />
+                    )}
+
+                    <div className="relative z-10 font-bold text-white">{section.name}</div>
+                    <div className="relative z-10 text-xs opacity-90 text-white">
                       {section.seats.length ? 'Seating' : 'Standing'}
                     </div>
+                    {isSectionLocked && (
+                      <div className="relative z-10 mt-1 rounded bg-black/50 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-red-300">
+                        Đã khóa
+                      </div>
+                    )}
                   </div>
                 )
+              );
+              }
             )}
           </div>
         </div>

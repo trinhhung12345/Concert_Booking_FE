@@ -34,6 +34,8 @@ import UserManagerPage from "./pages/admin/UserManagerPage";
 import CategoryManagerPage from "./pages/admin/CategoryManagerPage";
 import ReportsPage from "./pages/admin/ReportsPage";
 import AdminProfilePage from "./pages/admin/AdminProfilePage";
+import EventRevenuePage from "./pages/admin/EventRevenuePage";
+import EventOrdersPage from "./pages/admin/EventOrdersPage";
 import { useAuthStore } from "./store/useAuthStore";
 import Error404Page from "./pages/Error404Page";
 import { setNavigator } from "@/lib/navigation";
@@ -138,6 +140,8 @@ function App() {
           {/* Thêm các route placeholder này */}
           <Route path="events/:id/edit" element={<EventWizardPage />} />
           <Route path="events/:id/seatmap" element={<AdminSeatMapPage />} />
+          <Route path="events/:id/revenue" element={<EventRevenuePage />} />
+          <Route path="events/:id/orders" element={<EventOrdersPage />} />
 
           <Route
             path="users"
