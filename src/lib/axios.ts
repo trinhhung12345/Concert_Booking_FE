@@ -1,15 +1,25 @@
 import axios from "axios";
 import { useModalStore } from "@/store/useModalStore";
+import { useAuthStore } from "@/store/useAuthStore";
+import { navigateTo } from "@/lib/navigation";
 
 // Create a non-reactive reference to the modal store
 // This avoids React hooks being called in non-React context
 let modalStore: any;
+let authStore: any;
 
 const getModalStore = () => {
   if (!modalStore) {
     modalStore = useModalStore.getState();
   }
   return modalStore;
+};
+
+const getAuthStore = () => {
+  if (!authStore) {
+    authStore = useAuthStore.getState();
+  }
+  return authStore;
 };
 
 const apiClient = axios.create({
@@ -43,13 +53,32 @@ apiClient.interceptors.response.use(
     return response.data;
   },
   (error) => {
+    const status = error.response?.status;
+
     // Xử lý lỗi 401 (Unauthorized) - Token hết hạn hoặc chưa đăng nhập
-    if (error.response?.status === 401) {
+    if (status === 401) {
       // Không hiện modal nếu đang ở trang login hoặc register
       const currentPath = window.location.pathname;
       if (currentPath !== '/login' && currentPath !== '/register') {
-        const modalStore = getModalStore();
-        modalStore.openLoginPrompt();
+        const auth = getAuthStore();
+
+        // Chỉ mở modal yêu cầu đăng nhập nếu người dùng CHƯA đăng nhập
+        // (không có accessToken hoặc không có user)
+        if (!auth.isAuthenticated || !auth.accessToken || !auth.user) {
+          const modalStore = getModalStore();
+          modalStore.openLoginPrompt();
+        }
+        // Nếu đã đăng nhập (kể cả super admin) mà vẫn 401,
+        // cứ để lỗi trả về cho UI xử lý (ví dụ: toast, thông báo lỗi quyền hạn)
+      }
+    }
+
+    // Xử lý lỗi 403 (Forbidden) - Sai quyền người dùng
+    if (status === 403) {
+      const auth = getAuthStore();
+      // Nếu đã đăng nhập mà vẫn 403 => quyền không đúng, chuyển sang trang 404 đẹp
+      if (auth?.isAuthenticated) {
+        navigateTo('/404');
       }
     }
 
