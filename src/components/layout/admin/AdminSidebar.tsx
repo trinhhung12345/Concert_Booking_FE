@@ -14,14 +14,16 @@ import { useAuthStore } from "@/store/useAuthStore";
 export default function AdminSidebar() {
   const { user } = useAuthStore();
   // Check role
-  const isSuperAdmin = user?.role?.roleName === "SUPER_ADMIN";
+  const roleName = (user?.role?.roleName || "").toUpperCase();
+  const isSuperAdmin = roleName === "SUPER_ADMIN" || roleName === "SUPERADMIN";
 
   const MENU_ITEMS = [
     { path: "/admin/events", icon: faCalendarAlt, label: "Sự kiện của tôi" },
     // Chỉ hiện menu Quản lý người dùng nếu là SUPER_ADMIN
     ...(isSuperAdmin ? [{ path: "/admin/users", icon: faTicket, label: "Quản lý người dùng" }] : []),
-    { path: "/admin/categories", icon: faTags, label: "Quản lý danh mục" },
-    { path: "/admin/reports", icon: faChartLine, label: "Quản lý báo cáo" },
+    // Chỉ hiện menu Danh mục/Báo cáo nếu là SUPER_ADMIN
+    ...(isSuperAdmin ? [{ path: "/admin/categories", icon: faTags, label: "Quản lý danh mục" }] : []),
+    ...(isSuperAdmin ? [{ path: "/admin/reports", icon: faChartLine, label: "Quản lý báo cáo" }] : []),
     { path: "/admin/policies", icon: faFileContract, label: "Điều khoản tổ chức" },
   ];
 
