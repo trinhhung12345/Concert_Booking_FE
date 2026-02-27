@@ -1,7 +1,7 @@
 import axios from "axios";
 import { useModalStore } from "@/store/useModalStore";
 import { useAuthStore } from "@/store/useAuthStore";
-import { navigateTo } from "@/lib/navigation";
+import { navigateTo } from "./navigation";
 
 // Create a non-reactive reference to the modal store
 // This avoids React hooks being called in non-React context
@@ -54,6 +54,7 @@ apiClient.interceptors.response.use(
   },
   (error) => {
     const status = error.response?.status;
+    const requestUrl = error.config?.url || "";
 
     // Xử lý lỗi 401 (Unauthorized) - Token hết hạn hoặc chưa đăng nhập
     if (status === 401) {
@@ -79,6 +80,28 @@ apiClient.interceptors.response.use(
       // Nếu đã đăng nhập mà vẫn 403 => quyền không đúng, chuyển sang trang 404 đẹp
       if (auth?.isAuthenticated) {
         navigateTo('/404');
+      }
+    }
+
+    // Các lỗi khác (400, 404, 500, ...) -> Hiện alert với thông điệp từ backend nếu có
+    const backendMessage =
+      error.response?.data?.message ||
+      error.response?.data?.error ||
+      error.message;
+
+    if (status && status >= 400 && status !== 401 && status !== 403 && backendMessage) {
+      // Riêng các API sự kiện admin sau KHÔNG cần hiển thị lỗi popup
+      // - GET /events/admin
+      // - GET /events/admin/my-events
+      const silentErrorUrls = [
+        "/events/admin",
+        "/events/admin/my-events",
+      ];
+
+      const shouldSilent = silentErrorUrls.some((path) => requestUrl.includes(path));
+
+      if (!shouldSilent) {
+        alert(backendMessage);
       }
     }
 

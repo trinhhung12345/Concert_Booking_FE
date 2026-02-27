@@ -28,9 +28,7 @@ export default function ReportsPageTest() {
           <p className="text-sm text-gray-500 dark:text-gray-400">Cập nhật lần cuối: Hôm nay, 14:30</p>
         </div>
         <div className="flex gap-2">
-           <Button variant="outline" className="bg-white dark:bg-[#1a1c23] border-gray-200 dark:border-gray-700">
-              Tháng này
-           </Button>
+        
            <Button className="bg-primary hover:bg-primary/90 text-white gap-2">
               <FontAwesomeIcon icon={faDownload} /> Xuất báo cáo
            </Button>
