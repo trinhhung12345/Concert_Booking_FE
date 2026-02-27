@@ -315,6 +315,12 @@ export const eventService = {
     return res?.data || res;
   },
 
+  // API xóa mềm sự kiện
+  softDeleteEvent: async (eventId: number): Promise<{ code: number; message: string }> => {
+    const res: any = await apiClient.delete(`/events/${eventId}`);
+    return res?.data || res;
+  },
+
   // API Cập nhật sự kiện (FormData)
   update: async (formData: FormData) => {
     console.log("EventService - Updating event with FormData:", Array.from(formData.entries()));

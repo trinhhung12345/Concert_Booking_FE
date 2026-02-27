@@ -78,6 +78,19 @@ export default function EventManagerPage() {
     }
   };
 
+  // Handle soft delete event
+  const handleDelete = async (eventId: number) => {
+    try {
+      await eventService.softDeleteEvent(eventId);
+      setEvents((prev) =>
+        prev.map((e) => (e.id === eventId ? { ...e, deleted: true } : e))
+      );
+    } catch (error) {
+      console.error("Lỗi xóa sự kiện:", error);
+      alert("Không thể xóa sự kiện. Vui lòng thử lại.");
+    }
+  };
+
   // Filter events by search query
   const searchFiltered = useMemo(() => {
     if (!searchQuery.trim()) return events;
@@ -200,6 +213,7 @@ export default function EventManagerPage() {
                     event={event}
                     onApprove={handleApprove}
                     onNotApprove={handleNotApprove}
+                    onDelete={handleDelete}
                   />
                 ))
               : !loading && (
