@@ -1,7 +1,7 @@
 import axios from "axios";
 import { useModalStore } from "@/store/useModalStore";
 import { useAuthStore } from "@/store/useAuthStore";
-import { navigateTo } from "@/lib/navigation";
+import { navigateTo } from "./navigation";
 
 // Create a non-reactive reference to the modal store
 // This avoids React hooks being called in non-React context
