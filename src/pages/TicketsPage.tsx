@@ -16,6 +16,7 @@ import {
 import { orderService } from "@/features/booking/services/orderService";
 import type { Order } from "@/features/booking/types/order";
 import { Button } from "@/components/ui/button";
+import OrderTimer from "@/features/booking/components/OrderTimer";
 
 type FilterStatus = "ALL" | "PAID" | "UNPAID" | "CANCELLED";
 
@@ -279,6 +280,20 @@ const TicketsPage = () => {
                         <div className="flex items-center gap-4 sm:gap-6">
                           <div className="text-right">
                             {getStatusBadge(order.status, "sm")}
+                            {order.status === "UNPAID" && order.createdAt && (
+                              <div className="mt-1">
+                                <OrderTimer 
+                                  createdAt={order.createdAt} 
+                                  size="sm" 
+                                  variant="inline"
+                                  onExpired={() => {
+                                    setOrders(prev => prev.map(o => 
+                                      o.id === order.id ? { ...o, status: "CANCELLED" } : o
+                                    ));
+                                  }}
+                                />
+                              </div>
+                            )}
                             <p className="font-bold text-xl text-primary mt-2">
                               {order.totalAmount.toLocaleString("vi-VN")} đ
                             </p>

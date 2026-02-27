@@ -18,6 +18,8 @@ export interface Order {
   totalAmount: number;
   totalQuantity: number;
   status: "UNPAID" | "PAID" | "CANCELLED";
+  createdAt: string;
+  updatedAt: string;
   recipientName: string;
   recipientPhone: string;
   recipientEmail: string;
