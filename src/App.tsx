@@ -36,6 +36,22 @@ import ReportsPage from "./pages/admin/ReportsPage";
 import AdminProfilePage from "./pages/admin/AdminProfilePage";
 import { useAuthStore } from "./store/useAuthStore";
 
+function AdminRoute({ children }: { children: React.ReactElement }) {
+  const user = useAuthStore((s) => s.user);
+  const roleName = (user?.role?.roleName || "").toUpperCase();
+  const isAdmin =
+    roleName === "ADMIN" ||
+    roleName === "SUPER_ADMIN" ||
+    roleName === "SUPERADMIN";
+
+  if (!isAdmin) {
+    // Người dùng thường không được truy cập admin → 404
+    return <Navigate to="/404" replace />;
+  }
+
+  return children;
+}
+
 function SuperAdminRoute({ children }: { children: React.ReactElement }) {
   const user = useAuthStore((s) => s.user);
   const roleName = (user?.role?.roleName || "").toUpperCase();
@@ -93,7 +109,7 @@ function App() {
         <Route path="/check-in" element={<CheckInPage />} />
 
         {/* --- ROUTE ADMIN (MỚI) --- */}
-        <Route path="/admin" element={<AdminLayout />}>
+        <Route path="/admin" element={<AdminRoute><AdminLayout /></AdminRoute>}>
           {/* Mặc định vào /admin sẽ redirect hoặc render trang events */}
           <Route index element={<EventManagerPage />} />
 
