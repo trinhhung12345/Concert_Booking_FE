@@ -191,8 +191,9 @@ export default function EventSlider({ events }: Props) {
             )}
           </div>
 
+          <div className="overflow-hidden">
           <Swiper
-            className="special-events-swiper !overflow-visible"
+            className="special-events-swiper"
             spaceBetween={20}
             slidesPerView={4}
             breakpoints={{
@@ -255,6 +256,7 @@ export default function EventSlider({ events }: Props) {
               );
             })}
           </Swiper>
+          </div>
         </div>
       )}
     </div>
