@@ -20,7 +20,7 @@ const teamMembers = [
 
 export default function AboutPage() {
   return (
-    <div className="bg-gray-900 min-h-screen text-slate-100">
+    <div className="bg-background min-h-screen text-foreground">
       {/* HERO */}
       <div className="relative">
         <img
@@ -29,13 +29,13 @@ export default function AboutPage() {
         />
         <div className="absolute inset-0 flex items-center">
           <div className="container mx-auto px-4 max-w-4xl">
-            <span className="inline-block px-3 py-1 rounded-full bg-indigo-500/20 text-indigo-300 text-xs border border-indigo-500/30 mb-3">
+            <span className="inline-block px-3 py-1 rounded-full bg-indigo-500/20 text-indigo-300 text-xs border-indigo-500/30 mb-3">
               Về ConcertBooking
             </span>
-            <h1 className="text-3xl md:text-4xl font-bold text-white">
+            <h1 className="text-3xl md:text-4xl font-bold text-foreground">
               Kết nối âm nhạc & cảm xúc
             </h1>
-            <p className="mt-2 text-slate-300 max-w-2xl">
+            <p className="mt-2 text-muted-foreground max-w-2xl">
               Nền tảng đặt vé concert và sự kiện trực tiếp dành cho cộng đồng yêu âm nhạc tại Việt Nam.
             </p>
           </div>
@@ -44,12 +44,12 @@ export default function AboutPage() {
 
       <div className="container mx-auto px-4 py-12 max-w-4xl space-y-10">
         {/* SỨ MỆNH */}
-        <section className="bg-gray-800/70 border border-slate-700 rounded-2xl p-6">
+        <section className="bg-card border border-border rounded-2xl p-6">
           <div className="flex items-center gap-3 mb-2">
             <Music className="text-indigo-400" />
             <h2 className="text-lg font-semibold">Sứ mệnh</h2>
           </div>
-          <p className="text-slate-300 text-sm leading-relaxed">
+          <p className="text-muted-foreground text-sm leading-relaxed">
             ConcertBooking hướng đến việc đơn giản hóa quá trình mua vé, đảm bảo minh bạch,
             an toàn và mang đến trải nghiệm tốt nhất cho khán giả cũng như nhà tổ chức.
           </p>
@@ -76,21 +76,21 @@ export default function AboutPage() {
 
         {/* ĐỘI NGŨ */}
         <section>
-          <h2 className="text-xl font-semibold text-white mb-4">
+          <h2 className="text-xl font-semibold text-foreground mb-4">
             Đội ngũ của chúng tôi
           </h2>
           <div className="grid sm:grid-cols-2 md:grid-cols-3 gap-6">
             {teamMembers.map((member) => (
               <div
                 key={member.name}
-                className="bg-gray-800/70 border border-slate-700 rounded-2xl p-5 text-center hover:border-indigo-500/50 transition"
+                className="bg-card border border-border rounded-2xl p-5 text-center hover:border-indigo-500/50 transition"
               >
                 <img
                   src={member.avatar}
                   className="w-20 h-20 rounded-full mx-auto mb-3 object-cover"
                 />
-                <h3 className="font-medium text-white">{member.name}</h3>
-                <p className="text-sm text-slate-400">{member.role}</p>
+                <h3 className="font-medium text-foreground">{member.name}</h3>
+                <p className="text-sm text-muted-foreground">{member.role}</p>
               </div>
             ))}
           </div>
@@ -110,10 +110,10 @@ function ValueCard({
   desc: string;
 }) {
   return (
-    <div className="bg-gray-800/70 border border-slate-700 rounded-2xl p-5">
+    <div className="bg-card border border-border rounded-2xl p-5">
       <div className="text-indigo-400 mb-2">{icon}</div>
-      <h3 className="font-semibold text-white mb-1">{title}</h3>
-      <p className="text-sm text-slate-300">{desc}</p>
+      <h3 className="font-semibold text-foreground mb-1">{title}</h3>
+      <p className="text-sm text-muted-foreground">{desc}</p>
     </div>
   );
 }

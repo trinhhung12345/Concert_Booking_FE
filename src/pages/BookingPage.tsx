@@ -130,16 +130,16 @@ import { eventService, type TicketType } from "@/features/concerts/services/even
 
     if (loading) {
       return (
-        <div className="h-screen flex flex-col items-center justify-center gap-4 bg-gray-900 text-slate-100">
+        <div className="h-screen flex flex-col items-center justify-center gap-4 bg-background text-foreground">
           <FontAwesomeIcon icon={faSpinner} spin className="text-4xl text-primary" />
-          <p className="text-slate-400">Đang tải...</p>
+          <p className="text-muted-foreground">Đang tải...</p>
         </div>
       );
     }
 
     if (error) {
       return (
-        <div className="h-screen flex flex-col items-center justify-center gap-4 bg-gray-900">
+        <div className="h-screen flex flex-col items-center justify-center gap-4 bg-background">
           <p className="text-red-400 font-medium">{error}</p>
           <Button variant="outline" onClick={() => navigate(-1)}>
             Quay lại
@@ -151,8 +151,8 @@ import { eventService, type TicketType } from "@/features/concerts/services/even
     // No seat map: choose ticket types
     if (noSeatMap || !mapData) {
       return (
-        <div className="min-h-screen bg-gray-900 text-slate-100 flex flex-col">
-          <header className="h-16 flex items-center justify-between px-6 border-b border-gray-800">
+        <div className="min-h-screen bg-background text-foreground flex flex-col">
+          <header className="h-16 flex items-center justify-between px-6 border-b border-border">
             <h1 className="font-bold text-lg">Chọn loại vé</h1>
             <span className="text-sm text-primary font-bold">10:00</span>
           </header>
@@ -161,20 +161,20 @@ import { eventService, type TicketType } from "@/features/concerts/services/even
             {ticketTypes.map((ticket) => {
               const qty = ticketQuantities[ticket.id] || 0;
               return (
-                <div key={ticket.id} className="border-b border-gray-800 pb-4">
+                <div key={ticket.id} className="border-b border-border pb-4">
                   <div className="flex justify-between gap-4">
                     <div>
                       <p className="text-primary font-semibold uppercase text-xs">
                         {ticket.name}
                       </p>
-                      <p className="text-slate-400 text-xs mt-1">{ticket.description}</p>
+                      <p className="text-muted-foreground text-xs mt-1">{ticket.description}</p>
                     </div>
 
                     <div className="text-right">
                       <p className="text-primary font-bold">
                         {ticket.price.toLocaleString("vi-VN")} đ
                       </p>
-                      <div className="flex items-center mt-2 bg-slate-800 rounded">
+                      <div className="flex items-center mt-2 bg-muted rounded">
                         <button
                           className="w-8 h-8"
                           onClick={() => handleTicketQtyChange(ticket.id, -1)}
@@ -196,12 +196,12 @@ import { eventService, type TicketType } from "@/features/concerts/services/even
             })}
 
             {ticketTypes.length === 0 && (
-              <div className="text-center text-slate-400 mt-10">
+              <div className="text-center text-muted-foreground mt-10">
                 Không tìm thấy loại vé cho suất diễn này.
               </div>
             )}
 
-            <div className="flex justify-between pt-4 border-t border-dashed border-gray-700">
+            <div className="flex justify-between pt-4 border-t border-dashed border-border">
               <div>
                 <p className="text-sm">
                   Tổng vé: <b>{totalTicketQuantity}</b>
@@ -245,31 +245,31 @@ import { eventService, type TicketType } from "@/features/concerts/services/even
 
     // Has seat map
     return (
-      <div className="min-h-screen bg-gray-900 text-slate-100 flex flex-col">
-        <header className="h-16 flex items-center justify-between px-6 border-b border-gray-800">
+      <div className="min-h-screen bg-background text-foreground flex flex-col">
+        <header className="h-16 flex items-center justify-between px-6 border-b border-border">
           <div>
             <h1 className="font-bold">{mapData.name}</h1>
-            <p className="text-xs text-slate-400">Suất diễn: {showingId}</p>
+            <p className="text-xs text-muted-foreground">Suất diễn: {showingId}</p>
           </div>
           <span className="text-primary font-bold">10:00</span>
         </header>
 
         <div className="flex flex-1 overflow-hidden">
-          <div className="flex-1 bg-slate-900 flex items-center justify-center">
+          <div className="flex-1 bg-card flex items-center justify-center">
             <SeatMap data={mapData} selectedSeats={selectedSeats} onSeatClick={handleSeatClick} />
           </div>
 
-          <aside className="w-96 bg-slate-950 border-l border-gray-800 p-6 flex flex-col">
+          <aside className="w-96 bg-background border-l border-border p-6 flex flex-col">
             <h2 className="text-lg font-bold mb-4">
-              Vé đang chọn <span className="text-slate-400">({selectedSeats.length}/4)</span>
+              Vé đang chọn <span className="text-muted-foreground">({selectedSeats.length}/4)</span>
             </h2>
 
             <div className="flex-1 space-y-3 overflow-y-auto">
               {selectedSeats.map((seat) => (
-                <div key={seat.id} className="bg-slate-900 p-3 rounded-xl flex justify-between">
+                <div key={seat.id} className="bg-card p-3 rounded-xl flex justify-between">
                   <div>
                     <p className="font-bold">{seat.code}</p>
-                    <p className="text-xs text-slate-400">
+                    <p className="text-xs text-muted-foreground">
                       {mapData.sections.find((s) => s.id === seat.sectionId)?.name}
                     </p>
                   </div>
@@ -288,7 +288,7 @@ import { eventService, type TicketType } from "@/features/concerts/services/even
               ))}
             </div>
 
-            <div className="pt-4 border-t border-dashed border-gray-700">
+            <div className="pt-4 border-t border-dashed border-border">
               <div className="flex justify-between font-bold text-lg mb-4">
                 <span>Tổng</span>
                 <span className="text-primary">

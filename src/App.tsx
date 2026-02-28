@@ -97,6 +97,7 @@ function App() {
         {/* Các trang nằm trong MainLayout (Có Header/Footer) */}
         <Route element={<MainLayout />}>
             <Route path="/" element={<HomePage />} />
+            <Route path="/events" element={<CategoryPage />} />
             <Route path="/category/:slug" element={<CategoryPage />} />
             <Route path="/event/:id" element={<EventDetailPage />} />
             <Route path="/booking/:eventId" element={<BookingPage />} />

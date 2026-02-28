@@ -175,7 +175,7 @@ export default function EventDetailPage() {
         <div className="container relative z-10 h-full flex flex-col justify-end pb-10">
           <Link
             to="/"
-            className="absolute top-8 left-4 flex items-center gap-2 text-slate-300 hover:text-pink-400"
+            className="absolute top-8 left-4 flex items-center gap-2 text-white/80 hover:text-pink-400"
           >
             <FontAwesomeIcon icon={faChevronLeft} /> Quay lại
           </Link>
@@ -188,15 +188,15 @@ export default function EventDetailPage() {
           {/* LEFT */}
           <div className="lg:col-span-2 space-y-8">
             {/* GIỚI THIỆU */}
-            <div className="rounded-2xl bg-[#0d0616] border border-pink-500/10 p-8">
-              <h2 className="text-xl font-semibold mb-4 text-white">
+            <div className="rounded-2xl bg-card border border-border p-8">
+              <h2 className="text-xl font-semibold mb-4 text-foreground">
                 Giới thiệu sự kiện
               </h2>
 
               {/* DESCRIPTION */}
               <div
                 className="
-    text-slate-300 leading-relaxed text-[15px]
+    text-muted-foreground leading-relaxed text-[15px]
 
     break-words
     whitespace-pre-wrap
@@ -205,7 +205,7 @@ export default function EventDetailPage() {
     [&_img]:rounded-xl
     [&_img]:my-4
     [&_img]:border
-    [&_img]:border-pink-500/20
+    [&_img]:border-border
     [&_img]:max-w-full
     [&_img]:h-auto
 
@@ -231,7 +231,7 @@ export default function EventDetailPage() {
               {/* IMAGE GALLERY - CAROUSEL */}
               {introImages.length > 0 && (
                 <div className="mt-8">
-                  <h3 className="text-lg font-semibold mb-4 text-white">
+                  <h3 className="text-lg font-semibold mb-4 text-foreground">
                     Hình ảnh
                   </h3>
                   
@@ -239,7 +239,7 @@ export default function EventDetailPage() {
                   <div className="relative">
                     {/* Main Image Display */}
                     <div 
-                      className="relative aspect-video rounded-xl overflow-hidden border border-pink-500/20 bg-black/50 cursor-pointer"
+                      className="relative aspect-video rounded-xl overflow-hidden border border-border bg-black/50 cursor-pointer"
                       onClick={() => setSelectedImage(introImages[currentSlide]?.originUrl || null)}
                     >
                       <img
@@ -287,8 +287,8 @@ export default function EventDetailPage() {
                             onClick={() => setCurrentSlide(idx)}
                             className={`flex-shrink-0 w-20 h-14 rounded-lg overflow-hidden border-2 transition-all ${
                               idx === currentSlide
-                                ? "border-pink-500 opacity-100"
-                                : "border-pink-500/20 opacity-60 hover:opacity-100"
+                                ? "border-primary opacity-100"
+                                : "border-border opacity-60 hover:opacity-100"
                             }`}
                           >
                             <img
@@ -306,19 +306,19 @@ export default function EventDetailPage() {
             </div>
 
             {/* LỊCH DIỄN */}
-            <div className="rounded-2xl bg-[#0d0616] border border-pink-500/10 p-8">
-              <h2 className="flex items-center gap-2 text-xl font-semibold text-white mb-6">
+            <div className="rounded-2xl bg-card border border-border p-8">
+              <h2 className="flex items-center gap-2 text-xl font-semibold text-foreground mb-6">
                 <FontAwesomeIcon icon={faCalendarAlt} className="text-pink-400" />
                 Lịch diễn & Giá vé
               </h2>
 
               <div
-                className="rounded-xl bg-[#0a0312] p-4
-                [&_*]:bg-[#12061f]
-                [&_*]:border-pink-500/20
-                [&_*]:text-slate-200
-                [&_button]:bg-pink-500
-                [&_button]:text-white"
+                className="rounded-xl bg-muted p-4
+                [&_*]:bg-card
+                [&_*]:border-border
+                [&_*]:text-foreground
+                [&_button]:bg-primary
+                [&_button]:text-primary-foreground"
               >
                 <EventSchedule eventId={event.id} />
               </div>
@@ -327,29 +327,29 @@ export default function EventDetailPage() {
 
           {/* RIGHT */}
           <div className="lg:col-span-1">
-            <div className="sticky top-24 rounded-2xl bg-[#0a0312] border border-pink-500/20 p-6">
+            <div className="sticky top-24 rounded-2xl bg-card border border-border p-6">
               <h3 className="text-center text-lg font-semibold text-pink-400 mb-1">
                 {event.title}
               </h3>
-              <p className="text-center text-xs text-slate-400 mb-1">Giá vé từ</p>
+              <p className="text-center text-xs text-muted-foreground mb-1">Giá vé từ</p>
               <p className="text-center text-3xl font-bold text-pink-500 mb-6">
                 {formatCurrency(minPrice)}
               </p>
 
               <div className="space-y-3 mb-6">
-                <div className="flex items-center gap-3 rounded-xl bg-[#12061f] px-4 py-3">
-                  <FontAwesomeIcon icon={faClock} className="text-pink-400" />
+                <div className="flex items-center gap-3 rounded-xl bg-muted px-4 py-3">
+                  <FontAwesomeIcon icon={faClock} className="text-primary" />
                   <span className="text-sm">{formatTime(startTime)}</span>
                 </div>
 
-                <div className="flex items-center gap-3 rounded-xl bg-[#12061f] px-4 py-3">
-                  <FontAwesomeIcon icon={faMapMarkerAlt} className="text-pink-400" />
+                <div className="flex items-center gap-3 rounded-xl bg-muted px-4 py-3">
+                  <FontAwesomeIcon icon={faMapMarkerAlt} className="text-primary" />
                   <span className="text-sm truncate">{event.venue}</span>
                 </div>
               </div>
 
               <Button
-                className="w-full h-12 rounded-xl bg-pink-500 hover:bg-pink-400 text-white font-semibold"
+                className="w-full h-12 rounded-xl font-semibold"
                 disabled={!hasSalableShowing || isSingleShowingLocked}
                 onClick={() => {
                   if (event.showings?.length === 1) {
@@ -373,10 +373,10 @@ export default function EventDetailPage() {
 
       {/* MODAL - Chọn suất diễn */}
       <Dialog open={showingModalOpen} onOpenChange={setShowingModalOpen}>
-        <DialogContent className="bg-[#0a0312] border border-pink-500/20 text-white">
+        <DialogContent className="bg-card border border-border text-foreground">
           <DialogHeader>
             <DialogTitle>Chọn suất diễn</DialogTitle>
-            <DialogDescription className="text-slate-400">
+            <DialogDescription className="text-muted-foreground">
               Vui lòng chọn suất diễn
             </DialogDescription>
           </DialogHeader>
@@ -397,15 +397,15 @@ export default function EventDetailPage() {
                   }}
                   className={`rounded-xl border px-4 py-3 ${
                     isShowingLocked
-                      ? "cursor-not-allowed border-pink-500/10 bg-[#12061f]/60 opacity-60"
-                      : "cursor-pointer border-pink-500/20 hover:border-pink-400 bg-[#12061f]"
+                      ? "cursor-not-allowed border-border bg-muted/60 opacity-60"
+                      : "cursor-pointer border-border hover:border-primary bg-muted"
                   }`}
                   title={isShowingLocked ? "Suất diễn đã hết vé" : undefined}
                 >
                   <div className="flex justify-between items-center">
                     <div>
-                      <p className="font-semibold text-white">{time}</p>
-                      <p className="text-sm text-slate-400">{date}</p>
+                      <p className="font-semibold text-foreground">{time}</p>
+                      <p className="text-sm text-muted-foreground">{date}</p>
                     </div>
                     <div className="flex items-center gap-2">
                       {isShowingLocked && (
@@ -413,7 +413,7 @@ export default function EventDetailPage() {
                           Đã hết vé
                         </span>
                       )}
-                      <FontAwesomeIcon icon={faTicketAlt} className="text-pink-400" />
+                      <FontAwesomeIcon icon={faTicketAlt} className="text-primary" />
                     </div>
                   </div>
                 </div>
