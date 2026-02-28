@@ -159,7 +159,7 @@ export default function EventSchedule({ eventId }: EventScheduleProps) {
                 {/* Action Button */}
                 <div className="flex items-center justify-between md:justify-end gap-3 w-full md:w-auto mt-2 md:mt-0">
                     <span className="text-sm text-gray-400 md:hidden">
-                        {isShowingLocked ? "Đã khóa" : isOpen ? "Thu gọn" : "Xem vé"}
+                        {isShowingLocked ? "Đã hết vé" : isOpen ? "Thu gọn" : "Xem vé"}
                     </span>
                     <Button
                         onClick={(e) => handleBookNow(e, show.id)}
@@ -173,7 +173,7 @@ export default function EventSchedule({ eventId }: EventScheduleProps) {
                               : "bg-gray-100 text-gray-600 hover:bg-gray-200"
                         )}
                     >
-                        {isShowingLocked ? "Đã khóa" : "Mua vé ngay"}
+                        {isShowingLocked ? "Đã hết vé" : "Mua vé ngay"}
                     </Button>
                     {!isShowingLocked && (
                       <FontAwesomeIcon

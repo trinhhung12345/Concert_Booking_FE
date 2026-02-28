@@ -363,7 +363,7 @@ export default function EventDetailPage() {
                 }}
               >
                 {!hasSalableShowing || isSingleShowingLocked
-                  ? "Suất diễn đã khóa"
+                  ? "Suất diễn đã hết vé"
                   : "Đặt vé ngay"}
               </Button>
             </div>
@@ -400,7 +400,7 @@ export default function EventDetailPage() {
                       ? "cursor-not-allowed border-pink-500/10 bg-[#12061f]/60 opacity-60"
                       : "cursor-pointer border-pink-500/20 hover:border-pink-400 bg-[#12061f]"
                   }`}
-                  title={isShowingLocked ? "Suất diễn đã khóa" : undefined}
+                  title={isShowingLocked ? "Suất diễn đã hết vé" : undefined}
                 >
                   <div className="flex justify-between items-center">
                     <div>
@@ -410,7 +410,7 @@ export default function EventDetailPage() {
                     <div className="flex items-center gap-2">
                       {isShowingLocked && (
                         <span className="rounded bg-black/50 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-red-300">
-                          Đã khóa
+                          Đã hết vé
                         </span>
                       )}
                       <FontAwesomeIcon icon={faTicketAlt} className="text-pink-400" />

@@ -182,7 +182,7 @@ export default function SeatMap({
                     }}
                     title={
                       isSectionLocked
-                        ? `Khu vực đã khóa${section.message ? `: ${section.message}` : ''}`
+                        ? `Khu vực đã hết vé${section.message ? `: ${section.message}` : ''}`
                         : section.name
                     }
                   >
@@ -196,7 +196,7 @@ export default function SeatMap({
                     </div>
                     {isSectionLocked && (
                       <div className="relative z-10 mt-1 rounded bg-black/50 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-red-300">
-                        Đã khóa
+                        Đã hết vé
                       </div>
                     )}
                   </div>
