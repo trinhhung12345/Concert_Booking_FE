@@ -321,6 +321,12 @@ export const eventService = {
     return res?.data || res;
   },
 
+  // API phục hồi sự kiện đã xóa mềm
+  restoreEvent: async (eventId: number): Promise<Event> => {
+    const res: any = await apiClient.put(`/events/${eventId}/restore`);
+    return res?.data || res;
+  },
+
   // API Cập nhật sự kiện (FormData)
   update: async (formData: FormData) => {
     console.log("EventService - Updating event with FormData:", Array.from(formData.entries()));
