@@ -25,6 +25,7 @@ import {
   faChevronLeft,
   faChevronRight,
   faTimes,
+  faShareAlt,
 } from "@fortawesome/free-solid-svg-icons";
 
 const decodeHtmlEntities = (text: string) => {
@@ -35,10 +36,13 @@ const decodeHtmlEntities = (text: string) => {
 };
 
 const formatCurrency = (n: number) =>
-  new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND" }).format(n);
+  new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND", maximumFractionDigits: 0 }).format(n);
 
 const formatTime = (d: string) =>
   new Date(d).toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" });
+
+const formatDate = (d: string) =>
+  new Date(d).toLocaleDateString("vi-VN", { weekday: "long", day: "2-digit", month: "2-digit", year: "numeric" });
 
 const formatScheduleShort = (start: string, end: string) => {
   const s = new Date(start);
@@ -77,15 +81,12 @@ export default function EventDetailPage() {
         const response: any = await eventService.getById(id);
         
         let data: Event;
-        // Handle wrapped response { code: 200, data: {...}, message: "..." }
         if (response?.data && typeof response.data === 'object' && !Array.isArray(response.data)) {
           data = response.data;
         } else {
-          // Handle direct response {...}
           data = response;
         }
         
-        // Block access to non-approved or deleted events
         if (data.status !== EVENT_STATUS.APPROVED || data.deleted === true) {
           setEvent(null);
           setLoading(false);
@@ -115,13 +116,27 @@ export default function EventDetailPage() {
 
   if (loading)
     return (
-      <div className="container py-10">
-        <Skeleton className="h-[420px] w-full rounded-3xl" />
+      <div className="container py-10 space-y-6">
+        <Skeleton className="h-[280px] sm:h-[360px] lg:h-[420px] w-full rounded-2xl" />
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div className="lg:col-span-2 space-y-4">
+            <Skeleton className="h-8 w-3/4 rounded-lg" />
+            <Skeleton className="h-4 w-full" />
+            <Skeleton className="h-4 w-full" />
+            <Skeleton className="h-4 w-2/3" />
+          </div>
+          <Skeleton className="h-64 rounded-2xl" />
+        </div>
       </div>
     );
 
   if (!event)
-    return <div className="py-20 text-center text-foreground">Không tìm thấy sự kiện</div>;
+    return (
+      <div className="py-20 text-center text-foreground">
+        <FontAwesomeIcon icon={faTicketAlt} className="text-5xl text-muted-foreground mb-4" />
+        <p className="text-lg">Không tìm thấy sự kiện</p>
+      </div>
+    );
 
   const firstShowing = event.showings?.[0];
   const hasSalableShowing = event.showings?.some((s) => s.isSalable !== false) ?? false;
@@ -132,7 +147,6 @@ export default function EventDetailPage() {
     event.showings?.flatMap((s) => s.types?.map((t) => t.price) || []) || [0];
   const minPrice = Math.min(...prices);
 
-  // ✅ ẢNH GIỚI THIỆU
   const introImages =
     event.files?.filter((f) => f.type === 0 && !isVideo(f)) || [];
 
@@ -149,14 +163,23 @@ export default function EventDetailPage() {
     },
   };
 
+  const handleBooking = () => {
+    if (event.showings?.length === 1) {
+      if (event.showings[0].isSalable === false) return;
+      navigate(`/booking/${event.id}?showingId=${event.showings[0].id}`);
+      return;
+    }
+    setShowingModalOpen(true);
+  };
+
   return (
     <div className="min-h-screen bg-background">
-      {/* HERO */}
-      <div className="relative h-[420px] md:h-[520px] overflow-hidden bg-black">
+      {/* HERO - Responsive height */}
+      <div className="relative h-[280px] sm:h-[360px] md:h-[420px] lg:h-[480px] overflow-hidden bg-black">
         {videoId ? (
           <div className="absolute inset-0 scale-125">
             <YouTube videoId={videoId} opts={videoOpts} className="w-full h-full" />
-            <div className="absolute inset-0 bg-black/70" />
+            <div className="absolute inset-0 bg-black/60" />
           </div>
         ) : (
           <>
@@ -168,76 +191,95 @@ export default function EventDetailPage() {
               className="absolute inset-0 bg-contain bg-center bg-no-repeat"
               style={{ backgroundImage: `url(${heroImage})` }}
             />
-            <div className="absolute inset-0 bg-black/70" />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-black/20" />
           </>
         )}
 
-        <div className="container relative z-10 h-full flex flex-col justify-end pb-10">
+        {/* Hero content overlay */}
+        <div className="container relative z-10 h-full flex flex-col justify-between py-4 sm:py-6">
           <Link
             to="/"
-            className="absolute top-8 left-4 flex items-center gap-2 text-white/80 hover:text-pink-400"
+            className="inline-flex items-center gap-2 text-white/80 hover:text-white bg-black/30 backdrop-blur-sm px-3 py-2 rounded-full w-fit text-sm transition-colors"
           >
-            <FontAwesomeIcon icon={faChevronLeft} /> Quay lại
+            <FontAwesomeIcon icon={faChevronLeft} className="text-xs" /> Quay lại
           </Link>
+
+          {/* Event title on hero - visible on mobile */}
+          <div className="lg:hidden">
+            <h1 className="text-white font-bold text-xl sm:text-2xl line-clamp-2 mb-2">
+              {event.title}
+            </h1>
+            <div className="flex flex-wrap items-center gap-3 text-white/80 text-sm">
+              <span className="flex items-center gap-1.5">
+                <FontAwesomeIcon icon={faCalendarAlt} className="text-primary" />
+                {formatDate(startTime)}
+              </span>
+              <span className="flex items-center gap-1.5">
+                <FontAwesomeIcon icon={faMapMarkerAlt} className="text-primary" />
+                {event.venue}
+              </span>
+            </div>
+          </div>
         </div>
       </div>
 
       {/* CONTENT */}
-      <div className="container mx-auto px-4 -mt-16 relative z-20">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* LEFT */}
-          <div className="lg:col-span-2 space-y-8">
+      <div className="container mx-auto px-4 -mt-8 sm:-mt-12 lg:-mt-16 relative z-20 pb-28 lg:pb-8">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8">
+          {/* LEFT - Main Content */}
+          <div className="lg:col-span-2 space-y-6">
+            {/* Event Title Card - Desktop */}
+            <div className="hidden lg:block rounded-2xl bg-card border border-border p-6 sm:p-8">
+              <h1 className="text-2xl sm:text-3xl font-bold text-foreground mb-3">
+                {event.title}
+              </h1>
+              <div className="flex flex-wrap items-center gap-4 text-muted-foreground text-sm">
+                <span className="flex items-center gap-2">
+                  <FontAwesomeIcon icon={faCalendarAlt} className="text-primary" />
+                  {formatDate(startTime)}
+                </span>
+                <span className="flex items-center gap-2">
+                  <FontAwesomeIcon icon={faClock} className="text-primary" />
+                  {formatTime(startTime)}
+                </span>
+                <span className="flex items-center gap-2">
+                  <FontAwesomeIcon icon={faMapMarkerAlt} className="text-primary" />
+                  {event.venue}
+                </span>
+              </div>
+            </div>
+
             {/* GIỚI THIỆU */}
-            <div className="rounded-2xl bg-card border border-border p-8">
-              <h2 className="text-xl font-semibold mb-4 text-foreground">
+            <div className="rounded-2xl bg-card border border-border p-5 sm:p-8">
+              <h2 className="text-lg sm:text-xl font-semibold mb-4 text-foreground">
                 Giới thiệu sự kiện
               </h2>
 
-              {/* DESCRIPTION */}
               <div
                 className="
-    text-muted-foreground leading-relaxed text-[15px]
-
-    break-words
-    whitespace-pre-wrap
-    overflow-hidden
-
-    [&_img]:rounded-xl
-    [&_img]:my-4
-    [&_img]:border
-    [&_img]:border-border
-    [&_img]:max-w-full
-    [&_img]:h-auto
-
-    [&_table]:max-w-full
-    [&_table]:block
-    [&_table]:overflow-x-auto
-
-    [&_iframe]:max-w-full
-  "
+                  text-muted-foreground leading-relaxed text-[14px] sm:text-[15px]
+                  break-words whitespace-pre-wrap overflow-hidden
+                  [&_img]:rounded-xl [&_img]:my-4 [&_img]:border [&_img]:border-border [&_img]:max-w-full [&_img]:h-auto
+                  [&_table]:max-w-full [&_table]:block [&_table]:overflow-x-auto
+                  [&_iframe]:max-w-full
+                "
               >
-
                 {parse(
                   DOMPurify.sanitize(
                     decodeHtmlEntities(event.description || ""),
-                    {
-                      FORBID_ATTR: ["style", "bgcolor"],
-                    }
+                    { FORBID_ATTR: ["style", "bgcolor"] }
                   )
                 )}
-
               </div>
 
-              {/* IMAGE GALLERY - CAROUSEL */}
+              {/* IMAGE GALLERY */}
               {introImages.length > 0 && (
-                <div className="mt-8">
-                  <h3 className="text-lg font-semibold mb-4 text-foreground">
+                <div className="mt-6 sm:mt-8">
+                  <h3 className="text-base sm:text-lg font-semibold mb-4 text-foreground">
                     Hình ảnh
                   </h3>
                   
-                  {/* Carousel Container */}
                   <div className="relative">
-                    {/* Main Image Display */}
                     <div 
                       className="relative aspect-video rounded-xl overflow-hidden border border-border bg-black/50 cursor-pointer"
                       onClick={() => setSelectedImage(introImages[currentSlide]?.originUrl || null)}
@@ -248,7 +290,6 @@ export default function EventDetailPage() {
                         className="w-full h-full object-contain"
                       />
                       
-                      {/* Navigation Arrows */}
                       {introImages.length > 1 && (
                         <>
                           <button
@@ -256,7 +297,7 @@ export default function EventDetailPage() {
                               e.stopPropagation();
                               setCurrentSlide((prev) => (prev === 0 ? introImages.length - 1 : prev - 1));
                             }}
-                            className="absolute left-2 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-black/60 hover:bg-pink-500 text-white flex items-center justify-center transition-colors"
+                            className="absolute left-2 top-1/2 -translate-y-1/2 w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-black/60 hover:bg-primary text-white flex items-center justify-center transition-colors"
                           >
                             <FontAwesomeIcon icon={faChevronLeft} />
                           </button>
@@ -265,27 +306,25 @@ export default function EventDetailPage() {
                               e.stopPropagation();
                               setCurrentSlide((prev) => (prev === introImages.length - 1 ? 0 : prev + 1));
                             }}
-                            className="absolute right-2 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-black/60 hover:bg-pink-500 text-white flex items-center justify-center transition-colors"
+                            className="absolute right-2 top-1/2 -translate-y-1/2 w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-black/60 hover:bg-primary text-white flex items-center justify-center transition-colors"
                           >
                             <FontAwesomeIcon icon={faChevronRight} />
                           </button>
                         </>
                       )}
                       
-                      {/* Image Counter */}
-                      <div className="absolute bottom-2 right-2 px-3 py-1 rounded-full bg-black/60 text-white text-sm">
+                      <div className="absolute bottom-2 right-2 px-3 py-1 rounded-full bg-black/60 text-white text-xs sm:text-sm">
                         {currentSlide + 1} / {introImages.length}
                       </div>
                     </div>
 
-                    {/* Thumbnail Strip */}
                     {introImages.length > 1 && (
-                      <div className="flex gap-2 mt-4 overflow-x-auto pb-2">
+                      <div className="flex gap-2 mt-3 overflow-x-auto pb-2 no-scrollbar">
                         {introImages.map((img, idx) => (
                           <button
                             key={idx}
                             onClick={() => setCurrentSlide(idx)}
-                            className={`flex-shrink-0 w-20 h-14 rounded-lg overflow-hidden border-2 transition-all ${
+                            className={`flex-shrink-0 w-16 h-11 sm:w-20 sm:h-14 rounded-lg overflow-hidden border-2 transition-all ${
                               idx === currentSlide
                                 ? "border-primary opacity-100"
                                 : "border-border opacity-60 hover:opacity-100"
@@ -306,14 +345,14 @@ export default function EventDetailPage() {
             </div>
 
             {/* LỊCH DIỄN */}
-            <div className="rounded-2xl bg-card border border-border p-8">
-              <h2 className="flex items-center gap-2 text-xl font-semibold text-foreground mb-6">
-                <FontAwesomeIcon icon={faCalendarAlt} className="text-pink-400" />
+            <div className="rounded-2xl bg-card border border-border p-5 sm:p-8">
+              <h2 className="flex items-center gap-2 text-lg sm:text-xl font-semibold text-foreground mb-6">
+                <FontAwesomeIcon icon={faCalendarAlt} className="text-primary" />
                 Lịch diễn & Giá vé
               </h2>
 
               <div
-                className="rounded-xl bg-muted p-4
+                className="rounded-xl bg-muted p-3 sm:p-4
                 [&_*]:bg-card
                 [&_*]:border-border
                 [&_*]:text-foreground
@@ -325,14 +364,11 @@ export default function EventDetailPage() {
             </div>
           </div>
 
-          {/* RIGHT */}
-          <div className="lg:col-span-1">
+          {/* RIGHT - Desktop sticky sidebar */}
+          <div className="hidden lg:block lg:col-span-1">
             <div className="sticky top-24 rounded-2xl bg-card border border-border p-6">
-              <h3 className="text-center text-lg font-semibold text-pink-400 mb-1">
-                {event.title}
-              </h3>
-              <p className="text-center text-xs text-muted-foreground mb-1">Giá vé từ</p>
-              <p className="text-center text-3xl font-bold text-pink-500 mb-6">
+              <p className="text-center text-xs text-muted-foreground mb-1 uppercase tracking-wider">Giá vé từ</p>
+              <p className="text-center text-3xl font-bold text-primary mb-6">
                 {formatCurrency(minPrice)}
               </p>
 
@@ -341,7 +377,10 @@ export default function EventDetailPage() {
                   <FontAwesomeIcon icon={faClock} className="text-primary" />
                   <span className="text-sm">{formatTime(startTime)}</span>
                 </div>
-
+                <div className="flex items-center gap-3 rounded-xl bg-muted px-4 py-3">
+                  <FontAwesomeIcon icon={faCalendarAlt} className="text-primary" />
+                  <span className="text-sm">{formatDate(startTime)}</span>
+                </div>
                 <div className="flex items-center gap-3 rounded-xl bg-muted px-4 py-3">
                   <FontAwesomeIcon icon={faMapMarkerAlt} className="text-primary" />
                   <span className="text-sm truncate">{event.venue}</span>
@@ -349,18 +388,9 @@ export default function EventDetailPage() {
               </div>
 
               <Button
-                className="w-full h-12 rounded-xl font-semibold"
+                className="w-full h-12 rounded-xl font-semibold text-base"
                 disabled={!hasSalableShowing || isSingleShowingLocked}
-                onClick={() => {
-                  if (event.showings?.length === 1) {
-                    if (event.showings[0].isSalable === false) {
-                      return;
-                    }
-                    navigate(`/booking/${event.id}?showingId=${event.showings[0].id}`);
-                    return;
-                  }
-                  setShowingModalOpen(true);
-                }}
+                onClick={handleBooking}
               >
                 {!hasSalableShowing || isSingleShowingLocked
                   ? "Suất diễn đã hết vé"
@@ -371,13 +401,32 @@ export default function EventDetailPage() {
         </div>
       </div>
 
+      {/* MOBILE BOTTOM BAR - Fixed booking bar */}
+      <div className="lg:hidden fixed bottom-0 left-0 right-0 z-50 bg-card/95 backdrop-blur-md border-t border-border">
+        <div className="container mx-auto px-4 py-3 flex items-center justify-between gap-4">
+          <div>
+            <p className="text-xs text-muted-foreground">Giá vé từ</p>
+            <p className="text-xl font-bold text-primary">{formatCurrency(minPrice)}</p>
+          </div>
+          <Button
+            className="h-11 px-6 rounded-xl font-semibold"
+            disabled={!hasSalableShowing || isSingleShowingLocked}
+            onClick={handleBooking}
+          >
+            {!hasSalableShowing || isSingleShowingLocked
+              ? "Hết vé"
+              : "Đặt vé ngay"}
+          </Button>
+        </div>
+      </div>
+
       {/* MODAL - Chọn suất diễn */}
       <Dialog open={showingModalOpen} onOpenChange={setShowingModalOpen}>
-        <DialogContent className="bg-card border border-border text-foreground">
+        <DialogContent className="bg-card border border-border text-foreground max-w-md mx-auto">
           <DialogHeader>
             <DialogTitle>Chọn suất diễn</DialogTitle>
             <DialogDescription className="text-muted-foreground">
-              Vui lòng chọn suất diễn
+              Vui lòng chọn suất diễn bạn muốn tham gia
             </DialogDescription>
           </DialogHeader>
 
@@ -389,18 +438,15 @@ export default function EventDetailPage() {
                 <div
                   key={s.id}
                   onClick={() => {
-                    if (isShowingLocked) {
-                      return;
-                    }
+                    if (isShowingLocked) return;
                     setShowingModalOpen(false);
                     navigate(`/booking/${event.id}?showingId=${s.id}`);
                   }}
-                  className={`rounded-xl border px-4 py-3 ${
+                  className={`rounded-xl border px-4 py-3 transition-all ${
                     isShowingLocked
                       ? "cursor-not-allowed border-border bg-muted/60 opacity-60"
-                      : "cursor-pointer border-border hover:border-primary bg-muted"
+                      : "cursor-pointer border-border hover:border-primary hover:shadow-sm bg-muted"
                   }`}
-                  title={isShowingLocked ? "Suất diễn đã hết vé" : undefined}
                 >
                   <div className="flex justify-between items-center">
                     <div>
@@ -409,8 +455,8 @@ export default function EventDetailPage() {
                     </div>
                     <div className="flex items-center gap-2">
                       {isShowingLocked && (
-                        <span className="rounded bg-black/50 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-red-300">
-                          Đã hết vé
+                        <span className="rounded-full bg-destructive/10 px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-destructive">
+                          Hết vé
                         </span>
                       )}
                       <FontAwesomeIcon icon={faTicketAlt} className="text-primary" />
@@ -425,17 +471,15 @@ export default function EventDetailPage() {
 
       {/* MODAL - Xem ảnh full-size */}
       <Dialog open={!!selectedImage} onOpenChange={(open) => !open && setSelectedImage(null)}>
-        <DialogContent className="bg-transparent border-0 p-0 max-w-[90vw] max-h-[90vh] overflow-hidden">
+        <DialogContent className="bg-transparent border-0 p-0 max-w-[95vw] sm:max-w-[90vw] max-h-[90vh] overflow-hidden">
           <div className="relative w-full h-full flex items-center justify-center">
-            {/* Close button */}
             <button
               onClick={() => setSelectedImage(null)}
-              className="absolute top-4 right-4 z-50 w-10 h-10 rounded-full bg-black/60 hover:bg-pink-500 text-white flex items-center justify-center transition-colors"
+              className="absolute top-2 right-2 sm:top-4 sm:right-4 z-50 w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-black/60 hover:bg-primary text-white flex items-center justify-center transition-colors"
             >
               <FontAwesomeIcon icon={faTimes} />
             </button>
 
-            {/* Navigation buttons */}
             {introImages.length > 1 && (
               <>
                 <button
@@ -445,9 +489,9 @@ export default function EventDetailPage() {
                     setCurrentSlide(newIndex);
                     setSelectedImage(introImages[newIndex]?.originUrl || null);
                   }}
-                  className="absolute left-4 top-1/2 -translate-y-1/2 z-50 w-12 h-12 rounded-full bg-black/60 hover:bg-pink-500 text-white flex items-center justify-center transition-colors"
+                  className="absolute left-2 sm:left-4 top-1/2 -translate-y-1/2 z-50 w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-black/60 hover:bg-primary text-white flex items-center justify-center transition-colors"
                 >
-                  <FontAwesomeIcon icon={faChevronLeft} className="text-xl" />
+                  <FontAwesomeIcon icon={faChevronLeft} />
                 </button>
                 <button
                   onClick={(e) => {
@@ -456,14 +500,13 @@ export default function EventDetailPage() {
                     setCurrentSlide(newIndex);
                     setSelectedImage(introImages[newIndex]?.originUrl || null);
                   }}
-                  className="absolute right-4 top-1/2 -translate-y-1/2 z-50 w-12 h-12 rounded-full bg-black/60 hover:bg-pink-500 text-white flex items-center justify-center transition-colors"
+                  className="absolute right-2 sm:right-4 top-1/2 -translate-y-1/2 z-50 w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-black/60 hover:bg-primary text-white flex items-center justify-center transition-colors"
                 >
-                  <FontAwesomeIcon icon={faChevronRight} className="text-xl" />
+                  <FontAwesomeIcon icon={faChevronRight} />
                 </button>
               </>
             )}
 
-            {/* Full-size image */}
             {selectedImage && (
               <img
                 src={selectedImage}
@@ -472,8 +515,7 @@ export default function EventDetailPage() {
               />
             )}
 
-            {/* Image counter */}
-            <div className="absolute bottom-4 left-1/2 -translate-x-1/2 px-4 py-2 rounded-full bg-black/60 text-white text-sm">
+            <div className="absolute bottom-2 sm:bottom-4 left-1/2 -translate-x-1/2 px-4 py-2 rounded-full bg-black/60 text-white text-sm">
               {currentSlide + 1} / {introImages.length}
             </div>
           </div>

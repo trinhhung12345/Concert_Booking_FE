@@ -41,7 +41,7 @@ export default function EventCard({ id, title, imageUrl, minPrice, date, categor
   return (
     <Link
       to={`/event/${id}`}
-      className="group block h-full w-full min-w-0 max-w-xs md:max-w-sm lg:max-w-md"
+      className="group block h-full w-full min-w-0"
     >
       <div
         className="
