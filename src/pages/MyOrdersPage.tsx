@@ -116,16 +116,16 @@ export default function MyOrdersPage() {
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
           <FontAwesomeIcon icon={faSpinner} spin className="text-4xl text-primary mb-4" />
-          <p className="text-gray-500">Đang tải đơn hàng...</p>
+          <p className="text-muted-foreground">Đang tải đơn hàng...</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="bg-gray-900 min-h-screen w-full">
+    <div className="bg-background min-h-screen w-full">
       {/* Header */}
-      <div className="bg-white border-b sticky top-0 z-50">
+      <div className="bg-card border-b border-border sticky top-0 z-50">
         <div className="max-w-4xl mx-auto px-4 py-4 flex items-center gap-4">
           <Button 
             variant="ghost" 
@@ -140,16 +140,16 @@ export default function MyOrdersPage() {
 
       <div className="max-w-4xl mx-auto px-4 py-6">
         {error && (
-          <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg text-red-600">
+          <div className="mb-6 p-4 bg-destructive/10 border border-destructive/30 rounded-lg text-destructive">
             {error}
           </div>
         )}
 
         {orders.length === 0 ? (
           <div className="text-center py-12">
-            <FontAwesomeIcon icon={faTicketAlt} className="text-6xl text-gray-300 mb-4" />
-            <h2 className="text-xl font-semibold text-gray-600 mb-2">Chưa có đơn hàng</h2>
-            <p className="text-gray-400 mb-6">Bạn chưa đặt vé nào. Hãy khám phá các sự kiện!</p>
+            <FontAwesomeIcon icon={faTicketAlt} className="text-6xl text-muted-foreground mb-4" />
+            <h2 className="text-xl font-semibold text-foreground mb-2">Chưa có đơn hàng</h2>
+            <p className="text-muted-foreground mb-6">Bạn chưa đặt vé nào. Hãy khám phá các sự kiện!</p>
             <Button onClick={() => navigate("/")}>
               Khám phá sự kiện
             </Button>
@@ -159,12 +159,12 @@ export default function MyOrdersPage() {
             {orders.map((order) => (
               <div 
                 key={order.id} 
-                className="bg-white rounded-xl shadow-sm overflow-hidden border hover:shadow-md transition-shadow"
+                className="bg-card rounded-xl shadow-sm overflow-hidden border border-border hover:shadow-md transition-shadow"
               >
                 {/* Header đơn hàng */}
-                <div className="p-4 border-b bg-gray-50 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                <div className="p-4 border-b border-border bg-muted flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
                   <div>
-                    <span className="text-sm text-gray-500">Mã đơn hàng: </span>
+                    <span className="text-sm text-muted-foreground">Mã đơn hàng: </span>
                     <span className="font-bold text-primary">{order.code}</span>
                   </div>
                   {getStatusBadge(order.status)}
@@ -175,40 +175,40 @@ export default function MyOrdersPage() {
                   {/* Thông tin người nhận */}
                   <div className="grid grid-cols-2 gap-4 text-sm mb-4">
                     <div>
-                      <span className="text-gray-500">Người nhận:</span>
+                      <span className="text-muted-foreground">Người nhận:</span>
                       <p className="font-medium">{order.recipientName}</p>
                     </div>
                     <div>
-                      <span className="text-gray-500">Số điện thoại:</span>
+                      <span className="text-muted-foreground">Số điện thoại:</span>
                       <p className="font-medium">{order.recipientPhone}</p>
                     </div>
                     <div>
-                      <span className="text-gray-500">Email:</span>
+                      <span className="text-muted-foreground">Email:</span>
                       <p className="font-medium">{order.recipientEmail}</p>
                     </div>
                     <div>
-                      <span className="text-gray-500">Địa chỉ:</span>
+                      <span className="text-muted-foreground">Địa chỉ:</span>
                       <p className="font-medium">{order.recipientAddress}</p>
                     </div>
                   </div>
 
                   {/* Danh sách vé */}
-                  <div className="border-t pt-4">
+                  <div className="border-t border-border pt-4">
                     <h4 className="font-semibold mb-2">Chi tiết vé ({order.totalQuantity})</h4>
                     <div className="flex flex-wrap gap-2">
                       {order.orderDetails.map((detail) => (
                         <div 
                           key={detail.id}
-                          className="inline-flex items-center gap-2 px-3 py-2 bg-gray-100 rounded-lg text-sm"
+                          className="inline-flex items-center gap-2 px-3 py-2 bg-muted rounded-lg text-sm"
                         >
                           <FontAwesomeIcon icon={faTicketAlt} className="text-primary" />
                           <span className="font-medium">{detail.seatCode}</span>
                           {(detail.ticketTypeName || detail.ticketTypeId) && (
-                            <span className="text-gray-500">
+                            <span className="text-muted-foreground">
                               • {detail.ticketTypeName ?? `Loại vé #${detail.ticketTypeId}`}
                             </span>
                           )}
-                          <span className="text-gray-500">-</span>
+                          <span className="text-muted-foreground">-</span>
                           <span className="text-primary font-semibold">
                             {detail.price.toLocaleString("vi-VN")} đ
                           </span>
@@ -219,14 +219,14 @@ export default function MyOrdersPage() {
                 </div>
 
                 {/* Footer đơn hàng */}
-                <div className="p-4 border-t bg-gray-50 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                <div className="p-4 border-t border-border bg-muted flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                   <div>
-                    <span className="text-sm text-gray-500">Tổng tiền: </span>
+                    <span className="text-sm text-muted-foreground">Tổng tiền: </span>
                     <span className="text-xl font-bold text-primary">
                       {order.totalAmount.toLocaleString("vi-VN")} đ
                     </span>
                     {order.paymentAt && (
-                      <p className="text-xs text-gray-400 mt-1">
+                      <p className="text-xs text-muted-foreground mt-1">
                         Thanh toán lúc: {formatDate(order.paymentAt)}
                       </p>
                     )}

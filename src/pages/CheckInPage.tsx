@@ -124,7 +124,7 @@ const CheckInPage = () => {
   const config = getStatusConfig();
 
   return (
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-background flex items-center justify-center p-4">
       <div className={`max-w-md w-full ${config.bgClass} rounded-3xl shadow-xl border-2 ${config.borderClass} overflow-hidden`}>
         {/* Header */}
         <div className="bg-gradient-to-r from-primary to-pink-600 text-white p-6 text-center">
@@ -151,7 +151,7 @@ const CheckInPage = () => {
 
           {/* Status Title */}
           <h2 className={`text-2xl font-bold mb-3 ${
-            result.status === "loading" ? "text-gray-700" :
+            result.status === "loading" ? "text-foreground" :
             result.status === "success" ? "text-pink-600" :
             result.status === "already_used" ? "text-orange-600" :
             "text-red-600"
@@ -163,7 +163,7 @@ const CheckInPage = () => {
           </h2>
 
           {/* Message */}
-          <p className="text-gray-600 mb-8 leading-relaxed">
+          <p className="text-muted-foreground mb-8 leading-relaxed">
             {result.message}
           </p>
 
@@ -179,9 +179,9 @@ const CheckInPage = () => {
 
           {/* Token info (for debugging) */}
           {token && result.status !== "loading" && (
-            <div className="mb-6 p-3 bg-gray-100 rounded-lg">
-              <p className="text-xs text-gray-400 mb-1">Mã vé:</p>
-              <p className="text-sm font-mono text-gray-600 break-all">
+            <div className="mb-6 p-3 bg-muted rounded-lg">
+              <p className="text-xs text-muted-foreground mb-1">Mã vé:</p>
+              <p className="text-sm font-mono text-muted-foreground break-all">
                 {token.substring(0, 20)}...
               </p>
             </div>
@@ -213,8 +213,8 @@ const CheckInPage = () => {
         </div>
 
         {/* Footer */}
-        <div className="px-6 py-4 bg-gray-50 border-t text-center">
-          <p className="text-xs text-gray-400">
+        <div className="px-6 py-4 bg-muted border-t border-border text-center">
+          <p className="text-xs text-muted-foreground">
             TixCon - Hệ thống đặt vé sự kiện
           </p>
         </div>

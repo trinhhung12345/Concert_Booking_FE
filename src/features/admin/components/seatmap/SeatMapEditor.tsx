@@ -6,7 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faPlus, faSave, faTrash, faMousePointer, faRefresh, faEyeSlash } from "@fortawesome/free-solid-svg-icons";
+import { faPlus, faSave, faTrash, faMousePointer, faRefresh, faEyeSlash, faSearchPlus, faSearchMinus, faCompress } from "@fortawesome/free-solid-svg-icons";
 import Konva from "konva";
 import { eventService } from "@/features/concerts/services/eventService";
 import { seatMapService } from "@/features/admin/services/seatMapService";
@@ -68,7 +68,11 @@ export default function SeatMapEditor({ showingId, onSave }: SeatMapEditorProps)
   const [dialogType, setDialogType] = useState<'delete' | 'soft-delete'>('delete');
   const [dialogAction, setDialogAction] = useState<(() => void) | null>(null);
   const canvasContainerRef = useRef<HTMLDivElement | null>(null);
+  const stageRef = useRef<Konva.Stage>(null);
   const [stageSize, setStageSize] = useState({ width: 800, height: 600 });
+  const [stageScale, setStageScale] = useState(1);
+  const [stagePos, setStagePos] = useState({ x: 0, y: 0 });
+  const [isPanelCollapsed, setIsPanelCollapsed] = useState(false);
 
   // Đo kích thước container ngay khi mount (trước paint) để tránh flash
   useLayoutEffect(() => {
@@ -98,6 +102,93 @@ export default function SeatMapEditor({ showingId, onSave }: SeatMapEditorProps)
     ro.observe(el);
     return () => ro.disconnect();
   }, []);
+
+  // Zoom bằng scroll chuột trên Stage
+  const handleWheel = (e: Konva.KonvaEventObject<WheelEvent>) => {
+    e.evt.preventDefault();
+    const stage = stageRef.current;
+    if (!stage) return;
+
+    const scaleBy = 1.08;
+    const oldScale = stageScale;
+    const pointer = stage.getPointerPosition();
+    if (!pointer) return;
+
+    const mousePointTo = {
+      x: (pointer.x - stagePos.x) / oldScale,
+      y: (pointer.y - stagePos.y) / oldScale,
+    };
+
+    const direction = e.evt.deltaY > 0 ? -1 : 1;
+    const newScale = Math.min(Math.max(direction > 0 ? oldScale * scaleBy : oldScale / scaleBy, 0.1), 5);
+
+    const newPos = {
+      x: pointer.x - mousePointTo.x * newScale,
+      y: pointer.y - mousePointTo.y * newScale,
+    };
+
+    setStageScale(newScale);
+    setStagePos(newPos);
+  };
+
+  // Zoom controls
+  const zoomIn = () => {
+    const newScale = Math.min(stageScale * 1.2, 5);
+    const center = { x: stageSize.width / 2, y: stageSize.height / 2 };
+    const mousePointTo = {
+      x: (center.x - stagePos.x) / stageScale,
+      y: (center.y - stagePos.y) / stageScale,
+    };
+    setStageScale(newScale);
+    setStagePos({
+      x: center.x - mousePointTo.x * newScale,
+      y: center.y - mousePointTo.y * newScale,
+    });
+  };
+
+  const zoomOut = () => {
+    const newScale = Math.max(stageScale / 1.2, 0.1);
+    const center = { x: stageSize.width / 2, y: stageSize.height / 2 };
+    const mousePointTo = {
+      x: (center.x - stagePos.x) / stageScale,
+      y: (center.y - stagePos.y) / stageScale,
+    };
+    setStageScale(newScale);
+    setStagePos({
+      x: center.x - mousePointTo.x * newScale,
+      y: center.y - mousePointTo.y * newScale,
+    });
+  };
+
+  const resetZoom = () => {
+    setStageScale(1);
+    setStagePos({ x: 0, y: 0 });
+  };
+
+  const fitToScreen = () => {
+    if (shapes.length === 0) {
+      resetZoom();
+      return;
+    }
+    // Calculate bounding box of all shapes
+    let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+    shapes.forEach(s => {
+      minX = Math.min(minX, s.x);
+      minY = Math.min(minY, s.y);
+      maxX = Math.max(maxX, s.x + s.width);
+      maxY = Math.max(maxY, s.y + s.height);
+    });
+    const contentWidth = maxX - minX + 80;
+    const contentHeight = maxY - minY + 80;
+    const scaleX = stageSize.width / contentWidth;
+    const scaleY = stageSize.height / contentHeight;
+    const newScale = Math.min(scaleX, scaleY, 2);
+    setStageScale(newScale);
+    setStagePos({
+      x: (stageSize.width - contentWidth * newScale) / 2 - minX * newScale + 40 * newScale,
+      y: (stageSize.height - contentHeight * newScale) / 2 - minY * newScale + 40 * newScale,
+    });
+  };
 
   // Hàm xử lý xóa mềm section
   const softDeleteSection = async (sectionId: string) => {
@@ -758,36 +849,63 @@ export default function SeatMapEditor({ showingId, onSave }: SeatMapEditorProps)
       </div>
 
       {/* 2. CANVAS CHÍNH */}
-      <div ref={canvasContainerRef} className="flex-1 bg-muted/30 relative overflow-hidden">
+      <div ref={canvasContainerRef} className="flex-1 bg-muted/30 relative overflow-hidden min-w-0">
+        {/* Zoom Controls */}
+        <div className="absolute top-3 right-3 z-10 flex items-center gap-1 bg-card/90 backdrop-blur-sm border border-border rounded-lg px-2 py-1.5 shadow-sm">
+          <Button size="icon" variant="ghost" className="h-7 w-7" onClick={zoomOut} title="Thu nhỏ">
+            <FontAwesomeIcon icon={faSearchMinus} className="text-xs" />
+          </Button>
+          <span className="text-xs font-mono w-12 text-center select-none">{Math.round(stageScale * 100)}%</span>
+          <Button size="icon" variant="ghost" className="h-7 w-7" onClick={zoomIn} title="Phóng to">
+            <FontAwesomeIcon icon={faSearchPlus} className="text-xs" />
+          </Button>
+          <div className="w-px h-4 bg-border mx-1" />
+          <Button size="icon" variant="ghost" className="h-7 w-7" onClick={fitToScreen} title="Vừa màn hình">
+            <FontAwesomeIcon icon={faCompress} className="text-xs" />
+          </Button>
+          <Button size="sm" variant="ghost" className="h-7 px-2 text-xs" onClick={resetZoom} title="Đặt lại zoom">
+            Reset
+          </Button>
+        </div>
         <div className="absolute inset-0">
           <Stage
+            ref={stageRef}
             width={stageSize.width}
             height={stageSize.height}
+            scaleX={stageScale}
+            scaleY={stageScale}
+            x={stagePos.x}
+            y={stagePos.y}
+            draggable
+            onWheel={handleWheel}
             onMouseDown={(e) => {
               if (e.target === e.target.getStage()) setSelectedId(null);
+            }}
+            onDragEnd={(e) => {
+              setStagePos({ x: e.target.x(), y: e.target.y() });
             }}
           >
           <Layer>
             {/* Background */}
-            <Rect x={0} y={0} width={stageSize.width} height={stageSize.height} fill="#f8fafc" />
+            <Rect x={0} y={0} width={stageSize.width / stageScale + 400} height={stageSize.height / stageScale + 400} fill="#f8fafc" />
             
             {/* Grid pattern */}
-            {Array.from({ length: Math.ceil(stageSize.width / GRID_SIZE) + 1 }).map((_, i) => (
+            {Array.from({ length: Math.ceil((stageSize.width / stageScale + 400) / GRID_SIZE) + 1 }).map((_, i) => (
               <Rect
                 key={`vgrid-${i}`}
                 x={i * GRID_SIZE}
                 y={0}
                 width={1}
-                height={stageSize.height}
+                height={stageSize.height / stageScale + 400}
                 fill="#e2e8f0"
               />
             ))}
-            {Array.from({ length: Math.ceil(stageSize.height / GRID_SIZE) + 1 }).map((_, i) => (
+            {Array.from({ length: Math.ceil((stageSize.height / stageScale + 400) / GRID_SIZE) + 1 }).map((_, i) => (
               <Rect
                 key={`hgrid-${i}`}
                 x={0}
                 y={i * GRID_SIZE}
-                width={stageSize.width}
+                width={stageSize.width / stageScale + 400}
                 height={1}
                 fill="#e2e8f0"
               />
@@ -812,8 +930,18 @@ export default function SeatMapEditor({ showingId, onSave }: SeatMapEditorProps)
         </div>
       </div>
 
+      {/* Toggle Properties Panel button */}
+      <button
+        onClick={() => setIsPanelCollapsed(!isPanelCollapsed)}
+        className="absolute top-3 right-3 z-20 md:hidden bg-card border border-border rounded-lg p-2 shadow-sm"
+        style={{ display: isPanelCollapsed ? 'block' : 'none' }}
+        title="Mở panel thuộc tính"
+      >
+        <FontAwesomeIcon icon={faSave} className="text-sm" />
+      </button>
+
       {/* 3. PROPERTIES PANEL (BÊN PHẢI) */}
-      <div className="w-72 shrink-0 border-l border-border bg-card flex flex-col overflow-hidden">
+      <div className={`${isPanelCollapsed ? 'hidden' : 'flex'} w-64 lg:w-72 shrink-0 border-l border-border bg-card flex-col overflow-hidden`}>
         <div className="p-4 border-b border-border flex justify-between items-center bg-card z-10">
           <h3 className="font-bold">Thuộc tính</h3>
           <Button 

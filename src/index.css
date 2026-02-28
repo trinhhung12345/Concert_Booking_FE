@@ -188,7 +188,7 @@
   font-weight: 600;
   margin-bottom: 0.5rem;
   margin-top: 1rem;
-  color: #1f2937;
+  color: hsl(var(--foreground));
 }
 
 .event-description h1 {
@@ -232,7 +232,7 @@
 
 .event-description strong {
   font-weight: 600;
-  color: #1f2937;
+  color: hsl(var(--foreground));
 }
 
 .event-description em {
@@ -243,6 +243,6 @@
   border-left: 4px solid hsl(var(--primary));
   padding-left: 1rem;
   margin: 1rem 0;
-  color: #6b7280;
+  color: hsl(var(--muted-foreground));
   font-style: italic;
 }

@@ -148,7 +148,7 @@ const ChatBot: React.FC = () => {
 							)}
 						</div>
 					))}
-					{loading && <div className="text-gray-400">Đang trả lời...</div>}
+					{loading && <div className="text-muted-foreground">Đang trả lời...</div>}
 				</div>
 
 				{activeForm ? (

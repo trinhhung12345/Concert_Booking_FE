@@ -213,7 +213,7 @@ export default function Header() {
                     </Link>
                   ) : (
                     <Link to="/admin">
-                      <Button className="gap-2 bg-gray-800 text-white hover:bg-gray-900">
+                      <Button className="gap-2 bg-secondary text-secondary-foreground hover:bg-secondary/90">
                         <FontAwesomeIcon icon={faChartPie} />
                         Trang Quản Lý
                       </Button>
@@ -224,7 +224,7 @@ export default function Header() {
                 {/* Nút Lịch sử vé (Ẩn ở trang admin cho đỡ rối) */}
                 {!isAdminPage && (
                   <Link to="/tickets">
-                    <Button variant="ghost" className="text-gray-600 hover:text-primary hover:bg-pink-50 gap-2">
+                    <Button variant="ghost" className="text-muted-foreground hover:text-primary hover:bg-primary/10 gap-2">
                       <FontAwesomeIcon icon={faHistory} />
                       <span>Vé của tôi</span>
                     </Button>
@@ -298,14 +298,14 @@ export default function Header() {
           {/* MOBILE MENU (Hamburger) - Chỉ hiện trên Mobile */}
           <div className="md:hidden flex items-center gap-2">
             {/* Icon search nhỏ cho mobile */}
-            <Button variant="ghost" size="icon" className="text-gray-600">
+            <Button variant="ghost" size="icon" className="text-muted-foreground">
               <FontAwesomeIcon icon={faSearch} className="h-5 w-5" />
             </Button>
 
             <Sheet>
               <SheetTrigger asChild>
                 <Button variant="ghost" size="icon">
-                  <FontAwesomeIcon icon={faBars} className="h-6 w-6 text-gray-700" />
+                  <FontAwesomeIcon icon={faBars} className="h-6 w-6 text-foreground" />
                 </Button>
               </SheetTrigger>
               <SheetContent side="right" className="w-[300px] sm:w-[400px]">
@@ -314,7 +314,7 @@ export default function Header() {
 
                   {isAuthenticated ? (
                     <div className="flex flex-col gap-4">
-                      <div className="flex items-center gap-4 p-4 bg-gray-50 rounded-xl">
+                      <div className="flex items-center gap-4 p-4 bg-muted rounded-xl">
                         <Avatar>
                           <AvatarFallback className="bg-primary text-white">
                             {user?.name?.charAt(0)}
@@ -322,7 +322,7 @@ export default function Header() {
                         </Avatar>
                         <div>
                           <p className="font-semibold">{user?.name}</p>
-                          <p className="text-xs text-gray-500">{user?.email}</p>
+                          <p className="text-xs text-muted-foreground">{user?.email}</p>
                         </div>
                       </div>
                       <nav className="flex flex-col gap-2">
@@ -330,7 +330,7 @@ export default function Header() {
                         {isAdmin && (
                           <Button
                             variant="outline"
-                            className="w-full justify-start gap-3 border-gray-300"
+                            className="w-full justify-start gap-3 border-border"
                             onClick={() => navigate(isAdminPage ? "/" : "/admin")}
                           >
                             <FontAwesomeIcon icon={isAdminPage ? faGlobe : faChartPie} />

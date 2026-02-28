@@ -43,37 +43,36 @@ export default function LoginForm({ onSubmitAPI, isLoading }: LoginFormProps) {
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-6 mt-4">
       <div className="space-y-2">
-        <Label htmlFor="email" className="text-gray-700 font-medium ml-1">Email</Label>
+        <Label htmlFor="email" className="text-foreground/80 font-medium ml-1">Email</Label>
         <Input
           id="email"
           type="email"
-          placeholder=""
+          placeholder="your@email.com"
           {...register("email")}
-          // Thêm bg-gray-50 để input nổi bật trên nền trắng
-          className={`h-12 rounded-2xl bg-gray-50 border-gray-200 focus-visible:ring-primary focus-visible:border-primary ${errors.email ? "border-red-500 bg-red-50" : ""}`}
+          className={`h-12 rounded-2xl bg-muted/50 border-border focus-visible:ring-primary focus-visible:border-primary ${errors.email ? "border-destructive bg-destructive/5" : ""}`}
         />
-        {errors.email && <p className="text-sm text-red-500 ml-1">{errors.email.message}</p>}
+        {errors.email && <p className="text-sm text-destructive ml-1">{errors.email.message}</p>}
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="password" className="text-gray-700 font-medium ml-1">Mật khẩu</Label>
+        <Label htmlFor="password" className="text-foreground/80 font-medium ml-1">Mật khẩu</Label>
         <div className="relative">
           <Input
             id="password"
             type={showPassword ? "text" : "password"}
-            placeholder=""
+            placeholder="••••••••"
             {...register("password")}
-            className={`h-12 rounded-2xl bg-gray-50 border-gray-200 focus-visible:ring-primary focus-visible:border-primary pr-10 ${errors.password ? "border-red-500 bg-red-50" : ""}`}
+            className={`h-12 rounded-2xl bg-muted/50 border-border focus-visible:ring-primary focus-visible:border-primary pr-10 ${errors.password ? "border-destructive bg-destructive/5" : ""}`}
           />
           <button
             type="button"
-            className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700"
+            className="absolute right-3 top-1/2 transform -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
             onClick={() => setShowPassword(!showPassword)}
           >
             {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
           </button>
         </div>
-        {errors.password && <p className="text-sm text-red-500 ml-1">{errors.password.message}</p>}
+        {errors.password && <p className="text-sm text-destructive ml-1">{errors.password.message}</p>}
       </div>
 
       <div className="flex justify-end">
@@ -95,10 +94,9 @@ export default function LoginForm({ onSubmitAPI, isLoading }: LoginFormProps) {
         type="submit"
         className={`w-full h-12 text-lg font-semibold rounded-2xl transition-all duration-300 shadow-sm ${
           isFormFilled
-            ? "bg-primary text-white hover:bg-primary/90 shadow-lg shadow-primary/30"
-            : "bg-gray-200 text-gray-500 cursor-not-allowed"
+            ? "bg-primary text-primary-foreground hover:bg-primary/90 shadow-lg shadow-primary/30"
+            : "bg-muted text-muted-foreground cursor-not-allowed"
         }`}
-        // Disable nút khi đang loading
         disabled={isSubmitting || isLoading || !isFormFilled}
       >
         {(isSubmitting || isLoading) ? "Đang đăng nhập..." : "Đăng nhập"}

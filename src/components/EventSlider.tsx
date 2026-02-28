@@ -1,8 +1,9 @@
 import { Swiper, SwiperSlide } from "swiper/react";
 import "swiper/css/bundle";
-import { Swiper as SwiperCore } from "swiper";
+import { Autoplay } from "swiper/modules";
+import type { Swiper as SwiperCore } from "swiper";
 import { Link } from "react-router-dom";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import type { EventProps } from "@/features/concerts/components/EventCard";
 import { motion } from "framer-motion";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
@@ -14,6 +15,8 @@ interface Props {
 
 export default function EventSlider({ events }: Props) {
   const [activeIndex, setActiveIndex] = useState(0);
+  const [totalPages, setTotalPages] = useState(1);
+  const swiperRef = useRef<SwiperCore | null>(null);
   
   const sorted = [...events].sort(
     (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
@@ -50,7 +53,7 @@ export default function EventSlider({ events }: Props) {
           Sự kiện nổi bật
         </h2>
         <Link 
-          to="/category/0" 
+          to="/events" 
           className="text-primary hover:text-primary/80 text-sm font-medium transition-colors"
         >
           Xem tất cả →
@@ -167,16 +170,14 @@ export default function EventSlider({ events }: Props) {
             </h3>
             
             {/* Custom Pagination Dots */}
-            {specialEvents.length > 1 && (
+            {totalPages > 1 && (
               <div className="flex items-center gap-2">
-                {specialEvents.map((_, idx) => (
+                {Array.from({ length: totalPages }, (_, idx) => (
                   <button
                     key={idx}
                     onClick={() => {
-                      const swiper = document.querySelector('.special-events-swiper') as HTMLElement & { swiper?: SwiperCore };
-                      const swiperEl = document.querySelector('.special-events-swiper')?.querySelector('.swiper') as HTMLElement & { swiper?: SwiperCore };
-                      if (swiperEl?.swiper) {
-                        swiperEl.swiper.slideTo(idx);
+                      if (swiperRef.current) {
+                        swiperRef.current.slideTo(idx);
                       }
                     }}
                     className={`w-2 h-2 rounded-full transition-all duration-300 ${
@@ -184,7 +185,7 @@ export default function EventSlider({ events }: Props) {
                         ? 'w-8 bg-primary' 
                         : 'bg-muted-foreground/30 hover:bg-muted-foreground/50'
                     }`}
-                    aria-label={`Go to slide ${idx + 1}`}
+                    aria-label={`Go to page ${idx + 1}`}
                   />
                 ))}
               </div>
@@ -194,15 +195,29 @@ export default function EventSlider({ events }: Props) {
           <div className="overflow-hidden">
           <Swiper
             className="special-events-swiper"
+            modules={[Autoplay]}
             spaceBetween={20}
             slidesPerView={4}
+            loop={specialEvents.length > 4}
+            autoplay={{ delay: 3000, disableOnInteraction: false, pauseOnMouseEnter: true }}
             breakpoints={{
               0: { slidesPerView: 1.5, spaceBetween: 12 },
               640: { slidesPerView: 2, spaceBetween: 16 },
               768: { slidesPerView: 3, spaceBetween: 20 },
               1024: { slidesPerView: 4, spaceBetween: 20 },
             }}
-            onSlideChange={(swiper) => setActiveIndex(swiper.activeIndex)}
+            onSwiper={(swiper) => {
+              swiperRef.current = swiper;
+              const pages = swiper.snapGrid?.length ?? 1;
+              setTotalPages(pages);
+            }}
+            onSlideChange={(swiper) => {
+              setActiveIndex(swiper.snapIndex ?? swiper.activeIndex);
+            }}
+            onBreakpoint={(swiper) => {
+              const pages = swiper.snapGrid?.length ?? 1;
+              setTotalPages(pages);
+            }}
           >
             {specialEvents.map((event) => {
               // Ưu tiên chọn ảnh poster dọc cho khu special

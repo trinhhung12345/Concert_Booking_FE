@@ -8,16 +8,14 @@ import { categoryService, type Category } from "@/features/concerts/services/cat
 import ChatBot from "@/components/ChatBot";
 import { cleanImageUrl } from "@/lib/utils";
 import type { EventProps } from "@/features/concerts/components/EventCard";
+import EventCard from "@/features/concerts/components/EventCard";
 import { motion, AnimatePresence } from "framer-motion";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { 
-  faChevronLeft, 
   faChevronRight, 
-  faMapMarkerAlt,
   faCalendarAlt,
   faFire
 } from "@fortawesome/free-solid-svg-icons";
-import { Link } from "react-router-dom";
 
 // Animation variants
 const containerVariants = {
@@ -39,28 +37,6 @@ const itemVariants = {
   }
 };
 
-// Badge component for event status
-function EventBadge({ date, minPrice }: { date: string; minPrice: number }) {
-  const eventDate = new Date(date);
-  const now = new Date();
-  const daysUntil = Math.ceil((eventDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
-  
-  if (daysUntil > 7) {
-    return (
-      <span className="absolute top-3 left-3 bg-primary/90 text-white text-xs font-medium px-2.5 py-1 rounded-full">
-        Sắp diễn ra
-      </span>
-    );
-  } else if (daysUntil > 0 && daysUntil <= 7) {
-    return (
-      <span className="absolute top-3 left-3 bg-orange-500 text-white text-xs font-medium px-2.5 py-1 rounded-full flex items-center gap-1">
-        <FontAwesomeIcon icon={faFire} className="w-3 h-3" />
-        Còn {daysUntil} ngày
-      </span>
-    );
-  }
-  return null;
-}
 
 
 export default function HomePage() {
@@ -150,33 +126,11 @@ export default function HomePage() {
 
   const allEvents = Object.values(eventsByCategory).flat();
 
-  const VISIBLE_EVENTS_PER_CATEGORY = 3;
-
-  const handleNextCategoryPage = (categoryId: number) => {
-    setCategoryPageIndex((prev) => {
-      const current = prev[categoryId] ?? 0;
-      const total = eventsByCategory[categoryId]?.length ?? 0;
-      if (total === 0) return prev;
-
-      const maxStart = Math.max(total - VISIBLE_EVENTS_PER_CATEGORY, 0);
-      const next = Math.min(current + VISIBLE_EVENTS_PER_CATEGORY, maxStart);
-      if (next === current) return prev;
-      return { ...prev, [categoryId]: next };
-    });
-  };
-
-  const handlePrevCategoryPage = (categoryId: number) => {
-    setCategoryPageIndex((prev) => {
-      const current = prev[categoryId] ?? 0;
-      const next = Math.max(current - VISIBLE_EVENTS_PER_CATEGORY, 0);
-      if (next === current) return prev;
-      return { ...prev, [categoryId]: next };
-    });
-  };
+  const INITIAL_VISIBLE = 6;
 
   return (
     <div className="bg-background min-h-screen w-full">
-      <div className="container mx-auto px-4 py-8 space-y-14">
+      <div className="container mx-auto px-4 py-6 sm:py-8 space-y-10 sm:space-y-14">
         {/* Event Slider */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -199,14 +153,16 @@ export default function HomePage() {
                 transition={{ delay: i * 0.1 }}
               >
                 <Skeleton className="h-8 w-56 mb-6 rounded-lg" />
-                <div className="flex gap-6">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
                   {[1, 2, 3].map((j) => (
                     <motion.div
                       key={j}
                       animate={{ opacity: [0.5, 1, 0.5] }}
                       transition={{ duration: 1.5, repeat: Infinity, delay: j * 0.1 }}
                     >
-                      <Skeleton className="w-[320px] h-[300px] rounded-xl" />
+                      <Skeleton className="w-full aspect-[3/2] rounded-xl" />
+                      <Skeleton className="h-4 w-3/4 mt-3" />
+                      <Skeleton className="h-4 w-1/2 mt-2" />
                     </motion.div>
                   ))}
                 </div>
@@ -219,19 +175,25 @@ export default function HomePage() {
             variants={containerVariants}
             initial="hidden"
             animate="visible"
+            className="space-y-10 sm:space-y-14"
           >
             {categories
               .filter((c) => c.active)
-              .map((cat, sectionIndex) => (
+              .map((cat) => {
+                const catEvents = eventsByCategory[cat.id] || [];
+                const isExpanded = (categoryPageIndex[cat.id] ?? 0) === 1;
+                const visibleEvents = isExpanded ? catEvents : catEvents.slice(0, INITIAL_VISIBLE);
+                
+                return (
                 <motion.section 
                   key={cat.id} 
-                  className="space-y-6"
+                  className="space-y-5"
                   variants={itemVariants}
                 >
                   {/* Section Header */}
-                  <div className="flex items-center justify-between group">
+                  <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
-                      <h2 className="text-2xl font-bold text-foreground relative">
+                      <h2 className="text-xl sm:text-2xl font-bold text-foreground relative">
                         {cat.name}
                         <motion.span 
                           className="absolute -bottom-1 left-0 h-0.5 bg-primary"
@@ -240,132 +202,56 @@ export default function HomePage() {
                           transition={{ delay: 0.3, duration: 0.4 }}
                         />
                       </h2>
-                      <span className="text-sm text-muted-foreground bg-muted px-2.5 py-1 rounded-full">
-                        {eventsByCategory[cat.id]?.length || 0} sự kiện
+                      <span className="text-xs sm:text-sm text-muted-foreground bg-muted px-2 sm:px-2.5 py-1 rounded-full">
+                        {catEvents.length} sự kiện
                       </span>
                     </div>
                     
-                    <div className="flex items-center gap-3">
-                      {eventsByCategory[cat.id]?.length > VISIBLE_EVENTS_PER_CATEGORY && (
-                        <div className="flex items-center gap-2">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="text-primary hover:text-primary hover:bg-primary/10 transition-colors"
+                      onClick={() => navigate(`/category/${cat.id}`)}
+                    >
+                      Xem tất cả
+                      <FontAwesomeIcon icon={faChevronRight} className="ml-1 w-3 h-3" />
+                    </Button>
+                  </div>
+
+                  {/* Event Cards - Responsive Grid */}
+                  {catEvents.length ? (
+                    <div>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+                        <AnimatePresence mode="wait">
+                          {visibleEvents.map((event, index) => (
+                            <motion.div
+                              key={event.id}
+                              initial={{ opacity: 0, y: 20 }}
+                              animate={{ opacity: 1, y: 0 }}
+                              exit={{ opacity: 0, y: -20 }}
+                              transition={{ delay: index * 0.05, duration: 0.3 }}
+                            >
+                              <EventCard {...event} />
+                            </motion.div>
+                          ))}
+                        </AnimatePresence>
+                      </div>
+                      
+                      {/* Show More / Show Less */}
+                      {catEvents.length > INITIAL_VISIBLE && (
+                        <div className="flex justify-center mt-6">
                           <Button
                             variant="outline"
-                            size="icon"
-                            className="h-9 w-9 rounded-full hover:bg-primary hover:text-white hover:border-primary transition-all duration-300"
-                            onClick={() => handlePrevCategoryPage(cat.id)}
+                            className="rounded-full px-6 hover:bg-primary hover:text-white hover:border-primary transition-all"
+                            onClick={() => setCategoryPageIndex(prev => ({
+                              ...prev,
+                              [cat.id]: isExpanded ? 0 : 1
+                            }))}
                           >
-                            <FontAwesomeIcon icon={faChevronLeft} className="w-4 h-4" />
-                          </Button>
-                          <Button
-                            variant="outline"
-                            size="icon"
-                            className="h-9 w-9 rounded-full hover:bg-primary hover:text-white hover:border-primary transition-all duration-300"
-                            onClick={() => handleNextCategoryPage(cat.id)}
-                          >
-                            <FontAwesomeIcon icon={faChevronRight} className="w-4 h-4" />
+                            {isExpanded ? "Thu gọn" : `Xem thêm (${catEvents.length - INITIAL_VISIBLE})`}
                           </Button>
                         </div>
                       )}
-                      <Button
-                        variant="ghost"
-                        className="text-primary hover:text-primary hover:bg-primary/10 transition-colors"
-                        onClick={() => navigate(`/category/${cat.id}`)}
-                      >
-                        Xem tất cả
-                        <FontAwesomeIcon icon={faChevronRight} className="ml-2 w-4 h-4" />
-                      </Button>
-                    </div>
-                  </div>
-
-                  {/* Event Cards */}
-                  {eventsByCategory[cat.id]?.length ? (
-                    <div className="relative pb-3">
-                      <div className="flex gap-6">
-                        <AnimatePresence mode="wait">
-                          {eventsByCategory[cat.id]
-                            .slice(
-                              categoryPageIndex[cat.id] ?? 0,
-                              (categoryPageIndex[cat.id] ?? 0) + VISIBLE_EVENTS_PER_CATEGORY
-                            )
-                            .map((event, index) => (
-                              <motion.div
-                                key={event.id}
-                                initial={{ opacity: 0, y: 20 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                exit={{ opacity: 0, y: -20 }}
-                                transition={{ delay: index * 0.1, duration: 0.3 }}
-                                className="min-w-[320px] w-[320px]"
-                              >
-                                <div
-                                  className="group bg-card rounded-xl overflow-hidden cursor-pointer 
-                                    hover:shadow-2xl hover:shadow-primary/10 transition-all duration-300
-                                    border border-transparent hover:border-primary/20
-                                    transform hover:-translate-y-1"
-                                  onClick={() => navigate(`/event/${event.id}`)}
-                                >
-                                  {/* IMAGE with Badge */}
-                                  <div className="relative aspect-[16/9] w-full overflow-hidden">
-                                    {/* Badge */}
-                                    <EventBadge date={event.date} minPrice={event.minPrice} />
-                                    
-                                    <img
-                                      src={event.imageUrl}
-                                      alt={event.title}
-                                      className="w-full h-full object-cover 
-                                        transition-transform duration-500 
-                                        group-hover:scale-110"
-                                      onError={(e) => {
-                                        e.currentTarget.src =
-                                          "https://images.unsplash.com/photo-1459749411177-334811adbced?q=80&w=800";
-                                      }}
-                                    />
-                                    
-                                    {/* Gradient Overlay on Hover */}
-                                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent 
-                                      opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-                                  </div>
-
-                                  {/* CONTENT */}
-                                  <div className="p-5 space-y-3">
-                                    <span className="text-xs font-medium text-primary uppercase tracking-wider">
-                                      {event.category ?? "EVENT"}
-                                    </span>
-
-                                    <h3 className="text-foreground font-bold text-lg line-clamp-2 
-                                      group-hover:text-primary transition-colors duration-300">
-                                      {event.title}
-                                    </h3>
-
-                                    {/* Price & Date Row */}
-                                    <div className="flex items-center justify-between pt-2 border-t border-border/50">
-                                      <p className="text-primary font-bold text-base">
-                                        {new Intl.NumberFormat("vi-VN", {
-                                          style: "currency",
-                                          currency: "VND",
-                                          maximumFractionDigits: 0
-                                        }).format(event.minPrice)}
-                                      </p>
-
-                                      <div className="flex items-center gap-1.5 text-muted-foreground text-sm">
-                                        <FontAwesomeIcon icon={faCalendarAlt} className="w-4 h-4 text-primary/70" />
-                                        <span>
-                                          {new Date(event.date).toLocaleDateString(
-                                            "vi-VN",
-                                            {
-                                              day: "2-digit",
-                                              month: "2-digit",
-                                              year: "numeric"
-                                            }
-                                          )}
-                                        </span>
-                                      </div>
-                                    </div>
-                                  </div>
-                                </div>
-                              </motion.div>
-                            ))}
-                        </AnimatePresence>
-                      </div>
                     </div>
                   ) : (
                     <div className="text-muted-foreground italic py-8 text-center bg-muted/30 rounded-xl">
@@ -373,18 +259,13 @@ export default function HomePage() {
                     </div>
                   )}
                 </motion.section>
-              ))}
+                );
+              })}
           </motion.div>
         )}
         
         {/* ChatBot */}
-        <motion.div
-          initial={{ opacity: 0, scale: 0.9 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ delay: 0.5, duration: 0.3 }}
-        >
-          <ChatBot />
-        </motion.div>
+        <ChatBot />
       </div>
     </div>
   );

@@ -71,7 +71,7 @@ const TicketsPage = () => {
     });
   };
 
-  // Get status badge
+  // Get status badge - theme-aware
   const getStatusBadge = (status: Order["status"], size: "sm" | "md" = "md") => {
     const baseClass = size === "sm" 
       ? "inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium"
@@ -80,21 +80,21 @@ const TicketsPage = () => {
     switch (status) {
       case "PAID":
         return (
-          <span className={`${baseClass} bg-pink-100 text-pink-700`}>
+          <span className={`${baseClass} bg-primary/10 text-primary`}>
             <FontAwesomeIcon icon={faCheckCircle} className="text-xs" />
             Đã thanh toán
           </span>
         );
       case "UNPAID":
         return (
-          <span className={`${baseClass} bg-orange-100 text-orange-700`}>
+          <span className={`${baseClass} bg-amber-500/10 text-amber-600 dark:text-amber-400`}>
             <FontAwesomeIcon icon={faClock} className="text-xs" />
             Chờ thanh toán
           </span>
         );
       case "CANCELLED":
         return (
-          <span className={`${baseClass} bg-red-100 text-red-700`}>
+          <span className={`${baseClass} bg-destructive/10 text-destructive`}>
             <FontAwesomeIcon icon={faTimesCircle} className="text-xs" />
             Đã hủy
           </span>
@@ -111,17 +111,17 @@ const TicketsPage = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-900 text-slate-100">
+      <div className="min-h-screen flex items-center justify-center bg-background text-foreground">
         <div className="text-center">
           <FontAwesomeIcon icon={faSpinner} spin className="text-4xl text-primary mb-4" />
-          <p className="text-slate-300">Đang tải vé của bạn...</p>
+          <p className="text-muted-foreground">Đang tải vé của bạn...</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-900 text-slate-100">
+    <div className="min-h-screen bg-background text-foreground">
       {/* Header */}
       <div className="bg-gradient-to-r from-primary to-pink-600 text-white">
         <div className="max-w-6xl mx-auto px-4 py-8">
@@ -143,10 +143,10 @@ const TicketsPage = () => {
         )}
 
         {orders.length === 0 ? (
-          <div className="text-center py-16 bg-slate-900 rounded-2xl shadow-sm border border-slate-700">
-            <FontAwesomeIcon icon={faTicketAlt} className="text-7xl text-slate-600 mb-6" />
-            <h2 className="text-2xl font-bold text-slate-100 mb-3">Chưa có đơn hàng nào</h2>
-            <p className="text-slate-400 mb-8 max-w-md mx-auto">
+          <div className="text-center py-16 bg-card rounded-2xl shadow-sm border border-border">
+            <FontAwesomeIcon icon={faTicketAlt} className="text-7xl text-muted-foreground mb-6" />
+            <h2 className="text-2xl font-bold text-foreground mb-3">Chưa có đơn hàng nào</h2>
+            <p className="text-muted-foreground mb-8 max-w-md mx-auto">
               Bạn chưa đặt vé nào. Hãy đặt vé để tham gia các sự kiện thú vị!
             </p>
             <Button onClick={() => navigate("/")} size="lg">
@@ -157,29 +157,49 @@ const TicketsPage = () => {
         ) : (
           <>
             {/* Stats */}
-            <div className="grid grid-cols-1 sm:grid-cols-4 gap-4 mb-8">
-              <div className="bg-slate-900 rounded-xl p-6 shadow-sm border border-slate-700">
-                <div className="text-3xl font-bold text-primary">{orders.length}</div>
-                <div className="text-slate-400 text-sm">Tổng đơn hàng</div>
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4 mb-8">
+              <div className="bg-card rounded-xl p-4 sm:p-6 shadow-sm border border-border">
+                <div className="flex items-center gap-2 mb-2">
+                  <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
+                    <FontAwesomeIcon icon={faReceipt} className="text-primary text-sm" />
+                  </div>
+                </div>
+                <div className="text-2xl sm:text-3xl font-bold text-foreground">{orders.length}</div>
+                <div className="text-muted-foreground text-xs sm:text-sm">Tổng đơn hàng</div>
               </div>
-              <div className="bg-slate-900 rounded-xl p-6 shadow-sm border border-slate-700">
-                <div className="text-3xl font-bold text-blue-400">{totalTickets}</div>
-                <div className="text-slate-400 text-sm">Tổng số vé</div>
+              <div className="bg-card rounded-xl p-4 sm:p-6 shadow-sm border border-border">
+                <div className="flex items-center gap-2 mb-2">
+                  <div className="w-8 h-8 rounded-lg bg-blue-500/10 flex items-center justify-center">
+                    <FontAwesomeIcon icon={faTicketAlt} className="text-blue-500 text-sm" />
+                  </div>
+                </div>
+                <div className="text-2xl sm:text-3xl font-bold text-foreground">{totalTickets}</div>
+                <div className="text-muted-foreground text-xs sm:text-sm">Tổng số vé</div>
               </div>
-              <div className="bg-slate-900 rounded-xl p-6 shadow-sm border border-slate-700">
-                <div className="text-3xl font-bold text-pink-400">{paidOrders.length}</div>
-                <div className="text-slate-400 text-sm">Đơn đã thanh toán</div>
+              <div className="bg-card rounded-xl p-4 sm:p-6 shadow-sm border border-border">
+                <div className="flex items-center gap-2 mb-2">
+                  <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
+                    <FontAwesomeIcon icon={faCheckCircle} className="text-primary text-sm" />
+                  </div>
+                </div>
+                <div className="text-2xl sm:text-3xl font-bold text-foreground">{paidOrders.length}</div>
+                <div className="text-muted-foreground text-xs sm:text-sm">Đã thanh toán</div>
               </div>
-              <div className="bg-slate-900 rounded-xl p-6 shadow-sm border border-slate-700">
-                <div className="text-3xl font-bold text-orange-400">{unpaidOrders.length}</div>
-                <div className="text-slate-400 text-sm">Đơn chờ thanh toán</div>
+              <div className="bg-card rounded-xl p-4 sm:p-6 shadow-sm border border-border">
+                <div className="flex items-center gap-2 mb-2">
+                  <div className="w-8 h-8 rounded-lg bg-amber-500/10 flex items-center justify-center">
+                    <FontAwesomeIcon icon={faClock} className="text-amber-500 text-sm" />
+                  </div>
+                </div>
+                <div className="text-2xl sm:text-3xl font-bold text-foreground">{unpaidOrders.length}</div>
+                <div className="text-muted-foreground text-xs sm:text-sm">Chờ thanh toán</div>
               </div>
             </div>
 
             {/* Filter */}
-            <div className="bg-slate-900 rounded-xl p-4 shadow-sm border border-slate-700 mb-6">
+            <div className="bg-card rounded-xl p-4 shadow-sm border border-border mb-6">
               <div className="flex items-center gap-3 flex-wrap">
-                <span className="text-slate-400 flex items-center gap-2">
+                <span className="text-muted-foreground flex items-center gap-2">
                   <FontAwesomeIcon icon={faFilter} />
                   Lọc theo:
                 </span>
@@ -213,7 +233,7 @@ const TicketsPage = () => {
                     variant={filterStatus === "CANCELLED" ? "default" : "outline"}
                     size="sm"
                     onClick={() => setFilterStatus("CANCELLED")}
-                    className={filterStatus === "CANCELLED" ? "bg-gray-500 hover:bg-gray-600" : ""}
+                    className={filterStatus === "CANCELLED" ? "bg-muted-foreground hover:bg-muted-foreground/80" : ""}
                   >
                     <FontAwesomeIcon icon={faTimesCircle} className="mr-1" />
                     Đã hủy ({orders.filter(o => o.status === "CANCELLED").length})
@@ -224,8 +244,8 @@ const TicketsPage = () => {
 
             {/* Orders List */}
             {filteredOrders.length === 0 ? (
-              <div className="text-center py-12 bg-slate-900 rounded-xl border border-slate-700">
-                <p className="text-slate-400">Không có đơn hàng nào trong danh mục này</p>
+              <div className="text-center py-12 bg-card rounded-xl border border-border">
+                <p className="text-muted-foreground">Không có đơn hàng nào trong danh mục này</p>
               </div>
             ) : (
               <div className="space-y-4">
@@ -233,7 +253,7 @@ const TicketsPage = () => {
                   <div 
                     key={order.id}
                     onClick={() => navigate(`/tickets/${order.id}`)}
-                    className={`bg-slate-900 rounded-xl shadow-sm border border-slate-700 overflow-hidden hover:shadow-md transition-all duration-300 cursor-pointer ${
+                    className={`bg-card rounded-xl shadow-sm border border-border overflow-hidden hover:shadow-md transition-all duration-300 cursor-pointer ${
                       order.status === "CANCELLED" ? "opacity-60" : ""
                     }`}
                   >
@@ -253,22 +273,22 @@ const TicketsPage = () => {
                           </div>
                           
                           <div>
-                            <h3 className="font-bold text-lg text-slate-100">{order.code}</h3>
-                            <p className="text-sm text-slate-400">
+                            <h3 className="font-bold text-lg text-foreground">{order.code}</h3>
+                            <p className="text-sm text-muted-foreground">
                               {order.totalQuantity} vé • {formatDate(order.paymentAt)}
                             </p>
                             <div className="mt-2 flex flex-wrap gap-1">
                               {order.orderDetails.slice(0, 3).map((detail) => (
                                 <span 
                                   key={detail.id}
-                                  className="inline-flex items-center px-2 py-0.5 rounded bg-slate-800 text-xs font-medium text-slate-100"
+                                  className="inline-flex items-center px-2 py-0.5 rounded bg-muted text-xs font-medium text-foreground"
                                 >
-                                  <FontAwesomeIcon icon={faChair} className="mr-1 text-gray-400" />
+                                  <FontAwesomeIcon icon={faChair} className="mr-1 text-muted-foreground" />
                                   {detail.seatCode}
                                 </span>
                               ))}
                               {order.orderDetails.length > 3 && (
-                                <span className="inline-flex items-center px-2 py-0.5 rounded bg-gray-100 text-xs font-medium text-gray-500">
+                                <span className="inline-flex items-center px-2 py-0.5 rounded bg-muted text-xs font-medium text-muted-foreground">
                                   +{order.orderDetails.length - 3} vé khác
                                 </span>
                               )}
@@ -301,7 +321,7 @@ const TicketsPage = () => {
                           
                           <FontAwesomeIcon 
                             icon={faChevronRight} 
-                            className="text-gray-300 text-xl hidden sm:block" 
+                            className="text-muted-foreground text-xl hidden sm:block" 
                           />
                         </div>
                       </div>

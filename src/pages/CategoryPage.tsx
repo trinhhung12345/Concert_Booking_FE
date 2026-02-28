@@ -25,32 +25,49 @@ export default function CategoryPage() {
         if (location.state?.categoryId) {
           categoryId = location.state.categoryId;
         } else if (slug) {
-          // Nếu không có categoryId, fetch tất cả categories để tìm ID từ slug
-          const allCategories = await categoryService.getAll();
-          const foundCategory = allCategories.find(
-            (cat) => cat.name.toLowerCase().replace(/[\s\W-]+/g, "-") === slug
-          );
-          if (foundCategory) {
-            categoryId = foundCategory.id;
-            setCategory(foundCategory);
+          // Kiểm tra nếu slug là số (ID) thì dùng trực tiếp
+          const parsedId = Number(slug);
+          if (!isNaN(parsedId) && parsedId > 0) {
+            categoryId = parsedId;
+          } else {
+            // Nếu không phải số, fetch tất cả categories để tìm ID từ slug
+            const allCategories = await categoryService.getAll();
+            const foundCategory = allCategories.find(
+              (cat) => cat.name.toLowerCase().replace(/[\s\W-]+/g, "-") === slug
+            );
+            if (foundCategory) {
+              categoryId = foundCategory.id;
+              setCategory(foundCategory);
+            }
           }
         }
 
-        if (!categoryId) {
-          throw new Error("Category not found");
-        }
+        let data: Event[];
 
-        // Fetch events theo category & filter approved only
-        const rawData: Event[] = await eventService.getByCategory(categoryId);
-        const data: Event[] = rawData.filter(
-          (e) => e.status === EVENT_STATUS.APPROVED && e.deleted !== true
-        );
+        if (!slug && !categoryId) {
+          // Không có slug => route /events => hiển thị tất cả sự kiện
+          const rawData: Event[] = await eventService.getAll();
+          data = rawData.filter(
+            (e) => e.status === EVENT_STATUS.APPROVED && e.deleted !== true
+          );
+          setCategory({ id: 0, name: "Tất cả sự kiện", active: true } as Category);
+        } else {
+          if (!categoryId) {
+            throw new Error("Category not found");
+          }
 
-        // Fetch category info để hiển thị tên + mô tả (luôn cập nhật theo categoryId hiện tại)
-        const allCategories = await categoryService.getAll();
-        const foundCategory = allCategories.find((cat) => cat.id === categoryId);
-        if (foundCategory) {
-          setCategory(foundCategory);
+          // Fetch events theo category & filter approved only
+          const rawData: Event[] = await eventService.getByCategory(categoryId);
+          data = rawData.filter(
+            (e) => e.status === EVENT_STATUS.APPROVED && e.deleted !== true
+          );
+
+          // Fetch category info để hiển thị tên + mô tả
+          const allCategories = await categoryService.getAll();
+          const foundCategory = allCategories.find((cat) => cat.id === categoryId);
+          if (foundCategory) {
+            setCategory(foundCategory);
+          }
         }
 
         // Transform data

@@ -157,16 +157,16 @@ export default function CheckoutPage() {
   };
 
   return (
-    <div className="bg-[#0b1220] min-h-screen w-full text-slate-200">
+    <div className="bg-background min-h-screen w-full text-foreground">
       {/* Header */}
-      <div className="bg-[#111827] border-b border-slate-700 sticky top-0 z-50">
+      <div className="bg-card border-b border-border sticky top-0 z-50">
         <div className="max-w-4xl mx-auto px-4 py-4 flex items-center gap-4">
           <Button variant="ghost" size="icon" onClick={() => navigate(-1)}>
             <FontAwesomeIcon icon={faArrowLeft} />
           </Button>
           <div>
-            <h1 className="font-bold text-xl text-white">Xác nhận đặt vé</h1>
-            <p className="text-sm text-slate-400">{eventName}</p>
+            <h1 className="font-bold text-xl text-foreground">Xác nhận đặt vé</h1>
+            <p className="text-sm text-muted-foreground">{eventName}</p>
           </div>
         </div>
       </div>
@@ -176,8 +176,8 @@ export default function CheckoutPage() {
           {/* LEFT */}
           <div className="md:col-span-2 space-y-6">
             {/* Vé đã chọn */}
-            <div className="bg-slate-800 rounded-xl p-6 border border-slate-700">
-              <h2 className="font-bold text-lg mb-4 flex items-center gap-2 text-white">
+            <div className="bg-card rounded-xl p-6 border border-border">
+              <h2 className="font-bold text-lg mb-4 flex items-center gap-2 text-foreground">
                 <FontAwesomeIcon icon={faTicketAlt} className="text-primary" />
                 Vé đã chọn (
                 {hasSeatMode
@@ -191,11 +191,11 @@ export default function CheckoutPage() {
                   selectedSeats.map((seat) => (
                     <div
                       key={seat.id}
-                      className="flex justify-between items-center p-3 bg-slate-700 rounded-lg"
+                      className="flex justify-between items-center p-3 bg-muted rounded-lg"
                     >
                       <div>
-                        <span className="font-bold text-white">{seat.code}</span>
-                        <span className="text-slate-400 text-sm ml-2">
+                        <span className="font-bold text-foreground">{seat.code}</span>
+                        <span className="text-muted-foreground text-sm ml-2">
                           {seat.ticketTypeId}
                         </span>
                       </div>
@@ -209,11 +209,11 @@ export default function CheckoutPage() {
                   ticketSelections.map((t, idx) => (
                     <div
                       key={idx}
-                      className="flex justify-between items-center p-3 bg-slate-700 rounded-lg"
+                      className="flex justify-between items-center p-3 bg-muted rounded-lg"
                     >
                       <div>
-                        <span className="font-bold text-white">{t.name}</span>
-                        <span className="text-slate-400 text-sm ml-2">
+                        <span className="font-bold text-foreground">{t.name}</span>
+                        <span className="text-muted-foreground text-sm ml-2">
                           x{t.quantity}
                         </span>
                       </div>
@@ -227,8 +227,8 @@ export default function CheckoutPage() {
 
             {/* Form người nhận */}
             {!createdOrder && (
-              <div className="bg-slate-800 rounded-xl p-6 border border-slate-700">
-                <h2 className="font-bold text-lg mb-4 flex items-center gap-2 text-white">
+              <div className="bg-card rounded-xl p-6 border border-border">
+                <h2 className="font-bold text-lg mb-4 flex items-center gap-2 text-foreground">
                   <FontAwesomeIcon icon={faUser} className="text-primary" />
                   Thông tin người nhận vé
                 </h2>
@@ -241,14 +241,14 @@ export default function CheckoutPage() {
                     ["Địa chỉ", recipientAddress, setRecipientAddress, faMapMarkerAlt],
                   ].map(([label, value, setter, icon]: any, i) => (
                     <div key={i}>
-                      <Label className="flex items-center gap-2 mb-2 text-slate-300">
-                        <FontAwesomeIcon icon={icon} className="text-slate-400 text-sm" />
+                      <Label className="flex items-center gap-2 mb-2 text-muted-foreground">
+                        <FontAwesomeIcon icon={icon} className="text-muted-foreground text-sm" />
                         {label} <span className="text-red-500">*</span>
                       </Label>
                       <Input
                         value={value}
                         onChange={(e) => setter(e.target.value)}
-                        className="bg-slate-700 border-slate-600 text-white placeholder-slate-400"
+                        className="bg-muted border-border text-foreground placeholder-muted-foreground"
                       />
                     </div>
                   ))}
@@ -259,11 +259,11 @@ export default function CheckoutPage() {
 
           {/* RIGHT */}
           <div>
-            <div className="bg-slate-800 rounded-xl p-6 border border-slate-700 sticky top-24">
-              <h2 className="font-bold text-lg mb-4 text-white">Tổng thanh toán</h2>
+            <div className="bg-card rounded-xl p-6 border border-border sticky top-24">
+              <h2 className="font-bold text-lg mb-4 text-foreground">Tổng thanh toán</h2>
 
               <div className="space-y-3 text-sm">
-                <div className="flex justify-between text-slate-300">
+                <div className="flex justify-between text-muted-foreground">
                   <span>Số lượng vé</span>
                   <span>
                     {hasSeatMode
@@ -271,15 +271,15 @@ export default function CheckoutPage() {
                       : ticketSelections.reduce((sum, t) => sum + t.quantity, 0)}
                   </span>
                 </div>
-                <div className="flex justify-between text-slate-300">
+                <div className="flex justify-between text-muted-foreground">
                   <span>Tạm tính</span>
                   <span>{totalAmount.toLocaleString("vi-VN")} đ</span>
                 </div>
               </div>
 
-              <div className="border-t border-slate-600 my-4"></div>
+              <div className="border-t border-border my-4"></div>
 
-              <div className="flex justify-between text-lg font-bold mb-6 text-white">
+              <div className="flex justify-between text-lg font-bold mb-6 text-foreground">
                 <span>Tổng cộng</span>
                 <span className="text-primary">
                   {(createdOrder?.totalAmount || totalAmount).toLocaleString("vi-VN")} đ
@@ -287,7 +287,7 @@ export default function CheckoutPage() {
               </div>
 
               {error && (
-                <div className="mb-4 p-3 bg-red-900/40 border border-red-700 rounded-lg text-red-300 text-sm">
+                <div className="mb-4 p-3 bg-destructive/10 border border-destructive/30 rounded-lg text-destructive text-sm">
                   {error}
                 </div>
               )}
@@ -335,7 +335,7 @@ export default function CheckoutPage() {
                 </Button>
               )}
 
-              <p className="text-xs text-slate-400 text-center mt-4">
+              <p className="text-xs text-muted-foreground text-center mt-4">
                 Bằng việc đặt vé, bạn đồng ý với Điều khoản sử dụng của chúng tôi
               </p>
             </div>
