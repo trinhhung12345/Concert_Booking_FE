@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState, useMemo, useCallback } from "react";
 import { Link } from "react-router-dom";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -16,6 +16,7 @@ import {
 } from "@fortawesome/free-solid-svg-icons";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useAuthStore } from "@/store/useAuthStore";
+import Pagination from "@/components/ui/pagination";
 
 // Services & Components
 import { eventService, EVENT_STATUS, type Event } from "@/features/concerts/services/eventService";
@@ -29,6 +30,8 @@ export default function EventManagerPage() {
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [activeTab, setActiveTab] = useState<TabValue>("all");
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
 
   const roleName = (user?.role?.roleName || "").toUpperCase();
   const isSuperAdmin = roleName === "SUPER_ADMIN" || roleName === "SUPERADMIN";
@@ -135,8 +138,8 @@ export default function EventManagerPage() {
     return { all, approved, notApproved, pending, deleted };
   }, [searchFiltered]);
 
-  // Get events for current tab
-  const currentEvents = useMemo(() => {
+  // Get events for current tab (all items, before pagination)
+  const currentTabEvents = useMemo(() => {
     switch (activeTab) {
       case "approved": return categorized.approved;
       case "not_approved": return categorized.notApproved;
@@ -145,6 +148,28 @@ export default function EventManagerPage() {
       default: return categorized.all;
     }
   }, [activeTab, categorized]);
+
+  // Paginated events
+  const currentEvents = useMemo(() => {
+    const start = (currentPage - 1) * pageSize;
+    return currentTabEvents.slice(start, start + pageSize);
+  }, [currentTabEvents, currentPage, pageSize]);
+
+  // Reset page when tab or search changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [activeTab, searchQuery]);
+
+  const handlePageChange = useCallback((page: number) => {
+    setCurrentPage(page);
+    // Scroll to top of list
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }, []);
+
+  const handlePageSizeChange = useCallback((size: number) => {
+    setPageSize(size);
+    setCurrentPage(1);
+  }, []);
 
   // Tab config
   const tabs: { value: TabValue; label: string; icon: any; count: number; color: string }[] = [
@@ -228,16 +253,28 @@ export default function EventManagerPage() {
 
             {/* DATA LIST */}
             {!loading && currentEvents.length > 0
-              ? currentEvents.map((event) => (
-                  <AdminEventCard
-                    key={event.id}
-                    event={event}
-                    onApprove={handleApprove}
-                    onNotApprove={handleNotApprove}
-                    onDelete={handleDelete}
-                    onRestore={handleRestore}
+              ? (<>
+                  {currentEvents.map((event) => (
+                    <AdminEventCard
+                      key={event.id}
+                      event={event}
+                      onApprove={handleApprove}
+                      onNotApprove={handleNotApprove}
+                      onDelete={handleDelete}
+                      onRestore={handleRestore}
+                    />
+                  ))}
+
+                  {/* PAGINATION — luôn hiện để user có thể chọn số item/trang */}
+                  <Pagination
+                    currentPage={currentPage}
+                    totalItems={currentTabEvents.length}
+                    pageSize={pageSize}
+                    onPageChange={handlePageChange}
+                    onPageSizeChange={handlePageSizeChange}
+                    className="mt-6"
                   />
-                ))
+                </>)
               : !loading && (
                   <div className="text-center py-20">
                     <FontAwesomeIcon icon={tab.icon} className="text-4xl text-muted-foreground/30 mb-4" />
