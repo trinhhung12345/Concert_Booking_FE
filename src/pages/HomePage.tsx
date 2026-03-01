@@ -9,13 +9,14 @@ import ChatBot from "@/components/ChatBot";
 import { cleanImageUrl } from "@/lib/utils";
 import type { EventProps } from "@/features/concerts/components/EventCard";
 import EventCard from "@/features/concerts/components/EventCard";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { 
-  faChevronRight, 
-  faCalendarAlt,
-  faFire
+  faChevronRight 
 } from "@fortawesome/free-solid-svg-icons";
+import { Swiper, SwiperSlide } from "swiper/react";
+import "swiper/css/bundle";
+import { FreeMode, Navigation } from "swiper/modules";
 
 // Animation variants
 const containerVariants = {
@@ -46,7 +47,6 @@ export default function HomePage() {
   const [eventsByCategory, setEventsByCategory] = useState<
     Record<number, EventProps[]>
   >({});
-  const [categoryPageIndex, setCategoryPageIndex] = useState<Record<number, number>>({});
   const [isLoading, setIsLoading] = useState(true);
   const searchResults = location.state?.searchResults;
 
@@ -126,8 +126,6 @@ export default function HomePage() {
 
   const allEvents = Object.values(eventsByCategory).flat();
 
-  const INITIAL_VISIBLE = 6;
-
   return (
     <div className="bg-background min-h-screen w-full">
       <div className="container mx-auto px-4 py-6 sm:py-8 space-y-10 sm:space-y-14">
@@ -181,8 +179,6 @@ export default function HomePage() {
               .filter((c) => c.active)
               .map((cat) => {
                 const catEvents = eventsByCategory[cat.id] || [];
-                const isExpanded = (categoryPageIndex[cat.id] ?? 0) === 1;
-                const visibleEvents = isExpanded ? catEvents : catEvents.slice(0, INITIAL_VISIBLE);
                 
                 return (
                 <motion.section 
@@ -218,39 +214,55 @@ export default function HomePage() {
                     </Button>
                   </div>
 
-                  {/* Event Cards - Responsive Grid */}
+                  {/* Event Cards - Slider */}
                   {catEvents.length ? (
-                    <div>
-                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
-                        <AnimatePresence mode="wait">
-                          {visibleEvents.map((event, index) => (
+                    <div className="relative group">
+                      <Swiper
+                        modules={[FreeMode, Navigation]}
+                        spaceBetween={16}
+                        slidesPerView={1.2}
+                        freeMode={true}
+                        navigation={{
+                          nextEl: `.swiper-button-next-${cat.id}`,
+                          prevEl: `.swiper-button-prev-${cat.id}`,
+                        }}
+                        breakpoints={{
+                          640: { slidesPerView: 2.2, spaceBetween: 24 },
+                          1024: { slidesPerView: 3.2, spaceBetween: 24 },
+                          1280: { slidesPerView: 4.2, spaceBetween: 24 },
+                        }}
+                        className="!pb-6"
+                      >
+                        {catEvents.slice(0, 10).map((event, index) => (
+                          <SwiperSlide key={event.id} className="!h-auto">
                             <motion.div
-                              key={event.id}
-                              initial={{ opacity: 0, y: 20 }}
-                              animate={{ opacity: 1, y: 0 }}
-                              exit={{ opacity: 0, y: -20 }}
+                              className="h-full"
+                              initial={{ opacity: 0, scale: 0.95 }}
+                              animate={{ opacity: 1, scale: 1 }}
                               transition={{ delay: index * 0.05, duration: 0.3 }}
                             >
                               <EventCard {...event} />
                             </motion.div>
-                          ))}
-                        </AnimatePresence>
-                      </div>
+                          </SwiperSlide>
+                        ))}
+                      </Swiper>
                       
-                      {/* Show More / Show Less */}
-                      {catEvents.length > INITIAL_VISIBLE && (
-                        <div className="flex justify-center mt-6">
-                          <Button
-                            variant="outline"
-                            className="rounded-full px-6 hover:bg-primary hover:text-white hover:border-primary transition-all"
-                            onClick={() => setCategoryPageIndex(prev => ({
-                              ...prev,
-                              [cat.id]: isExpanded ? 0 : 1
-                            }))}
+                      {/* Custom Navigation Buttons (hidden on mobile, visible on hover on larger screens) */}
+                      {catEvents.length > 4 && (
+                        <>
+                          <button 
+                            className={`swiper-button-prev-${cat.id} absolute top-1/2 -left-4 -translate-y-1/2 z-10 w-10 h-10 rounded-full bg-background/80 backdrop-blur border shadow-md flex items-center justify-center text-foreground opacity-0 group-hover:opacity-100 transition-opacity disabled:hidden`}
+                            aria-label="Previous slide"
                           >
-                            {isExpanded ? "Thu gọn" : `Xem thêm (${catEvents.length - INITIAL_VISIBLE})`}
-                          </Button>
-                        </div>
+                            <FontAwesomeIcon icon={faChevronRight} className="w-4 h-4 rotate-180" />
+                          </button>
+                          <button 
+                            className={`swiper-button-next-${cat.id} absolute top-1/2 -right-4 -translate-y-1/2 z-10 w-10 h-10 rounded-full bg-background/80 backdrop-blur border shadow-md flex items-center justify-center text-foreground opacity-0 group-hover:opacity-100 transition-opacity disabled:hidden`}
+                            aria-label="Next slide"
+                          >
+                            <FontAwesomeIcon icon={faChevronRight} className="w-4 h-4" />
+                          </button>
+                        </>
                       )}
                     </div>
                   ) : (
