@@ -4,6 +4,7 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faGlobe } from "@fortawesome/free-solid-svg-icons";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
 import AdminProfilePopup from "./AdminProfilePopup";
+import { NotificationBell } from "@/features/notifications/components/NotificationBell";
 
 export default function AdminHeader({ title }: { title: string }) {
   return (
@@ -15,6 +16,9 @@ export default function AdminHeader({ title }: { title: string }) {
       <div className="flex items-center gap-4">
         {/* Theme Toggle */}
         <ThemeToggle />
+
+        {/* Realtime event notifications for admins / super admins */}
+        <NotificationBell />
 
         {/* Nút về trang người dùng */}
         <Link to="/">

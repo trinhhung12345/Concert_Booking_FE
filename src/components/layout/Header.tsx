@@ -35,6 +35,7 @@ import {
 import { useAuthStore } from "@/store/useAuthStore";
 import { eventService, EVENT_STATUS, type Event } from "@/features/concerts/services/eventService";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
+import { NotificationBell } from "@/features/notifications/components/NotificationBell";
 
 export default function Header() {
   const navigate = useNavigate();
@@ -200,6 +201,9 @@ export default function Header() {
             {/* Theme Toggle - Chỉ hiện ở trang user */}
             {!isAdminPage && <ThemeToggle />}
 
+            {/* Thông báo sự kiện realtime */}
+            <NotificationBell />
+
             {isAuthenticated ? (
               <>
                 {/* NÚT CHUYỂN ĐỔI TRANG QUẢN LÝ (Chỉ hiện cho Admin) */}
@@ -297,6 +301,9 @@ export default function Header() {
 
           {/* MOBILE MENU (Hamburger) - Chỉ hiện trên Mobile */}
           <div className="md:hidden flex items-center gap-2">
+            {/* Bell thông báo trên mobile */}
+            <NotificationBell />
+
             {/* Icon search nhỏ cho mobile */}
             <Button variant="ghost" size="icon" className="text-muted-foreground">
               <FontAwesomeIcon icon={faSearch} className="h-5 w-5" />
