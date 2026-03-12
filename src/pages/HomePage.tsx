@@ -265,14 +265,6 @@ export default function HomePage() {
                             className={`swiper-button-next-${cat.id} absolute top-1/2 -right-4 -translate-y-1/2 z-10 w-10 h-10 rounded-full bg-background/80 backdrop-blur border shadow-md flex items-center justify-center text-foreground opacity-0 group-hover:opacity-100 transition-opacity disabled:hidden`}
                             aria-label="Next slide"
                           >
-                            {isExpanded
-                              ? (isVi ? "Thu gọn" : "Show less")
-                              : (isVi
-                                  ? `Xem thêm (${catEvents.length - INITIAL_VISIBLE})`
-                                  : `Show more (${catEvents.length - INITIAL_VISIBLE})`)
-                            }
-                          </Button>
-                        </div>
                             <FontAwesomeIcon icon={faChevronRight} className="w-4 h-4" />
                           </button>
                         </>
