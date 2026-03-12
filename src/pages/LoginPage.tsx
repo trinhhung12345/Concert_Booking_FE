@@ -5,8 +5,11 @@ import LoginForm from "../features/auth/components/LoginForm";
 import ErrorDialog from "../features/auth/components/ErrorDialog";
 import { authService, type LoginResponse } from "../features/auth/services/authService";
 import { useAuthStore } from "@/store/useAuthStore";
+import { useLanguageStore } from "@/store/useLanguageStore";
 
 export default function LoginPage() {
+  const { language } = useLanguageStore();
+  const isVi = language === "vi";
   const [isLoading, setIsLoading] = useState(false);
   const [errorDialog, setErrorDialog] = useState({
     isOpen: false,
@@ -39,7 +42,7 @@ export default function LoginPage() {
       } else {
         setErrorDialog({
           isOpen: true,
-          message: res.message || "Đăng nhập thất bại",
+          message: res.message || (isVi ? "Đăng nhập thất bại" : "Login failed"),
           code: res.code
         });
       }
@@ -47,7 +50,7 @@ export default function LoginPage() {
       console.error("Login Error:", error);
       setErrorDialog({
         isOpen: true,
-        message: error.message || "Sai email hoặc mật khẩu",
+        message: error.message || (isVi ? "Sai email hoặc mật khẩu" : "Incorrect email or password"),
         code: error.code
       });
     } finally {
@@ -58,8 +61,12 @@ export default function LoginPage() {
   return (
     <div className="bg-gray-900 min-h-screen w-full">
       <AuthLayout
-        title="Chào mừng trở lại!"
-        subtitle="Khám phá hàng triệu buổi hòa nhạc, nhận thông báo về các nghệ sĩ, vở kịch yêu thích của bạn và nhiều hơn thế nữa."
+        title={isVi ? "Chào mừng trở lại!" : "Welcome back!"}
+        subtitle={
+          isVi
+            ? "Khám phá hàng triệu buổi hòa nhạc, nhận thông báo về các nghệ sĩ, vở kịch yêu thích của bạn và nhiều hơn thế nữa."
+            : "Discover concerts, get notified about your favorite artists and shows, and much more."
+        }
         isLogin={true}
       >
         {/* Truyền hàm xử lý và trạng thái loading xuống Form */}

@@ -8,12 +8,16 @@ import type { EventProps } from "@/features/concerts/components/EventCard";
 import { motion } from "framer-motion";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faCalendarAlt, faTicketAlt } from "@fortawesome/free-solid-svg-icons";
+import { useLanguageStore } from "@/store/useLanguageStore";
+import { getLocale } from "@/lib/i18n";
 
 interface Props {
   events: EventProps[];
 }
 
 export default function EventSlider({ events }: Props) {
+  const { language } = useLanguageStore();
+  const locale = getLocale(language);
   const [activeIndex, setActiveIndex] = useState(0);
   const [totalPages, setTotalPages] = useState(1);
   const swiperRef = useRef<SwiperCore | null>(null);
@@ -32,7 +36,7 @@ export default function EventSlider({ events }: Props) {
   console.log("specialEvents:", specialEvents);
 
   const formatDate = (dateStr: string) => {
-    return new Date(dateStr).toLocaleDateString("vi-VN", {
+    return new Date(dateStr).toLocaleDateString(locale, {
       day: "2-digit",
       month: "2-digit",
       year: "numeric",
@@ -40,7 +44,7 @@ export default function EventSlider({ events }: Props) {
   };
 
   const formatPrice = (price: number) => {
-    return new Intl.NumberFormat("vi-VN", {
+    return new Intl.NumberFormat(locale, {
       style: "currency",
       currency: "VND",
       maximumFractionDigits: 0,
@@ -52,13 +56,13 @@ export default function EventSlider({ events }: Props) {
       {/* ===== SECTION HEADER ===== */}
       <div className="flex items-center justify-between">
         <h2 className="text-2xl font-bold text-foreground">
-          Sự kiện nổi bật
+          {language === "vi" ? "Sự kiện nổi bật" : "Featured events"}
         </h2>
         <Link 
           to="/events" 
           className="text-primary hover:text-primary/80 text-sm font-medium transition-colors"
         >
-          Xem tất cả →
+          {language === "vi" ? "Xem tất cả" : "View all"} →
         </Link>
       </div>
 
@@ -151,7 +155,7 @@ export default function EventSlider({ events }: Props) {
                       whileHover={{ scale: 1.05 }}
                       whileTap={{ scale: 0.95 }}
                     >
-                      Xem chi tiết
+                      {language === "vi" ? "Xem chi tiết" : "View details"}
                     </motion.div>
                   </div>
                 </div>
@@ -168,7 +172,7 @@ export default function EventSlider({ events }: Props) {
           <div className="flex items-center justify-between">
             <h3 className="text-xl font-bold text-foreground flex items-center gap-2">
               <span className="w-1 h-6 bg-primary rounded-full"></span>
-              Sự kiện đặc sắc
+              {language === "vi" ? "Sự kiện đặc sắc" : "Special events"}
             </h3>
             
             {/* Custom Pagination Dots */}

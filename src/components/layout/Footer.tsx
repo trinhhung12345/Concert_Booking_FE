@@ -8,6 +8,8 @@ import {
   faLinkedinIn,
 } from "@fortawesome/free-brands-svg-icons";
 import { faChevronDown } from "@fortawesome/free-solid-svg-icons";
+import { useLanguageStore } from "@/store/useLanguageStore";
+import { LANGUAGE_LABELS } from "@/lib/i18n";
 
 function FooterSection({
   title,
@@ -59,11 +61,14 @@ function FooterSection({
 }
 
 export default function Footer() {
+  const { language, setLanguage } = useLanguageStore();
+  const isVi = language === "vi";
+
   return (
     <footer className="bg-secondary text-secondary-foreground mt-auto border-t border-border">
       <div className="container mx-auto px-4 py-6 md:py-10 grid gap-0 md:gap-8 md:grid-cols-4 text-sm">
-        {/* Liên hệ */}
-        <FooterSection title="Liên hệ" defaultOpen>
+        {/* Liên hệ / Contact */}
+        <FooterSection title={isVi ? "Liên hệ" : "Contact"} defaultOpen>
           <div className="space-y-3">
             <div>
               <p className="text-xs text-muted-foreground uppercase tracking-wider mb-1">Hotline</p>
@@ -74,91 +79,94 @@ export default function Footer() {
               <p>support@concertbooking.vn</p>
             </div>
             <div>
-              <p className="text-xs text-muted-foreground uppercase tracking-wider mb-1">Trụ sở chính</p>
+              <p className="text-xs text-muted-foreground uppercase tracking-wider mb-1">
+                {isVi ? "Trụ sở chính" : "Head office"}
+              </p>
               <p className="text-muted-foreground leading-relaxed">
-                Tầng 12, Tòa nhà Example, 285 Cách Mạng Tháng Tám,
-                Phường 12, Quận 10, TP. Hồ Chí Minh
+                {isVi
+                  ? "Tầng 12, Tòa nhà Example, 285 Cách Mạng Tháng Tám, Phường 12, Quận 10, TP. Hồ Chí Minh"
+                  : "12th Floor, Example Building, 285 Cach Mang Thang Tam Street, Ward 12, District 10, Ho Chi Minh City"}
               </p>
             </div>
           </div>
         </FooterSection>
 
-        {/* Dành cho khách hàng */}
-        <FooterSection title="Dành cho khách hàng">
+        {/* Dành cho khách hàng / For customers */}
+        <FooterSection title={isVi ? "Dành cho khách hàng" : "For customers"}>
           <ul className="space-y-1.5 text-muted-foreground">
             <li>
               <Link to="/terms" className="hover:text-foreground hover:underline underline-offset-4 transition-colors">
-                Điều khoản sử dụng
+                {isVi ? "Điều khoản sử dụng" : "Terms of use"}
               </Link>
             </li>
             <li>
               <Link to="/privacy" className="hover:text-foreground hover:underline underline-offset-4 transition-colors">
-                Chính sách bảo mật
+                {isVi ? "Chính sách bảo mật" : "Privacy policy"}
               </Link>
             </li>
             <li>
               <Link to="/support" className="hover:text-foreground hover:underline underline-offset-4 transition-colors">
-                Hỗ trợ & Câu hỏi thường gặp
+                {isVi ? "Hỗ trợ & Câu hỏi thường gặp" : "Support & FAQ"}
               </Link>
             </li>
             <li>
               <Link to="/refund-policy" className="hover:text-foreground hover:underline underline-offset-4 transition-colors">
-                Chính sách hoàn tiền
+                {isVi ? "Chính sách hoàn tiền" : "Refund policy"}
               </Link>
             </li>
           </ul>
         </FooterSection>
 
-        {/* Dành cho nhà tổ chức */}
-        <FooterSection title="Dành cho nhà tổ chức">
+        {/* Dành cho nhà tổ chức / For organizers */}
+        <FooterSection title={isVi ? "Dành cho nhà tổ chức" : "For organizers"}>
           <ul className="space-y-1.5 text-muted-foreground">
             <li>
               <Link to="/organizer-terms" className="hover:text-foreground hover:underline underline-offset-4 transition-colors">
-                Điều khoản nhà tổ chức
+                {isVi ? "Điều khoản nhà tổ chức" : "Organizer terms"}
               </Link>
             </li>
             <li>
               <Link to="/sell-with-us" className="hover:text-foreground hover:underline underline-offset-4 transition-colors">
-                Bán vé cùng chúng tôi
+                {isVi ? "Bán vé cùng chúng tôi" : "Sell tickets with us"}
               </Link>
             </li>
             <li>
               <Link to="/marketing-solutions" className="hover:text-foreground hover:underline underline-offset-4 transition-colors">
-                Giải pháp marketing
+                {isVi ? "Giải pháp marketing" : "Marketing solutions"}
               </Link>
             </li>
             <li>
               <Link to="/business-contact" className="hover:text-foreground hover:underline underline-offset-4 transition-colors">
-                Liên hệ kinh doanh
+                {isVi ? "Liên hệ kinh doanh" : "Business contact"}
               </Link>
             </li>
           </ul>
         </FooterSection>
 
-        {/* Công ty / Mạng xã hội */}
-        <FooterSection title="Về công ty">
+        {/* Công ty / Company */}
+        <FooterSection title={isVi ? "Về công ty" : "Company"}>
           <div className="space-y-4">
             <ul className="space-y-1.5 text-muted-foreground">
               <li>
                 <Link to="/about" className="hover:text-foreground hover:underline underline-offset-4 transition-colors">
-                  Giới thiệu
+                  {isVi ? "Giới thiệu" : "About"}
                 </Link>
               </li>
               <li>
                 <Link to="/terms" className="hover:text-foreground hover:underline underline-offset-4 transition-colors">
-                  Điều khoản & điều kiện
+                  {isVi ? "Điều khoản & điều kiện" : "Terms & conditions"}
                 </Link>
               </li>
               <li>
                 <Link to="/payment-methods" className="hover:text-foreground hover:underline underline-offset-4 transition-colors">
-                  Phương thức thanh toán
+                  {isVi ? "Phương thức thanh toán" : "Payment methods"}
                 </Link>
               </li>
             </ul>
 
             <div className="space-y-2">
               <h4 className="text-xs font-semibold tracking-[0.2em] text-muted-foreground uppercase">
-                Theo dõi chúng tôi
+                {isVi ? "Theo dõi chúng tôi" : "Follow us"}
               </h4>
               <div className="flex items-center gap-3 text-muted-foreground">
                 <a href="#" aria-label="Facebook"
@@ -182,14 +190,30 @@ export default function Footer() {
 
             <div className="space-y-2">
               <h4 className="text-xs font-semibold tracking-[0.2em] text-muted-foreground uppercase">
-                Ngôn ngữ
+                {isVi ? "Ngôn ngữ" : "Language"}
               </h4>
               <div className="flex gap-3 text-xs">
-                <button className="px-3 py-1.5 rounded-full bg-primary text-primary-foreground font-medium">
-                  VI
+                <button
+                  type="button"
+                  onClick={() => setLanguage("vi")}
+                  className={`px-3 py-1.5 rounded-full font-medium transition-colors ${
+                    language === "vi"
+                      ? "bg-primary text-primary-foreground"
+                      : "bg-muted text-foreground hover:bg-accent"
+                  }`}
+                >
+                  {LANGUAGE_LABELS.vi}
                 </button>
-                <button className="px-3 py-1.5 rounded-full bg-muted text-foreground hover:bg-accent transition-colors">
-                  EN
+                <button
+                  type="button"
+                  onClick={() => setLanguage("en")}
+                  className={`px-3 py-1.5 rounded-full font-medium transition-colors ${
+                    language === "en"
+                      ? "bg-primary text-primary-foreground"
+                      : "bg-muted text-foreground hover:bg-accent"
+                  }`}
+                >
+                  {LANGUAGE_LABELS.en}
                 </button>
               </div>
             </div>
@@ -205,8 +229,9 @@ export default function Footer() {
             <span>ConcertBooking</span>
           </div>
           <p className="text-center md:text-right max-w-xl">
-            Nền tảng bán vé hàng đầu Việt Nam cho các buổi hòa nhạc
-            và sự kiện trực tiếp. Phát triển và đầu tư bởi Công ty của bạn.
+            {isVi
+              ? "Nền tảng bán vé hàng đầu Việt Nam cho các buổi hòa nhạc và sự kiện trực tiếp. Phát triển và đầu tư bởi Công ty của bạn."
+              : "Vietnam's leading ticketing platform for concerts and live events. Developed and invested by your company."}
           </p>
         </div>
       </div>

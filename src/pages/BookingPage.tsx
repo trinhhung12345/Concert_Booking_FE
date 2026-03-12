@@ -16,8 +16,13 @@ import {
   faShoppingCart,
 } from "@fortawesome/free-solid-svg-icons";
 import { eventService, type TicketType } from "@/features/concerts/services/eventService";
+import { useLanguageStore } from "@/store/useLanguageStore";
+import { getLocale } from "@/lib/i18n";
 
 export default function BookingPage() {
+  const { language } = useLanguageStore();
+  const isVi = language === "vi";
+  const locale = getLocale(language);
   const navigate = useNavigate();
   const { eventId } = useParams();
   const [searchParams] = useSearchParams();
@@ -37,7 +42,11 @@ export default function BookingPage() {
   // Fetch seat map + ticket types
   useEffect(() => {
     if (!showingId) {
-      setError("Không tìm thấy thông tin suất diễn (Thiếu showingId).");
+      setError(
+        isVi
+          ? "Không tìm thấy thông tin suất diễn (Thiếu showingId)."
+          : "Cannot find showing information (missing showingId)."
+      );
       setLoading(false);
       return;
     }
@@ -63,7 +72,11 @@ export default function BookingPage() {
         setTicketTypes(types || []);
         setTicketQuantities({});
       } catch {
-        setError("Không thể tải dữ liệu suất diễn.");
+        setError(
+          isVi
+            ? "Không thể tải dữ liệu suất diễn."
+            : "Failed to load showing data."
+        );
       } finally {
         setLoading(false);
       }
@@ -102,7 +115,7 @@ export default function BookingPage() {
     }
 
     if (selectedSeats.length >= 4) {
-      alert("Bạn chỉ được chọn tối đa 4 vé");
+      alert(isVi ? "Bạn chỉ được chọn tối đa 4 vé" : "You can select up to 4 tickets only");
       return;
     }
 
@@ -143,7 +156,9 @@ export default function BookingPage() {
     return (
       <div className="h-screen flex flex-col items-center justify-center gap-4 bg-background text-foreground">
         <FontAwesomeIcon icon={faSpinner} spin className="text-4xl text-primary" />
-        <p className="text-muted-foreground">Đang tải...</p>
+        <p className="text-muted-foreground">
+          {isVi ? "Đang tải..." : "Loading..."}
+        </p>
       </div>
     );
   }
@@ -153,7 +168,7 @@ export default function BookingPage() {
       <div className="h-screen flex flex-col items-center justify-center gap-4 bg-background">
         <p className="text-red-400 font-medium">{error}</p>
         <Button variant="outline" onClick={() => navigate(-1)}>
-          Quay lại
+          {isVi ? "Quay lại" : "Go back"}
         </Button>
       </div>
     );
@@ -170,8 +185,12 @@ export default function BookingPage() {
               <FontAwesomeIcon icon={faArrowLeft} />
             </Button>
             <div>
-              <h1 className="font-bold text-base sm:text-lg line-clamp-1">{eventName || "Chọn loại vé"}</h1>
-              <p className="text-xs text-muted-foreground">Suất diễn #{showingId}</p>
+              <h1 className="font-bold text-base sm:text-lg line-clamp-1">
+                {eventName || (isVi ? "Chọn loại vé" : "Choose ticket type")}
+              </h1>
+              <p className="text-xs text-muted-foreground">
+                {isVi ? "Suất diễn" : "Showing"} #{showingId}
+              </p>
             </div>
           </div>
         </header>
@@ -188,7 +207,7 @@ export default function BookingPage() {
                     </p>
                     <p className="text-muted-foreground text-sm mt-1 line-clamp-2">{ticket.description}</p>
                     <p className="text-primary font-bold text-lg mt-2">
-                      {ticket.price.toLocaleString("vi-VN")} đ
+                      {ticket.price.toLocaleString(locale)} đ
                     </p>
                   </div>
 
@@ -217,7 +236,11 @@ export default function BookingPage() {
           {ticketTypes.length === 0 && (
             <div className="text-center text-muted-foreground py-16">
               <FontAwesomeIcon icon={faTicketAlt} className="text-5xl mb-4 opacity-30" />
-              <p>Không tìm thấy loại vé cho suất diễn này.</p>
+              <p>
+                {isVi
+                  ? "Không tìm thấy loại vé cho suất diễn này."
+                  : "No ticket types found for this showing."}
+              </p>
             </div>
           )}
         </main>
@@ -228,10 +251,10 @@ export default function BookingPage() {
             <div className="max-w-3xl mx-auto flex items-center justify-between gap-4">
               <div>
                 <p className="text-sm text-muted-foreground">
-                  {totalTicketQuantity} vé
+                  {totalTicketQuantity} {isVi ? "vé" : "tickets"}
                 </p>
                 <p className="font-bold text-lg text-primary">
-                  {totalTicketAmount.toLocaleString("vi-VN")} đ
+                  {totalTicketAmount.toLocaleString(locale)} đ
                 </p>
               </div>
 
@@ -252,7 +275,7 @@ export default function BookingPage() {
 
                   navigate("/checkout", {
                     state: {
-                      eventName: eventName || "Đặt vé",
+                      eventName: eventName || (isVi ? "Đặt vé" : "Book tickets"),
                       showingId: showingId || "",
                       ticketSelections: selections,
                     },

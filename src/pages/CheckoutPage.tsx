@@ -19,6 +19,8 @@ import type { Seat } from "@/features/booking/types/seatmap";
 import type { Order } from "@/features/booking/types/order";
 import { useAuthStore } from "@/store/useAuthStore";
 import OrderTimer from "@/features/booking/components/OrderTimer";
+import { useLanguageStore } from "@/store/useLanguageStore";
+import { getLocale } from "@/lib/i18n";
 
 interface TicketSelection {
   ticketTypeId: number;
@@ -37,6 +39,9 @@ interface LocationState {
 export default function CheckoutPage() {
   const navigate = useNavigate();
   const location = useLocation();
+  const { language } = useLanguageStore();
+  const isVi = language === "vi";
+  const locale = getLocale(language);
   const { user } = useAuthStore();
   
   const state = location.state as LocationState | null;
@@ -73,7 +78,7 @@ export default function CheckoutPage() {
 
   const handleCreateOrder = async () => {
     if (!recipientName.trim() || !recipientPhone.trim() || !recipientEmail.trim() || !recipientAddress.trim()) {
-      setError("Vui lòng nhập đầy đủ thông tin");
+      setError(isVi ? "Vui lòng nhập đầy đủ thông tin" : "Please fill in all required fields");
       return;
     }
 
@@ -81,12 +86,16 @@ export default function CheckoutPage() {
       const nonZeroSelections = ticketSelections.filter((t) => t.quantity > 0);
 
       if (nonZeroSelections.length === 0) {
-        setError("Vui lòng chọn ít nhất một vé");
+        setError(isVi ? "Vui lòng chọn ít nhất một vé" : "Please select at least one ticket");
         return;
       }
 
       if (nonZeroSelections.length > 1) {
-        setError("Hiện tại mỗi đơn chỉ hỗ trợ một loại vé. Vui lòng chỉ chọn một loại vé.");
+        setError(
+          isVi
+            ? "Hiện tại mỗi đơn chỉ hỗ trợ một loại vé. Vui lòng chỉ chọn một loại vé."
+            : "Currently each order only supports one ticket type. Please select only one."
+        );
         return;
       }
     }
@@ -119,11 +128,11 @@ export default function CheckoutPage() {
       if (orderData && orderData.id) {
         setCreatedOrder(orderData);
       } else {
-        setError(response?.message || "Có lỗi xảy ra");
+        setError(response?.message || (isVi ? "Có lỗi xảy ra" : "An error occurred"));
       }
     } catch (err: any) {
       console.error("Create order error:", err);
-      setError(err.message || "Không thể tạo đơn hàng");
+      setError(err.message || (isVi ? "Không thể tạo đơn hàng" : "Unable to create order"));
     } finally {
       setIsCreatingOrder(false);
     }
@@ -146,11 +155,11 @@ export default function CheckoutPage() {
         setCreatedOrder(null);
         window.location.href = checkoutData?.message || response?.message;
       } else {
-        setError("Không thể lấy link thanh toán");
+        setError(isVi ? "Không thể lấy link thanh toán" : "Cannot get payment link");
       }
     } catch (err: any) {
       console.error("Checkout error:", err);
-      setError(err.message || "Không thể thanh toán");
+      setError(err.message || (isVi ? "Không thể thanh toán" : "Payment failed"));
     } finally {
       setIsCheckingOut(false);
     }
@@ -165,7 +174,9 @@ export default function CheckoutPage() {
             <FontAwesomeIcon icon={faArrowLeft} />
           </Button>
           <div>
-            <h1 className="font-bold text-xl text-foreground">Xác nhận đặt vé</h1>
+            <h1 className="font-bold text-xl text-foreground">
+              {isVi ? "Xác nhận đặt vé" : "Confirm booking"}
+            </h1>
             <p className="text-sm text-muted-foreground">{eventName}</p>
           </div>
         </div>
@@ -230,15 +241,15 @@ export default function CheckoutPage() {
               <div className="bg-card rounded-xl p-6 border border-border">
                 <h2 className="font-bold text-lg mb-4 flex items-center gap-2 text-foreground">
                   <FontAwesomeIcon icon={faUser} className="text-primary" />
-                  Thông tin người nhận vé
+                  {isVi ? "Thông tin người nhận vé" : "Ticket recipient information"}
                 </h2>
 
                 <div className="space-y-4">
                   {[
-                    ["Họ và tên", recipientName, setRecipientName, faUser],
-                    ["Số điện thoại", recipientPhone, setRecipientPhone, faPhone],
+                    [isVi ? "Họ và tên" : "Full name", recipientName, setRecipientName, faUser],
+                    [isVi ? "Số điện thoại" : "Phone number", recipientPhone, setRecipientPhone, faPhone],
                     ["Email", recipientEmail, setRecipientEmail, faEnvelope],
-                    ["Địa chỉ", recipientAddress, setRecipientAddress, faMapMarkerAlt],
+                    [isVi ? "Địa chỉ" : "Address", recipientAddress, setRecipientAddress, faMapMarkerAlt],
                   ].map(([label, value, setter, icon]: any, i) => (
                     <div key={i}>
                       <Label className="flex items-center gap-2 mb-2 text-muted-foreground">
@@ -260,11 +271,13 @@ export default function CheckoutPage() {
           {/* RIGHT */}
           <div>
             <div className="bg-card rounded-xl p-6 border border-border sticky top-24">
-              <h2 className="font-bold text-lg mb-4 text-foreground">Tổng thanh toán</h2>
+              <h2 className="font-bold text-lg mb-4 text-foreground">
+                {isVi ? "Tổng thanh toán" : "Total payment"}
+              </h2>
 
               <div className="space-y-3 text-sm">
                 <div className="flex justify-between text-muted-foreground">
-                  <span>Số lượng vé</span>
+                  <span>{isVi ? "Số lượng vé" : "Ticket quantity"}</span>
                   <span>
                     {hasSeatMode
                       ? selectedSeats.length
@@ -272,17 +285,17 @@ export default function CheckoutPage() {
                   </span>
                 </div>
                 <div className="flex justify-between text-muted-foreground">
-                  <span>Tạm tính</span>
-                  <span>{totalAmount.toLocaleString("vi-VN")} đ</span>
+                  <span>{isVi ? "Tạm tính" : "Subtotal"}</span>
+                  <span>{totalAmount.toLocaleString(locale)} đ</span>
                 </div>
               </div>
 
               <div className="border-t border-border my-4"></div>
 
               <div className="flex justify-between text-lg font-bold mb-6 text-foreground">
-                <span>Tổng cộng</span>
+                <span>{isVi ? "Tổng cộng" : "Total"}</span>
                 <span className="text-primary">
-                  {(createdOrder?.totalAmount || totalAmount).toLocaleString("vi-VN")} đ
+                  {(createdOrder?.totalAmount || totalAmount).toLocaleString(locale)} đ
                 </span>
               </div>
 
@@ -300,7 +313,11 @@ export default function CheckoutPage() {
                     size="lg"
                     onExpired={() => {
                       setCreatedOrder({ ...createdOrder, status: "CANCELLED" });
-                      setError("Đơn hàng đã bị hủy do hết thời gian thanh toán. Vui lòng đặt lại vé.");
+                      setError(
+                        isVi
+                          ? "Đơn hàng đã bị hủy do hết thời gian thanh toán. Vui lòng đặt lại vé."
+                          : "Your order has been cancelled due to payment timeout. Please book again."
+                      );
                     }}
                   />
                 </div>
@@ -311,10 +328,10 @@ export default function CheckoutPage() {
                   {isCreatingOrder ? (
                     <>
                       <FontAwesomeIcon icon={faSpinner} spin className="mr-2" />
-                      Đang xử lý...
+                      {isVi ? "Đang xử lý..." : "Processing..."}
                     </>
                   ) : (
-                    "Xác nhận đặt vé"
+                    (isVi ? "Xác nhận đặt vé" : "Confirm booking")
                   )}
                 </Button>
               ) : createdOrder.status === "CANCELLED" ? (
@@ -322,7 +339,7 @@ export default function CheckoutPage() {
                   className="w-full h-12 text-lg font-bold"
                   onClick={() => navigate(-1)}
                 >
-                  Quay lại đặt vé
+                  {isVi ? "Quay lại đặt vé" : "Back to booking"}
                 </Button>
               ) : (
                 <Button
@@ -331,12 +348,14 @@ export default function CheckoutPage() {
                   disabled={isCheckingOut}
                 >
                   <FontAwesomeIcon icon={faCreditCard} className="mr-2" />
-                  Thanh toán ngay
+                  {isVi ? "Thanh toán ngay" : "Pay now"}
                 </Button>
               )}
 
               <p className="text-xs text-muted-foreground text-center mt-4">
-                Bằng việc đặt vé, bạn đồng ý với Điều khoản sử dụng của chúng tôi
+                {isVi
+                  ? "Bằng việc đặt vé, bạn đồng ý với Điều khoản sử dụng của chúng tôi"
+                  : "By booking tickets, you agree to our Terms of Use"}
               </p>
             </div>
           </div>

@@ -36,6 +36,7 @@ import { useAuthStore } from "@/store/useAuthStore";
 import { eventService, EVENT_STATUS, type Event } from "@/features/concerts/services/eventService";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
 import { NotificationBell } from "@/features/notifications/components/NotificationBell";
+import { useLanguageStore } from "@/store/useLanguageStore";
 
 export default function Header() {
   const navigate = useNavigate();
@@ -47,6 +48,8 @@ export default function Header() {
   const [showDropdown, setShowDropdown] = useState(false);
   const inputRef = useRef<HTMLInputElement | null>(null);
   const dropdownRef = useRef<HTMLDivElement | null>(null);
+  const { language, toggleLanguage } = useLanguageStore();
+  const isVi = language === "vi";
   // Xử lý debounce cho search
   useEffect(() => {
     if (!searchQuery.trim()) {
@@ -147,10 +150,10 @@ export default function Header() {
                 icon={faSearch}
                 className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground"
               />
-              <Input
+                <Input
                 ref={inputRef}
                 type="text"
-                placeholder="Tìm kiếm sự kiện,..."
+                placeholder={isVi ? "Tìm kiếm sự kiện,..." : "Search events..."}
                 className="pl-10 rounded-full bg-muted border-transparent focus:bg-background focus:border-primary transition-all duration-300"
                 value={searchQuery}
                 onChange={(e) => {
@@ -201,6 +204,16 @@ export default function Header() {
             {/* Theme Toggle - Chỉ hiện ở trang user */}
             {!isAdminPage && <ThemeToggle />}
 
+            {/* Language toggle - luôn hiện trên desktop */}
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={toggleLanguage}
+              aria-label={isVi ? "Đổi ngôn ngữ" : "Change language"}
+            >
+              <FontAwesomeIcon icon={faGlobe} className="h-4 w-4" />
+            </Button>
+
             {/* Thông báo sự kiện realtime */}
             <NotificationBell />
 
@@ -212,14 +225,14 @@ export default function Header() {
                     <Link to="/">
                       <Button variant="outline" className="gap-2 border-primary text-primary hover:bg-primary hover:text-white transition-colors">
                         <FontAwesomeIcon icon={faGlobe} />
-                        Về Website
+                        {isVi ? "Về Website" : "Back to site"}
                       </Button>
                     </Link>
                   ) : (
                     <Link to="/admin">
                       <Button className="gap-2 bg-secondary text-secondary-foreground hover:bg-secondary/90">
                         <FontAwesomeIcon icon={faChartPie} />
-                        Trang Quản Lý
+                        {isVi ? "Trang Quản Lý" : "Admin"}
                       </Button>
                     </Link>
                   )
@@ -228,9 +241,9 @@ export default function Header() {
                 {/* Nút Lịch sử vé (Ẩn ở trang admin cho đỡ rối) */}
                 {!isAdminPage && (
                   <Link to="/tickets">
-                    <Button variant="ghost" className="text-muted-foreground hover:text-primary hover:bg-primary/10 gap-2">
+                      <Button variant="ghost" className="text-muted-foreground hover:text-primary hover:bg-primary/10 gap-2">
                       <FontAwesomeIcon icon={faHistory} />
-                      <span>Vé của tôi</span>
+                      <span>{isVi ? "Vé của tôi" : "My tickets"}</span>
                     </Button>
                   </Link>
                 )}
@@ -265,26 +278,26 @@ export default function Header() {
                       onClick={() => navigate("/profile")}
                     >
                       <FontAwesomeIcon icon={faUser} className="mr-2 h-4 w-4" />
-                      <span>Cá nhân</span>
+                      <span>{isVi ? "Cá nhân" : "Profile"}</span>
                     </DropdownMenuItem>
 
                     {/* Mục menu chuyển trang cho Mobile */}
                     {isAdmin && (
                       <DropdownMenuItem className="cursor-pointer md:hidden" onClick={() => navigate(isAdminPage ? "/" : "/admin")}>
                         <FontAwesomeIcon icon={isAdminPage ? faGlobe : faChartPie} className="mr-2 h-4 w-4" />
-                        <span>{isAdminPage ? "Về Website" : "Trang Quản Lý"}</span>
+                        <span>{isAdminPage ? (isVi ? "Về Website" : "Back to site") : (isVi ? "Trang Quản Lý" : "Admin")}</span>
                       </DropdownMenuItem>
                     )}
 
                     <DropdownMenuItem className="cursor-pointer md:hidden">
                       {/* Trên mobile thì hiện ticket trong menu này luôn */}
                       <FontAwesomeIcon icon={faHistory} className="mr-2 h-4 w-4" />
-                      <span>Vé của tôi</span>
+                      <span>{isVi ? "Vé của tôi" : "My tickets"}</span>
                     </DropdownMenuItem>
                     <DropdownMenuSeparator />
                     <DropdownMenuItem className="cursor-pointer text-red-600 focus:text-red-600" onClick={handleLogout}>
                       <FontAwesomeIcon icon={faRightFromBracket} className="mr-2 h-4 w-4" />
-                      <span>Đăng xuất</span>
+                      <span>{isVi ? "Đăng xuất" : "Logout"}</span>
                     </DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
@@ -293,7 +306,7 @@ export default function Header() {
               <Link to="/login">
                 <Button variant="secondary" className="gap-2">
                   <FontAwesomeIcon icon={faSignInAlt} />
-                  <span>Đăng nhập</span>
+                  <span>{isVi ? "Đăng nhập" : "Login"}</span>
                 </Button>
               </Link>
             )}
@@ -307,6 +320,17 @@ export default function Header() {
             {/* Icon search nhỏ cho mobile */}
             <Button variant="ghost" size="icon" className="text-muted-foreground">
               <FontAwesomeIcon icon={faSearch} className="h-5 w-5" />
+            </Button>
+
+            {/* Language toggle (mobile) */}
+            <Button
+              variant="ghost"
+              size="icon"
+              className="text-muted-foreground"
+              onClick={toggleLanguage}
+              aria-label={isVi ? "Đổi ngôn ngữ" : "Change language"}
+            >
+              <FontAwesomeIcon icon={faGlobe} className="h-5 w-5" />
             </Button>
 
             <Sheet>
@@ -341,19 +365,21 @@ export default function Header() {
                             onClick={() => navigate(isAdminPage ? "/" : "/admin")}
                           >
                             <FontAwesomeIcon icon={isAdminPage ? faGlobe : faChartPie} />
-                            {isAdminPage ? "Về Website" : "Trang Quản Lý"}
+                            {isAdminPage
+                              ? (isVi ? "Về Website" : "Back to site")
+                              : (isVi ? "Trang Quản Lý" : "Admin")}
                           </Button>
                         )}
 
                         <Link to="/profile">
                           <Button variant="ghost" className="w-full justify-start gap-3">
-                            <FontAwesomeIcon icon={faUser} /> Cá nhân
+                              <FontAwesomeIcon icon={faUser} /> {isVi ? "Cá nhân" : "Profile"}
                           </Button>
                         </Link>
 
                         <Link to="/tickets">
                           <Button variant="ghost" className="w-full justify-start gap-3">
-                            <FontAwesomeIcon icon={faHistory} /> Vé của tôi
+                              <FontAwesomeIcon icon={faHistory} /> {isVi ? "Vé của tôi" : "My tickets"}
                           </Button>
                         </Link>
 
@@ -362,7 +388,7 @@ export default function Header() {
                           className="w-full justify-start gap-3 text-red-600 hover:text-red-600 hover:bg-red-50"
                           onClick={handleLogout}
                         >
-                          <FontAwesomeIcon icon={faRightFromBracket} /> Đăng xuất
+                          <FontAwesomeIcon icon={faRightFromBracket} /> {isVi ? "Đăng xuất" : "Logout"}
                         </Button>
                       </nav>
                     </div>
@@ -370,7 +396,7 @@ export default function Header() {
                     <Link to="/login" className="w-full">
                       <Button variant="secondary" className="w-full gap-2">
                         <FontAwesomeIcon icon={faSignInAlt} />
-                        <span>Đăng nhập</span>
+                        <span>{isVi ? "Đăng nhập" : "Login"}</span>
                       </Button>
                     </Link>
                   )}
