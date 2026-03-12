@@ -7,6 +7,8 @@ import { navigateTo } from "./navigation";
 // This avoids React hooks being called in non-React context
 let modalStore: any;
 let authStore: any;
+let hasBoundAuthSubscription = false;
+let hasHandledSessionExpiry = false;
 
 const getModalStore = () => {
   if (!modalStore) {
@@ -19,6 +21,17 @@ const getAuthStore = () => {
   if (!authStore) {
     authStore = useAuthStore.getState();
   }
+
+  if (!hasBoundAuthSubscription) {
+    hasBoundAuthSubscription = true;
+    useAuthStore.subscribe((state) => {
+      authStore = state;
+      if (state.isAuthenticated && state.accessToken && state.user) {
+        hasHandledSessionExpiry = false;
+      }
+    });
+  }
+
   return authStore;
 };
 
@@ -58,11 +71,30 @@ apiClient.interceptors.response.use(
 
     // Xử lý lỗi 401 (Unauthorized) - Token hết hạn hoặc chưa đăng nhập
     if (status === 401) {
+      const auth = getAuthStore();
+      const isLoggedInSession = Boolean(auth?.isAuthenticated && auth?.accessToken && auth?.user);
+
+      // Nếu đang có phiên đăng nhập nhưng bị 401 => xem như token hết hạn
+      if (isLoggedInSession) {
+        if (!hasHandledSessionExpiry) {
+          hasHandledSessionExpiry = true;
+          auth.logout();
+
+          const modalStore = getModalStore();
+          if (modalStore?.isLoginPromptOpen) {
+            modalStore.closeLoginPrompt();
+          }
+
+          alert("Phiên đăng nhập hết hạn, vui lòng đăng nhập lại");
+          navigateTo('/login', { replace: true });
+        }
+
+        return Promise.reject(error);
+      }
+
       // Không hiện modal nếu đang ở trang login hoặc register
       const currentPath = window.location.pathname;
       if (currentPath !== '/login' && currentPath !== '/register') {
-        const auth = getAuthStore();
-
         // Chỉ mở modal yêu cầu đăng nhập nếu người dùng CHƯA đăng nhập
         // (không có accessToken hoặc không có user)
         if (!auth.isAuthenticated || !auth.accessToken || !auth.user) {

@@ -5,10 +5,13 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { eventService, EVENT_STATUS, type Event } from "@/features/concerts/services/eventService";
 import { categoryService, type Category } from "@/features/concerts/services/categoryService";
 import { cleanImageUrl } from "@/lib/utils";
+import { useLanguageStore } from "@/store/useLanguageStore";
 
 export default function CategoryPage() {
   const { slug } = useParams<{ slug: string }>();
   const location = useLocation();
+  const { language } = useLanguageStore();
+  const isVi = language === "vi";
   const [events, setEvents] = useState<EventProps[]>([]);
   const [category, setCategory] = useState<Category | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -50,7 +53,7 @@ export default function CategoryPage() {
           data = rawData.filter(
             (e) => e.status === EVENT_STATUS.APPROVED && e.deleted !== true
           );
-          setCategory({ id: 0, name: "Tất cả sự kiện", active: true } as Category);
+          setCategory({ id: 0, name: isVi ? "Tất cả sự kiện" : "All events", active: true } as Category);
         } else {
           if (!categoryId) {
             throw new Error("Category not found");
@@ -171,10 +174,10 @@ export default function CategoryPage() {
       ) : !isLoading && events.length === 0 ? (
         <section className="text-center py-12">
           <h3 className="text-xl font-semibold text-foreground mb-2">
-            Không có sự kiện trong danh mục này
+            {isVi ? "Không có sự kiện trong danh mục này" : "No events in this category"}
           </h3>
           <p className="text-muted-foreground">
-            Hãy quay lại và chọn một danh mục khác
+            {isVi ? "Hãy quay lại và chọn một danh mục khác" : "Please go back and choose another category"}
           </p>
         </section>
       ) : null}

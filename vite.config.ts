@@ -17,6 +17,11 @@ export default defineConfig({
     },
   },
 
+  // Fix for libraries expecting Node's global in browser (e.g. sockjs-client)
+  define: {
+    global: 'window',
+  },
+
   server: {
     host: true, // Cho phép truy cập qua IP mạng (0.0.0.0)
     port: 5173, // Cố định port (tùy chọn, để link đỡ bị đổi)

@@ -1,17 +1,25 @@
 // Simple global navigation helper so non-React code (like axios interceptors)
 // can trigger client-side navigation without reloading the page.
 
-let navigateFn: ((path: string) => void) | null = null;
+type NavigateOptions = {
+  replace?: boolean;
+};
 
-export const setNavigator = (fn: (path: string) => void) => {
+let navigateFn: ((path: string, options?: NavigateOptions) => void) | null = null;
+
+export const setNavigator = (fn: (path: string, options?: NavigateOptions) => void) => {
   navigateFn = fn;
 };
 
-export const navigateTo = (path: string) => {
+export const navigateTo = (path: string, options?: NavigateOptions) => {
   if (navigateFn) {
-    navigateFn(path);
+    navigateFn(path, options);
   } else {
     // Fallback if navigator chưa sẵn sàng
-    window.location.href = path;
+    if (options?.replace) {
+      window.location.replace(path);
+    } else {
+      window.location.href = path;
+    }
   }
 };

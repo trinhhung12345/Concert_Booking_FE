@@ -6,8 +6,11 @@ import OtpModal from "../features/auth/components/OtpModal";
 import ErrorDialog from "../features/auth/components/ErrorDialog";
 import { authService, type SendOtpResponse, type RegisterResponse } from "../features/auth/services/authService";
 import { useAuthStore } from "@/store/useAuthStore";
+import { useLanguageStore } from "@/store/useLanguageStore";
 
 export default function RegisterPage() {
+  const { language } = useLanguageStore();
+  const isVi = language === "vi";
   const [showOtp, setShowOtp] = useState(false);
   const [tempFormData, setTempFormData] = useState<any>(null); // Lưu tạm data form để đợi OTP
   const [isLoading, setIsLoading] = useState(false);
@@ -37,7 +40,7 @@ export default function RegisterPage() {
       } else {
         setErrorDialog({
           isOpen: true,
-          message: res.message || "Không thể gửi mã OTP",
+          message: res.message || (isVi ? "Không thể gửi mã OTP" : "Unable to send OTP"),
           code: res.code
         });
       }
@@ -45,7 +48,7 @@ export default function RegisterPage() {
       console.error("Send OTP error:", error);
       setErrorDialog({
         isOpen: true,
-        message: error.message || "Lỗi kết nối máy chủ. Vui lòng thử lại.",
+        message: error.message || (isVi ? "Lỗi kết nối máy chủ. Vui lòng thử lại." : "Server connection error. Please try again."),
         code: error.code
       });
     } finally {
@@ -89,7 +92,7 @@ export default function RegisterPage() {
       } else {
         setErrorDialog({
           isOpen: true,
-          message: res.message || "Đăng ký thất bại",
+          message: res.message || (isVi ? "Đăng ký thất bại" : "Registration failed"),
           code: res.code
         });
       }
@@ -97,7 +100,7 @@ export default function RegisterPage() {
       console.error("Register error:", error);
       setErrorDialog({
         isOpen: true,
-        message: error.message || "Mã OTP không đúng hoặc đã hết hạn",
+        message: error.message || (isVi ? "Mã OTP không đúng hoặc đã hết hạn" : "OTP is invalid or has expired"),
         code: error.code
       });
     }
@@ -106,8 +109,12 @@ export default function RegisterPage() {
   return (
     <div className="bg-gray-900 min-h-screen w-full">
       <AuthLayout
-        title="Join Us"
-        subtitle="Create an account to start booking your favorite concerts today. Simple, fast and secure."
+        title={isVi ? "Tham gia cùng chúng tôi" : "Join Us"}
+        subtitle={
+          isVi
+            ? "Tạo tài khoản để bắt đầu đặt vé cho những buổi hòa nhạc yêu thích của bạn. Nhanh chóng, đơn giản và bảo mật."
+            : "Create an account to start booking your favorite concerts today. Simple, fast and secure."
+        }
         isLogin={false}
       >
         {/* Truyền hàm xử lý xuống Form */}

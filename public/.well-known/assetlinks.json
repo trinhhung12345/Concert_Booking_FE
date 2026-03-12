@@ -1,0 +1,9 @@
+[{
+  "relation": ["delegate_permission/common.handle_all_urls"],
+  "target": {
+    "namespace": "android_app",
+    "package_name": "com.example.myticketapp",
+    "sha256_cert_fingerprints":
+    ["27:7F:07:52:8D:71:53:41:9C:F5:FB:B8:80:1D:18:6D:3D:B2:CD:E7:D2:E2:F4:E6:FF:A0:80:9E:A5:B6:C3:C7"]
+  }
+}]

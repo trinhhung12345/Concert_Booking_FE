@@ -17,11 +17,16 @@ import { orderService } from "@/features/booking/services/orderService";
 import type { Order } from "@/features/booking/types/order";
 import { Button } from "@/components/ui/button";
 import OrderTimer from "@/features/booking/components/OrderTimer";
+import { useLanguageStore } from "@/store/useLanguageStore";
+import { getLocale } from "@/lib/i18n";
 
 type FilterStatus = "ALL" | "PAID" | "UNPAID" | "CANCELLED";
 
 const TicketsPage = () => {
   const navigate = useNavigate();
+  const { language } = useLanguageStore();
+  const isVi = language === "vi";
+  const locale = getLocale(language);
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -40,11 +45,11 @@ const TicketsPage = () => {
         } else if (response?.data && Array.isArray(response.data)) {
           setOrders(response.data);
         } else {
-          setError("Dữ liệu không hợp lệ");
+          setError(isVi ? "Dữ liệu không hợp lệ" : "Invalid data format");
         }
       } catch (err: any) {
         console.error("Lỗi tải đơn hàng:", err);
-        setError("Không thể tải danh sách đơn hàng");
+        setError(isVi ? "Không thể tải danh sách đơn hàng" : "Failed to load your orders");
       } finally {
         setLoading(false);
       }
@@ -62,7 +67,7 @@ const TicketsPage = () => {
   // Format date
   const formatDate = (dateString: string | null) => {
     if (!dateString) return "---";
-    return new Date(dateString).toLocaleString("vi-VN", {
+    return new Date(dateString).toLocaleString(locale, {
       day: "2-digit",
       month: "2-digit",
       year: "numeric",
@@ -82,21 +87,21 @@ const TicketsPage = () => {
         return (
           <span className={`${baseClass} bg-primary/10 text-primary`}>
             <FontAwesomeIcon icon={faCheckCircle} className="text-xs" />
-            Đã thanh toán
+            {isVi ? "Đã thanh toán" : "Paid"}
           </span>
         );
       case "UNPAID":
         return (
           <span className={`${baseClass} bg-amber-500/10 text-amber-600 dark:text-amber-400`}>
             <FontAwesomeIcon icon={faClock} className="text-xs" />
-            Chờ thanh toán
+            {isVi ? "Chờ thanh toán" : "Pending"}
           </span>
         );
       case "CANCELLED":
         return (
           <span className={`${baseClass} bg-destructive/10 text-destructive`}>
             <FontAwesomeIcon icon={faTimesCircle} className="text-xs" />
-            Đã hủy
+            {isVi ? "Đã hủy" : "Cancelled"}
           </span>
         );
       default:
@@ -114,7 +119,9 @@ const TicketsPage = () => {
       <div className="min-h-screen flex items-center justify-center bg-background text-foreground">
         <div className="text-center">
           <FontAwesomeIcon icon={faSpinner} spin className="text-4xl text-primary mb-4" />
-          <p className="text-muted-foreground">Đang tải vé của bạn...</p>
+          <p className="text-muted-foreground">
+            {isVi ? "Đang tải vé của bạn..." : "Loading your tickets..."}
+          </p>
         </div>
       </div>
     );
@@ -127,10 +134,12 @@ const TicketsPage = () => {
         <div className="max-w-6xl mx-auto px-4 py-8">
           <h1 className="text-3xl font-bold flex items-center gap-3">
             <FontAwesomeIcon icon={faTicketAlt} />
-            Vé của tôi
+            {isVi ? "Vé của tôi" : "My tickets"}
           </h1>
           <p className="text-white/80 mt-2">
-            Quản lý tất cả đơn hàng và vé bạn đã đặt
+            {isVi
+              ? "Quản lý tất cả đơn hàng và vé bạn đã đặt"
+              : "Manage all your ticket orders in one place"}
           </p>
         </div>
       </div>
@@ -145,13 +154,17 @@ const TicketsPage = () => {
         {orders.length === 0 ? (
           <div className="text-center py-16 bg-card rounded-2xl shadow-sm border border-border">
             <FontAwesomeIcon icon={faTicketAlt} className="text-7xl text-muted-foreground mb-6" />
-            <h2 className="text-2xl font-bold text-foreground mb-3">Chưa có đơn hàng nào</h2>
+            <h2 className="text-2xl font-bold text-foreground mb-3">
+              {isVi ? "Chưa có đơn hàng nào" : "No orders yet"}
+            </h2>
             <p className="text-muted-foreground mb-8 max-w-md mx-auto">
-              Bạn chưa đặt vé nào. Hãy đặt vé để tham gia các sự kiện thú vị!
+              {isVi
+                ? "Bạn chưa đặt vé nào. Hãy đặt vé để tham gia các sự kiện thú vị!"
+                : "You haven't booked any tickets yet. Discover and join amazing events!"}
             </p>
             <Button onClick={() => navigate("/")} size="lg">
               <FontAwesomeIcon icon={faCalendarAlt} className="mr-2" />
-              Khám phá sự kiện
+              {isVi ? "Khám phá sự kiện" : "Browse events"}
             </Button>
           </div>
         ) : (
@@ -165,7 +178,9 @@ const TicketsPage = () => {
                   </div>
                 </div>
                 <div className="text-2xl sm:text-3xl font-bold text-foreground">{orders.length}</div>
-                <div className="text-muted-foreground text-xs sm:text-sm">Tổng đơn hàng</div>
+                <div className="text-muted-foreground text-xs sm:text-sm">
+                  {isVi ? "Tổng đơn hàng" : "Total orders"}
+                </div>
               </div>
               <div className="bg-card rounded-xl p-4 sm:p-6 shadow-sm border border-border">
                 <div className="flex items-center gap-2 mb-2">
@@ -174,7 +189,9 @@ const TicketsPage = () => {
                   </div>
                 </div>
                 <div className="text-2xl sm:text-3xl font-bold text-foreground">{totalTickets}</div>
-                <div className="text-muted-foreground text-xs sm:text-sm">Tổng số vé</div>
+                <div className="text-muted-foreground text-xs sm:text-sm">
+                  {isVi ? "Tổng số vé" : "Total tickets"}
+                </div>
               </div>
               <div className="bg-card rounded-xl p-4 sm:p-6 shadow-sm border border-border">
                 <div className="flex items-center gap-2 mb-2">
@@ -183,7 +200,9 @@ const TicketsPage = () => {
                   </div>
                 </div>
                 <div className="text-2xl sm:text-3xl font-bold text-foreground">{paidOrders.length}</div>
-                <div className="text-muted-foreground text-xs sm:text-sm">Đã thanh toán</div>
+                <div className="text-muted-foreground text-xs sm:text-sm">
+                  {isVi ? "Đã thanh toán" : "Paid"}
+                </div>
               </div>
               <div className="bg-card rounded-xl p-4 sm:p-6 shadow-sm border border-border">
                 <div className="flex items-center gap-2 mb-2">
@@ -192,7 +211,9 @@ const TicketsPage = () => {
                   </div>
                 </div>
                 <div className="text-2xl sm:text-3xl font-bold text-foreground">{unpaidOrders.length}</div>
-                <div className="text-muted-foreground text-xs sm:text-sm">Chờ thanh toán</div>
+                <div className="text-muted-foreground text-xs sm:text-sm">
+                  {isVi ? "Chờ thanh toán" : "Pending payment"}
+                </div>
               </div>
             </div>
 
@@ -201,7 +222,7 @@ const TicketsPage = () => {
               <div className="flex items-center gap-3 flex-wrap">
                 <span className="text-muted-foreground flex items-center gap-2">
                   <FontAwesomeIcon icon={faFilter} />
-                  Lọc theo:
+                  {isVi ? "Lọc theo:" : "Filter by:"}
                 </span>
                 <div className="flex gap-2 flex-wrap">
                   <Button
@@ -209,7 +230,7 @@ const TicketsPage = () => {
                     size="sm"
                     onClick={() => setFilterStatus("ALL")}
                   >
-                    Tất cả ({orders.length})
+                    {isVi ? "Tất cả" : "All"} ({orders.length})
                   </Button>
                   <Button
                     variant={filterStatus === "PAID" ? "default" : "outline"}
@@ -218,7 +239,7 @@ const TicketsPage = () => {
                     className={filterStatus === "PAID" ? "bg-pink-600 hover:bg-pink-700" : ""}
                   >
                     <FontAwesomeIcon icon={faCheckCircle} className="mr-1" />
-                    Đã thanh toán ({paidOrders.length})
+                    {isVi ? "Đã thanh toán" : "Paid"} ({paidOrders.length})
                   </Button>
                   <Button
                     variant={filterStatus === "UNPAID" ? "default" : "outline"}
@@ -227,7 +248,7 @@ const TicketsPage = () => {
                     className={filterStatus === "UNPAID" ? "bg-orange-500 hover:bg-orange-600" : ""}
                   >
                     <FontAwesomeIcon icon={faClock} className="mr-1" />
-                    Chờ thanh toán ({unpaidOrders.length})
+                    {isVi ? "Chờ thanh toán" : "Pending"} ({unpaidOrders.length})
                   </Button>
                   <Button
                     variant={filterStatus === "CANCELLED" ? "default" : "outline"}
@@ -236,7 +257,7 @@ const TicketsPage = () => {
                     className={filterStatus === "CANCELLED" ? "bg-muted-foreground hover:bg-muted-foreground/80" : ""}
                   >
                     <FontAwesomeIcon icon={faTimesCircle} className="mr-1" />
-                    Đã hủy ({orders.filter(o => o.status === "CANCELLED").length})
+                    {isVi ? "Đã hủy" : "Cancelled"} ({orders.filter(o => o.status === "CANCELLED").length})
                   </Button>
                 </div>
               </div>
@@ -245,7 +266,11 @@ const TicketsPage = () => {
             {/* Orders List */}
             {filteredOrders.length === 0 ? (
               <div className="text-center py-12 bg-card rounded-xl border border-border">
-                <p className="text-muted-foreground">Không có đơn hàng nào trong danh mục này</p>
+                <p className="text-muted-foreground">
+                  {isVi
+                    ? "Không có đơn hàng nào trong danh mục này"
+                    : "No orders in this filter"}
+                </p>
               </div>
             ) : (
               <div className="space-y-4">
