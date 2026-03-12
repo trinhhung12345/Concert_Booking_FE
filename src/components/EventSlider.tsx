@@ -33,6 +33,8 @@ export default function EventSlider({ events }: Props) {
   const specialEvents =
     sorted.length <= 5 ? sorted : sorted.slice(2, 6);
 
+  console.log("specialEvents:", specialEvents);
+
   const formatDate = (dateStr: string) => {
     return new Date(dateStr).toLocaleDateString(locale, {
       day: "2-digit",
@@ -182,6 +184,7 @@ export default function EventSlider({ events }: Props) {
                     onClick={() => {
                       if (swiperRef.current) {
                         swiperRef.current.slideTo(idx);
+                        setActiveIndex(idx);
                       }
                     }}
                     className={`w-2 h-2 rounded-full transition-all duration-300 ${
@@ -203,7 +206,7 @@ export default function EventSlider({ events }: Props) {
             spaceBetween={20}
             slidesPerView={4}
             loop={specialEvents.length > 4}
-            autoplay={{ delay: 3000, disableOnInteraction: false, pauseOnMouseEnter: true }}
+            autoplay={{ delay: 3000, disableOnInteraction: false }}
             breakpoints={{
               0: { slidesPerView: 1.5, spaceBetween: 12 },
               640: { slidesPerView: 2, spaceBetween: 16 },
@@ -214,9 +217,10 @@ export default function EventSlider({ events }: Props) {
               swiperRef.current = swiper;
               const pages = swiper.snapGrid?.length ?? 1;
               setTotalPages(pages);
+              setActiveIndex(swiper.realIndex);
             }}
             onSlideChange={(swiper) => {
-              setActiveIndex(swiper.snapIndex ?? swiper.activeIndex);
+              setActiveIndex(swiper.realIndex);
             }}
             onBreakpoint={(swiper) => {
               const pages = swiper.snapGrid?.length ?? 1;

@@ -74,7 +74,9 @@ function NavigationRegistrar() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    setNavigator(navigate);
+    setNavigator((path, options) => {
+      navigate(path, { replace: options?.replace ?? false });
+    });
   }, [navigate]);
 
   return null;
