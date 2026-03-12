@@ -14,9 +14,14 @@ import {
 import { orderService } from "@/features/booking/services/orderService";
 import type { Order } from "@/features/booking/types/order";
 import OrderTimer from "@/features/booking/components/OrderTimer";
+import { useLanguageStore } from "@/store/useLanguageStore";
+import { getLocale } from "@/lib/i18n";
 
 export default function MyOrdersPage() {
   const navigate = useNavigate();
+  const { language } = useLanguageStore();
+  const isVi = language === "vi";
+  const locale = getLocale(language);
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -35,11 +40,11 @@ export default function MyOrdersPage() {
         } else if (response?.data && Array.isArray(response.data)) {
           setOrders(response.data);
         } else {
-          setError(response?.message || "Không có dữ liệu");
+          setError(response?.message || (isVi ? "Không có dữ liệu" : "No data"));
         }
       } catch (err: any) {
         console.error("Lỗi tải đơn hàng:", err);
-        setError("Không thể tải danh sách đơn hàng");
+        setError(isVi ? "Không thể tải danh sách đơn hàng" : "Failed to load orders");
       } finally {
         setLoading(false);
       }
@@ -64,7 +69,7 @@ export default function MyOrdersPage() {
       }
     } catch (err: any) {
       console.error("Lỗi checkout:", err);
-      alert(err.message || "Không thể thanh toán. Vui lòng thử lại.");
+      alert(err.message || (isVi ? "Không thể thanh toán. Vui lòng thử lại." : "Cannot process payment. Please try again."));
     } finally {
       setCheckingOutId(null);
     }
@@ -77,21 +82,21 @@ export default function MyOrdersPage() {
         return (
           <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-sm font-medium bg-pink-100 text-pink-700">
             <FontAwesomeIcon icon={faCheckCircle} className="text-xs" />
-            Đã thanh toán
+            {isVi ? "Đã thanh toán" : "Paid"}
           </span>
         );
       case "UNPAID":
         return (
           <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-sm font-medium bg-orange-100 text-orange-700">
             <FontAwesomeIcon icon={faClock} className="text-xs" />
-            Chờ thanh toán
+            {isVi ? "Chờ thanh toán" : "Pending"}
           </span>
         );
       case "CANCELLED":
         return (
           <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-sm font-medium bg-red-100 text-red-700">
             <FontAwesomeIcon icon={faTimesCircle} className="text-xs" />
-            Đã hủy
+            {isVi ? "Đã hủy" : "Cancelled"}
           </span>
         );
       default:
@@ -102,7 +107,7 @@ export default function MyOrdersPage() {
   // Format date
   const formatDate = (dateString: string | null) => {
     if (!dateString) return "---";
-    return new Date(dateString).toLocaleString("vi-VN", {
+    return new Date(dateString).toLocaleString(locale, {
       day: "2-digit",
       month: "2-digit",
       year: "numeric",
@@ -116,7 +121,9 @@ export default function MyOrdersPage() {
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
           <FontAwesomeIcon icon={faSpinner} spin className="text-4xl text-primary mb-4" />
-          <p className="text-muted-foreground">Đang tải đơn hàng...</p>
+          <p className="text-muted-foreground">
+            {isVi ? "Đang tải đơn hàng..." : "Loading your orders..."}
+          </p>
         </div>
       </div>
     );
@@ -134,7 +141,9 @@ export default function MyOrdersPage() {
           >
             <FontAwesomeIcon icon={faArrowLeft} />
           </Button>
-          <h1 className="font-bold text-xl">Đơn hàng của tôi</h1>
+          <h1 className="font-bold text-xl">
+            {isVi ? "Đơn hàng của tôi" : "My orders"}
+          </h1>
         </div>
       </div>
 
@@ -148,10 +157,16 @@ export default function MyOrdersPage() {
         {orders.length === 0 ? (
           <div className="text-center py-12">
             <FontAwesomeIcon icon={faTicketAlt} className="text-6xl text-muted-foreground mb-4" />
-            <h2 className="text-xl font-semibold text-foreground mb-2">Chưa có đơn hàng</h2>
-            <p className="text-muted-foreground mb-6">Bạn chưa đặt vé nào. Hãy khám phá các sự kiện!</p>
+            <h2 className="text-xl font-semibold text-foreground mb-2">
+              {isVi ? "Chưa có đơn hàng" : "No orders yet"}
+            </h2>
+            <p className="text-muted-foreground mb-6">
+              {isVi
+                ? "Bạn chưa đặt vé nào. Hãy khám phá các sự kiện!"
+                : "You haven't booked any tickets yet. Discover events now!"}
+            </p>
             <Button onClick={() => navigate("/")}>
-              Khám phá sự kiện
+              {isVi ? "Khám phá sự kiện" : "Browse events"}
             </Button>
           </div>
         ) : (
@@ -175,26 +190,34 @@ export default function MyOrdersPage() {
                   {/* Thông tin người nhận */}
                   <div className="grid grid-cols-2 gap-4 text-sm mb-4">
                     <div>
-                      <span className="text-muted-foreground">Người nhận:</span>
+                        <span className="text-muted-foreground">
+                          {isVi ? "Người nhận:" : "Recipient:"}
+                        </span>
                       <p className="font-medium">{order.recipientName}</p>
                     </div>
                     <div>
-                      <span className="text-muted-foreground">Số điện thoại:</span>
+                        <span className="text-muted-foreground">
+                          {isVi ? "Số điện thoại:" : "Phone:"}
+                        </span>
                       <p className="font-medium">{order.recipientPhone}</p>
                     </div>
                     <div>
-                      <span className="text-muted-foreground">Email:</span>
+                        <span className="text-muted-foreground">Email:</span>
                       <p className="font-medium">{order.recipientEmail}</p>
                     </div>
                     <div>
-                      <span className="text-muted-foreground">Địa chỉ:</span>
+                        <span className="text-muted-foreground">
+                          {isVi ? "Địa chỉ:" : "Address:"}
+                        </span>
                       <p className="font-medium">{order.recipientAddress}</p>
                     </div>
                   </div>
 
                   {/* Danh sách vé */}
                   <div className="border-t border-border pt-4">
-                    <h4 className="font-semibold mb-2">Chi tiết vé ({order.totalQuantity})</h4>
+                    <h4 className="font-semibold mb-2">
+                      {isVi ? "Chi tiết vé" : "Ticket details"} ({order.totalQuantity})
+                    </h4>
                     <div className="flex flex-wrap gap-2">
                       {order.orderDetails.map((detail) => (
                         <div 
@@ -205,12 +228,12 @@ export default function MyOrdersPage() {
                           <span className="font-medium">{detail.seatCode}</span>
                           {(detail.ticketTypeName || detail.ticketTypeId) && (
                             <span className="text-muted-foreground">
-                              • {detail.ticketTypeName ?? `Loại vé #${detail.ticketTypeId}`}
+                              • {detail.ticketTypeName ?? (isVi ? `Loại vé #${detail.ticketTypeId}` : `Ticket type #${detail.ticketTypeId}`)}
                             </span>
                           )}
                           <span className="text-muted-foreground">-</span>
                           <span className="text-primary font-semibold">
-                            {detail.price.toLocaleString("vi-VN")} đ
+                            {detail.price.toLocaleString(locale)} đ
                           </span>
                         </div>
                       ))}
@@ -221,13 +244,16 @@ export default function MyOrdersPage() {
                 {/* Footer đơn hàng */}
                 <div className="p-4 border-t border-border bg-muted flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                   <div>
-                    <span className="text-sm text-muted-foreground">Tổng tiền: </span>
+                    <span className="text-sm text-muted-foreground">
+                      {isVi ? "Tổng tiền: " : "Total: "}
+                    </span>
                     <span className="text-xl font-bold text-primary">
-                      {order.totalAmount.toLocaleString("vi-VN")} đ
+                      {order.totalAmount.toLocaleString(locale)} đ
                     </span>
                     {order.paymentAt && (
                       <p className="text-xs text-muted-foreground mt-1">
-                        Thanh toán lúc: {formatDate(order.paymentAt)}
+                        {isVi ? "Thanh toán lúc: " : "Paid at: "}
+                        {formatDate(order.paymentAt)}
                       </p>
                     )}
                   </div>

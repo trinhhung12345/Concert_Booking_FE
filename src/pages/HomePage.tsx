@@ -16,6 +16,7 @@ import {
   faCalendarAlt,
   faFire
 } from "@fortawesome/free-solid-svg-icons";
+import { useLanguageStore } from "@/store/useLanguageStore";
 
 // Animation variants
 const containerVariants = {
@@ -40,6 +41,8 @@ const itemVariants = {
 
 
 export default function HomePage() {
+  const { language } = useLanguageStore();
+  const isVi = language === "vi";
   const location = useLocation();
   const navigate = useNavigate();
   const [categories, setCategories] = useState<Category[]>([]);
@@ -203,7 +206,9 @@ export default function HomePage() {
                         />
                       </h2>
                       <span className="text-xs sm:text-sm text-muted-foreground bg-muted px-2 sm:px-2.5 py-1 rounded-full">
-                        {catEvents.length} sự kiện
+                        {isVi
+                          ? `${catEvents.length} sự kiện`
+                          : `${catEvents.length} events`}
                       </span>
                     </div>
                     
@@ -213,7 +218,7 @@ export default function HomePage() {
                       className="text-primary hover:text-primary hover:bg-primary/10 transition-colors"
                       onClick={() => navigate(`/category/${cat.id}`)}
                     >
-                      Xem tất cả
+                      {isVi ? "Xem tất cả" : "View all"}
                       <FontAwesomeIcon icon={faChevronRight} className="ml-1 w-3 h-3" />
                     </Button>
                   </div>
@@ -248,14 +253,21 @@ export default function HomePage() {
                               [cat.id]: isExpanded ? 0 : 1
                             }))}
                           >
-                            {isExpanded ? "Thu gọn" : `Xem thêm (${catEvents.length - INITIAL_VISIBLE})`}
+                            {isExpanded
+                              ? (isVi ? "Thu gọn" : "Show less")
+                              : (isVi
+                                  ? `Xem thêm (${catEvents.length - INITIAL_VISIBLE})`
+                                  : `Show more (${catEvents.length - INITIAL_VISIBLE})`)
+                            }
                           </Button>
                         </div>
                       )}
                     </div>
                   ) : (
                     <div className="text-muted-foreground italic py-8 text-center bg-muted/30 rounded-xl">
-                      Chưa có sự kiện nào trong danh mục này
+                      {isVi
+                        ? "Chưa có sự kiện nào trong danh mục này"
+                        : "No events in this category yet"}
                     </div>
                   )}
                 </motion.section>

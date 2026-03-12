@@ -7,18 +7,20 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faCalendarDays, faChevronDown, faChevronUp, faTicket } from "@fortawesome/free-solid-svg-icons";
 import { cn } from "@/lib/utils";
+import { useLanguageStore } from "@/store/useLanguageStore";
+import { getLocale } from "@/lib/i18n";
 
 // Helper format tiền
-const formatCurrency = (amount: number) =>
-  new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND" }).format(amount);
+const formatCurrency = (amount: number, locale: string) =>
+  new Intl.NumberFormat(locale, { style: "currency", currency: "VND" }).format(amount);
 
 // Helper format ngày giờ đẹp (VD: 19:00 - 22:00, CN 18 Tháng 01)
-const formatSchedule = (start: string, end: string) => {
+const formatSchedule = (start: string, end: string, locale: string) => {
   const startDate = new Date(start);
   const endDate = new Date(end);
 
-  const timeStr = `${startDate.toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" })} - ${endDate.toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" })}`;
-  const dateStr = startDate.toLocaleDateString("vi-VN", { weekday: "short", day: "2-digit", month: "2-digit", year: "numeric" });
+  const timeStr = `${startDate.toLocaleTimeString(locale, { hour: "2-digit", minute: "2-digit" })} - ${endDate.toLocaleTimeString(locale, { hour: "2-digit", minute: "2-digit" })}`;
+  const dateStr = startDate.toLocaleDateString(locale, { weekday: "short", day: "2-digit", month: "2-digit", year: "numeric" });
 
   return { time: timeStr, date: dateStr };
 };
@@ -29,6 +31,8 @@ interface EventScheduleProps {
 
 export default function EventSchedule({ eventId }: EventScheduleProps) {
   const navigate = useNavigate();
+  const { language } = useLanguageStore();
+  const locale = getLocale(language);
   const [showings, setShowings] = useState<Showing[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -93,12 +97,17 @@ export default function EventSchedule({ eventId }: EventScheduleProps) {
   };
 
   if (loading) return <Skeleton className="h-32 w-full rounded-xl" />;
-  if (showings.length === 0) return <div className="text-gray-500 italic">Chưa có lịch diễn nào.</div>;
+  if (showings.length === 0)
+    return (
+      <div className="text-gray-500 italic">
+        {language === "vi" ? "Chưa có lịch diễn nào." : "No schedule available yet."}
+      </div>
+    );
 
   return (
     <div className="space-y-4">
       {showings.map((show) => {
-        const { time, date } = formatSchedule(show.startTime, show.endTime);
+        const { time, date } = formatSchedule(show.startTime, show.endTime, locale);
         const isOpen = expandedShowingId === show.id;
         const isShowingLocked = show.isSalable === false;
 
@@ -159,7 +168,11 @@ export default function EventSchedule({ eventId }: EventScheduleProps) {
                 {/* Action Button */}
                 <div className="flex items-center justify-between md:justify-end gap-3 w-full md:w-auto mt-2 md:mt-0">
                     <span className="text-sm text-gray-400 md:hidden">
-                        {isShowingLocked ? "Đã hết vé" : isOpen ? "Thu gọn" : "Xem vé"}
+                        {isShowingLocked
+                          ? language === "vi" ? "Đã hết vé" : "Sold out"
+                          : isOpen
+                          ? language === "vi" ? "Thu gọn" : "Collapse"
+                          : language === "vi" ? "Xem vé" : "View tickets"}
                     </span>
                     <Button
                         onClick={(e) => handleBookNow(e, show.id)}
@@ -173,7 +186,9 @@ export default function EventSchedule({ eventId }: EventScheduleProps) {
                               : "bg-gray-100 text-gray-600 hover:bg-gray-200"
                         )}
                     >
-                        {isShowingLocked ? "Đã hết vé" : "Mua vé ngay"}
+                        {isShowingLocked
+                          ? language === "vi" ? "Đã hết vé" : "Sold out"
+                          : language === "vi" ? "Mua vé ngay" : "Book now"}
                     </Button>
                     {!isShowingLocked && (
                       <FontAwesomeIcon
@@ -210,15 +225,19 @@ export default function EventSchedule({ eventId }: EventScheduleProps) {
                                     </div>
 
                                     <div className="mt-2 sm:mt-0 text-right">
-                                        <p className="font-bold text-xl text-primary">{formatCurrency(ticket.price)}</p>
+                                        <p className="font-bold text-xl text-primary">{formatCurrency(ticket.price, locale)}</p>
                                         {ticket.originalPrice > ticket.price && (
-                                            <p className="text-xs text-gray-400 line-through">{formatCurrency(ticket.originalPrice)}</p>
+                                          <p className="text-xs text-gray-400 line-through">{formatCurrency(ticket.originalPrice, locale)}</p>
                                         )}
                                     </div>
                                 </div>
                             ))
                         ) : (
-                            <p className="text-center text-gray-400 py-4">Hiện chưa có loại vé nào được mở bán.</p>
+                            <p className="text-center text-gray-400 py-4">
+                              {language === "vi"
+                                ? "Hiện chưa có loại vé nào được mở bán."
+                                : "No ticket types are currently on sale."}
+                            </p>
                         )}
                     </div>
                 </div>
