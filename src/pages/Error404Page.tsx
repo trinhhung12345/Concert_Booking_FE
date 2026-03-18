@@ -1,8 +1,11 @@
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
+import { useLanguageStore } from "@/store/useLanguageStore";
 
 export default function Error404Page() {
   const navigate = useNavigate();
+  const { language } = useLanguageStore();
+  const isVi = language === "vi";
 
   const goHome = () => navigate("/");
   const goBack = () => navigate(-1);
@@ -16,11 +19,14 @@ export default function Error404Page() {
             4<span className="text-primary">0</span>4
           </h1>
           <p className="text-xl sm:text-2xl font-semibold text-foreground">
-            Trang không tồn tại hoặc bạn không có quyền truy cập.
+            {isVi
+              ? "Trang không tồn tại hoặc bạn không có quyền truy cập."
+              : "Page not found or you don't have permission."}
           </p>
           <p className="text-sm sm:text-base text-muted-foreground max-w-xl mx-auto">
-            Có thể liên kết đã bị thay đổi, sự kiện không còn khả dụng,
-            hoặc quyền truy cập của bạn không phù hợp với trang này.
+            {isVi
+              ? "Có thể liên kết đã bị thay đổi, sự kiện không còn khả dụng, hoặc quyền truy cập của bạn không phù hợp với trang này."
+              : "The link may be outdated, the event is no longer available, or your access level is not sufficient for this page."}
           </p>
         </div>
 
@@ -30,7 +36,7 @@ export default function Error404Page() {
             className="px-8 h-11 rounded-full bg-primary hover:bg-primary/90 text-white font-semibold shadow-lg shadow-primary/30"
             onClick={goHome}
           >
-            Về trang chủ
+            {isVi ? "Về trang chủ" : "Back to home"}
           </Button>
           <Button
             size="lg"
@@ -38,12 +44,14 @@ export default function Error404Page() {
             className="px-8 h-11 rounded-full border-border text-foreground hover:bg-muted hover:text-foreground"
             onClick={goBack}
           >
-            Quay lại trang trước
+            {isVi ? "Quay lại trang trước" : "Go back"}
           </Button>
         </div>
 
         <div className="mt-6 text-xs sm:text-sm text-muted-foreground">
-          Nếu bạn nghĩ đây là lỗi phân quyền, hãy liên hệ quản trị viên hệ thống.
+          {isVi
+            ? "Nếu bạn nghĩ đây là lỗi phân quyền, hãy liên hệ quản trị viên hệ thống."
+            : "If you believe this is a permission error, please contact the system administrator."}
         </div>
       </div>
     </div>

@@ -27,6 +27,8 @@ import {
   faTimes,
   faShareAlt,
 } from "@fortawesome/free-solid-svg-icons";
+import { useLanguageStore } from "@/store/useLanguageStore";
+import { getLocale } from "@/lib/i18n";
 
 const decodeHtmlEntities = (text: string) => {
   if (!text) return "";
@@ -35,20 +37,20 @@ const decodeHtmlEntities = (text: string) => {
   return t.value;
 };
 
-const formatCurrency = (n: number) =>
-  new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND", maximumFractionDigits: 0 }).format(n);
+const formatCurrency = (n: number, locale: string) =>
+  new Intl.NumberFormat(locale, { style: "currency", currency: "VND", maximumFractionDigits: 0 }).format(n);
 
-const formatTime = (d: string) =>
-  new Date(d).toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" });
+const formatTime = (d: string, locale: string) =>
+  new Date(d).toLocaleTimeString(locale, { hour: "2-digit", minute: "2-digit" });
 
-const formatDate = (d: string) =>
-  new Date(d).toLocaleDateString("vi-VN", { weekday: "long", day: "2-digit", month: "2-digit", year: "numeric" });
+const formatDate = (d: string, locale: string) =>
+  new Date(d).toLocaleDateString(locale, { weekday: "long", day: "2-digit", month: "2-digit", year: "numeric" });
 
-const formatScheduleShort = (start: string, end: string) => {
+const formatScheduleShort = (start: string, end: string, locale: string) => {
   const s = new Date(start);
   return {
-    time: `${formatTime(start)} - ${formatTime(end)}`,
-    date: s.toLocaleDateString("vi-VN", {
+    time: `${formatTime(start, locale)} - ${formatTime(end, locale)}`,
+    date: s.toLocaleDateString(locale, {
       weekday: "short",
       day: "2-digit",
       month: "2-digit",
@@ -64,6 +66,8 @@ const isVideo = (f: EventFile) => {
 };
 
 export default function EventDetailPage() {
+  const { language } = useLanguageStore();
+  const locale = getLocale(language);
   const { id } = useParams();
   const navigate = useNavigate();
   const [event, setEvent] = useState<Event | null>(null);
@@ -134,7 +138,9 @@ export default function EventDetailPage() {
     return (
       <div className="py-20 text-center text-foreground">
         <FontAwesomeIcon icon={faTicketAlt} className="text-5xl text-muted-foreground mb-4" />
-        <p className="text-lg">Không tìm thấy sự kiện</p>
+        <p className="text-lg">
+          {language === "vi" ? "Không tìm thấy sự kiện" : "Event not found"}
+        </p>
       </div>
     );
 
@@ -212,7 +218,7 @@ export default function EventDetailPage() {
             <div className="flex flex-wrap items-center gap-3 text-white/80 text-sm">
               <span className="flex items-center gap-1.5">
                 <FontAwesomeIcon icon={faCalendarAlt} className="text-primary" />
-                {formatDate(startTime)}
+                  {formatDate(startTime, locale)}
               </span>
               <span className="flex items-center gap-1.5">
                 <FontAwesomeIcon icon={faMapMarkerAlt} className="text-primary" />
@@ -236,11 +242,11 @@ export default function EventDetailPage() {
               <div className="flex flex-wrap items-center gap-4 text-muted-foreground text-sm">
                 <span className="flex items-center gap-2">
                   <FontAwesomeIcon icon={faCalendarAlt} className="text-primary" />
-                  {formatDate(startTime)}
+                  {formatDate(startTime, locale)}
                 </span>
                 <span className="flex items-center gap-2">
                   <FontAwesomeIcon icon={faClock} className="text-primary" />
-                  {formatTime(startTime)}
+                  {formatTime(startTime, locale)}
                 </span>
                 <span className="flex items-center gap-2">
                   <FontAwesomeIcon icon={faMapMarkerAlt} className="text-primary" />
@@ -252,7 +258,7 @@ export default function EventDetailPage() {
             {/* GIỚI THIỆU */}
             <div className="rounded-2xl bg-card border border-border p-5 sm:p-8">
               <h2 className="text-lg sm:text-xl font-semibold mb-4 text-foreground">
-                Giới thiệu sự kiện
+                {language === "vi" ? "Giới thiệu sự kiện" : "Event introduction"}
               </h2>
 
               <div
@@ -276,7 +282,7 @@ export default function EventDetailPage() {
               {introImages.length > 0 && (
                 <div className="mt-6 sm:mt-8">
                   <h3 className="text-base sm:text-lg font-semibold mb-4 text-foreground">
-                    Hình ảnh
+                    {language === "vi" ? "Hình ảnh" : "Gallery"}
                   </h3>
                   
                   <div className="relative">
@@ -348,7 +354,7 @@ export default function EventDetailPage() {
             <div className="rounded-2xl bg-card border border-border p-5 sm:p-8">
               <h2 className="flex items-center gap-2 text-lg sm:text-xl font-semibold text-foreground mb-6">
                 <FontAwesomeIcon icon={faCalendarAlt} className="text-primary" />
-                Lịch diễn & Giá vé
+                {language === "vi" ? "Lịch diễn & Giá vé" : "Schedule & ticket prices"}
               </h2>
 
               <div
@@ -367,19 +373,21 @@ export default function EventDetailPage() {
           {/* RIGHT - Desktop sticky sidebar */}
           <div className="hidden lg:block lg:col-span-1">
             <div className="sticky top-24 rounded-2xl bg-card border border-border p-6">
-              <p className="text-center text-xs text-muted-foreground mb-1 uppercase tracking-wider">Giá vé từ</p>
+              <p className="text-center text-xs text-muted-foreground mb-1 uppercase tracking-wider">
+                {language === "vi" ? "Giá vé từ" : "Tickets from"}
+              </p>
               <p className="text-center text-3xl font-bold text-primary mb-6">
-                {formatCurrency(minPrice)}
+                {formatCurrency(minPrice, locale)}
               </p>
 
               <div className="space-y-3 mb-6">
                 <div className="flex items-center gap-3 rounded-xl bg-muted px-4 py-3">
                   <FontAwesomeIcon icon={faClock} className="text-primary" />
-                  <span className="text-sm">{formatTime(startTime)}</span>
+                  <span className="text-sm">{formatTime(startTime, locale)}</span>
                 </div>
                 <div className="flex items-center gap-3 rounded-xl bg-muted px-4 py-3">
                   <FontAwesomeIcon icon={faCalendarAlt} className="text-primary" />
-                  <span className="text-sm">{formatDate(startTime)}</span>
+                  <span className="text-sm">{formatDate(startTime, locale)}</span>
                 </div>
                 <div className="flex items-center gap-3 rounded-xl bg-muted px-4 py-3">
                   <FontAwesomeIcon icon={faMapMarkerAlt} className="text-primary" />
@@ -393,8 +401,8 @@ export default function EventDetailPage() {
                 onClick={handleBooking}
               >
                 {!hasSalableShowing || isSingleShowingLocked
-                  ? "Suất diễn đã hết vé"
-                  : "Đặt vé ngay"}
+                  ? language === "vi" ? "Suất diễn đã hết vé" : "All showings sold out"
+                  : language === "vi" ? "Đặt vé ngay" : "Book now"}
               </Button>
             </div>
           </div>
@@ -405,8 +413,10 @@ export default function EventDetailPage() {
       <div className="lg:hidden fixed bottom-0 left-0 right-0 z-50 bg-card/95 backdrop-blur-md border-t border-border">
         <div className="container mx-auto px-4 py-3 flex items-center justify-between gap-4">
           <div>
-            <p className="text-xs text-muted-foreground">Giá vé từ</p>
-            <p className="text-xl font-bold text-primary">{formatCurrency(minPrice)}</p>
+            <p className="text-xs text-muted-foreground">
+              {language === "vi" ? "Giá vé từ" : "Tickets from"}
+            </p>
+            <p className="text-xl font-bold text-primary">{formatCurrency(minPrice, locale)}</p>
           </div>
           <Button
             className="h-11 px-6 rounded-xl font-semibold"
@@ -414,8 +424,8 @@ export default function EventDetailPage() {
             onClick={handleBooking}
           >
             {!hasSalableShowing || isSingleShowingLocked
-              ? "Hết vé"
-              : "Đặt vé ngay"}
+              ? language === "vi" ? "Hết vé" : "Sold out"
+              : language === "vi" ? "Đặt vé ngay" : "Book now"}
           </Button>
         </div>
       </div>
@@ -424,15 +434,19 @@ export default function EventDetailPage() {
       <Dialog open={showingModalOpen} onOpenChange={setShowingModalOpen}>
         <DialogContent className="bg-card border border-border text-foreground max-w-md mx-auto">
           <DialogHeader>
-            <DialogTitle>Chọn suất diễn</DialogTitle>
+            <DialogTitle>
+              {language === "vi" ? "Chọn suất diễn" : "Choose a showing"}
+            </DialogTitle>
             <DialogDescription className="text-muted-foreground">
-              Vui lòng chọn suất diễn bạn muốn tham gia
+              {language === "vi"
+                ? "Vui lòng chọn suất diễn bạn muốn tham gia"
+                : "Please choose the showing you want to attend"}
             </DialogDescription>
           </DialogHeader>
 
           <div className="space-y-3 mt-4">
             {event.showings?.map((s) => {
-              const { time, date } = formatScheduleShort(s.startTime, s.endTime);
+              const { time, date } = formatScheduleShort(s.startTime, s.endTime, locale);
               const isShowingLocked = s.isSalable === false;
               return (
                 <div
@@ -456,7 +470,7 @@ export default function EventDetailPage() {
                     <div className="flex items-center gap-2">
                       {isShowingLocked && (
                         <span className="rounded-full bg-destructive/10 px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-destructive">
-                          Hết vé
+                          {language === "vi" ? "Hết vé" : "Sold out"}
                         </span>
                       )}
                       <FontAwesomeIcon icon={faTicketAlt} className="text-primary" />

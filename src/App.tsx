@@ -39,6 +39,7 @@ import EventOrdersPage from "./pages/admin/EventOrdersPage";
 import { useAuthStore } from "./store/useAuthStore";
 import Error404Page from "./pages/Error404Page";
 import { setNavigator } from "@/lib/navigation";
+import { useEventNotifications } from "@/features/notifications/hooks/useEventNotifications";
 
 function AdminRoute({ children }: { children: React.ReactElement }) {
   const user = useAuthStore((s) => s.user);
@@ -73,7 +74,9 @@ function NavigationRegistrar() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    setNavigator(navigate);
+    setNavigator((path, options) => {
+      navigate(path, { replace: options?.replace ?? false });
+    });
   }, [navigate]);
 
   return null;
@@ -81,6 +84,9 @@ function NavigationRegistrar() {
 
 function App() {
   const { isLoginPromptOpen, closeLoginPrompt } = useModalStore();
+
+  // Khởi tạo WebSocket thông báo sự kiện theo role hiện tại
+  useEventNotifications();
 
   return (
     <BrowserRouter>
