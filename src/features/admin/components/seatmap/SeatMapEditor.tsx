@@ -201,7 +201,7 @@ export default function SeatMapEditor({ showingId, onSave }: SeatMapEditorProps)
 
       // Updated based on requirement: soft delete via section attribute status = 0
       await seatMapService.softDeleteSection(numericId);
-      
+
       // Remove the section from the UI after soft delete
       setShapes(shapes.filter(s => s.id !== sectionId));
       setSelectedId(null);
@@ -263,14 +263,14 @@ export default function SeatMapEditor({ showingId, onSave }: SeatMapEditorProps)
       const loadData = async () => {
         setLoadingSeatMap(true);
         setError(null);
-        
+
         try {
           // Fetch ticket types
           setLoadingTicketTypes(true);
           const types = await eventService.getTicketTypesByShowingId(showingId);
           setTicketTypes(types);
           setLoadingTicketTypes(false);
-          
+
           // Fetch existing seatmap for the showing
           const seatMaps = await seatMapService.getSeatMapsByShowingId(showingId);
           if (seatMaps && seatMaps.length > 0) {
@@ -280,17 +280,17 @@ export default function SeatMapEditor({ showingId, onSave }: SeatMapEditorProps)
               .map((section: any) => {
                 // Find the first seat to determine rows and cols if possible
                 let rows = 5, cols = 8; // default values
-                
+
                 if (section.seats && section.seats.length > 0) {
                   const maxRowIndex = Math.max(...section.seats.map((seat: any) => seat.rowIndex));
                   const maxColIndex = Math.max(...section.seats.map((seat: any) => seat.colIndex));
                   rows = maxRowIndex;
                   cols = maxColIndex;
                 }
-                
+
                 // Get attribute values if available
                 const attr = section.attribute || {};
-                
+
                 return {
                   id: `section-${section.id}`,
                   x: (attr && attr.x) || 50,
@@ -308,7 +308,7 @@ export default function SeatMapEditor({ showingId, onSave }: SeatMapEditorProps)
                   attributeId: (attr && attr.id) || null // Lưu attribute ID để dùng khi cập nhật
                 };
               });
-            
+
             setShapes(convertedShapes);
           }
         } catch (err) {
@@ -329,10 +329,10 @@ export default function SeatMapEditor({ showingId, onSave }: SeatMapEditorProps)
   // Refresh seatmap data
   const refreshSeatMap = async () => {
     if (!showingId) return;
-    
+
     setLoadingSeatMap(true);
     setError(null);
-    
+
     try {
       const seatMaps = await seatMapService.getSeatMapsByShowingId(showingId);
       if (seatMaps && seatMaps.length > 0) {
@@ -342,17 +342,17 @@ export default function SeatMapEditor({ showingId, onSave }: SeatMapEditorProps)
           .map((section: any) => {
             // Find the first seat to determine rows and cols if possible
             let rows = 5, cols = 8; // default values
-            
+
             if (section.seats && section.seats.length > 0) {
               const maxRowIndex = Math.max(...section.seats.map((seat: any) => seat.rowIndex));
               const maxColIndex = Math.max(...section.seats.map((seat: any) => seat.colIndex));
               rows = maxRowIndex;
               cols = maxColIndex;
             }
-            
+
             // Get attribute values if available
             const attr = section.attribute || {};
-            
+
             return {
               id: `section-${section.id}`,
               x: (attr && attr.x) || 50,
@@ -370,7 +370,7 @@ export default function SeatMapEditor({ showingId, onSave }: SeatMapEditorProps)
               attributeId: (attr && attr.id) || null // Lưu attribute ID để dùng khi cập nhật
             };
           });
-        
+
         setShapes(convertedShapes);
       }
     } catch (err) {
@@ -435,7 +435,7 @@ export default function SeatMapEditor({ showingId, onSave }: SeatMapEditorProps)
   // 4. HÀM TÍNH TỔNG SỐ GHẾ THEO TICKET TYPE
   const calculateUsedSeatsByTicketType = (allShapes: ShapeData[]): Map<number, number> => {
     const usedSeats = new Map<number, number>();
-    
+
     // Count all shapes include temporary ones
     allShapes.forEach(shape => {
       if (shape.ticketTypeId) {
@@ -448,7 +448,7 @@ export default function SeatMapEditor({ showingId, onSave }: SeatMapEditorProps)
         }
       }
     });
-    
+
     return usedSeats;
   };
 
@@ -456,7 +456,7 @@ export default function SeatMapEditor({ showingId, onSave }: SeatMapEditorProps)
   const validateSeatsAgainstTicketQuantity = (): { valid: boolean; errors: string[] } => {
     const errors: string[] = [];
     const usedSeatsMap = calculateUsedSeatsByTicketType(shapes);
-    
+
     usedSeatsMap.forEach((usedSeats, ticketTypeId) => {
       const ticketType = ticketTypes.find(t => t.id === ticketTypeId);
       if (ticketType) {
@@ -467,7 +467,7 @@ export default function SeatMapEditor({ showingId, onSave }: SeatMapEditorProps)
         }
       }
     });
-    
+
     return { valid: errors.length === 0, errors };
   };
 
@@ -477,14 +477,14 @@ export default function SeatMapEditor({ showingId, onSave }: SeatMapEditorProps)
     setShapes(shapes.map(s => {
       if (s.id === selectedId) {
         let finalValue = value === 'none' ? null : value;
-        
+
         // Ensure ticketTypeId is saved as number
         if (field === 'ticketTypeId' && finalValue !== null) {
           finalValue = Number(finalValue);
         }
 
         const updated = { ...s, [field]: finalValue };
-        
+
         // Nếu thay đổi ticketTypeId, tự động cập nhật màu từ ticket type
         if (field === 'ticketTypeId' && value !== 'none') {
           const selectedTicket = ticketTypes.find(t => t.id == value); // Auto type coercion
@@ -492,12 +492,12 @@ export default function SeatMapEditor({ showingId, onSave }: SeatMapEditorProps)
             updated.color = selectedTicket.color;
           }
         }
-        
+
         // Nếu chọn "none" (stage), dùng màu xám mặc định
         if (field === 'ticketTypeId' && value === 'none') {
           updated.color = "#808080";
         }
-        
+
         return updated;
       }
       return s;
@@ -556,12 +556,12 @@ export default function SeatMapEditor({ showingId, onSave }: SeatMapEditorProps)
           try {
             // GET chi tiết section từ server để so sánh
             const serverSection = await seatMapService.getSectionById(realSectionId);
-            
+
             // So sánh và cập nhật section nếu có thay đổi
             const sectionUpdates: Partial<Section> = {};
             if (serverSection.name !== shape.name) sectionUpdates.name = shape.name;
             if (serverSection.ticketTypeId !== (shape.ticketTypeId || 0)) sectionUpdates.ticketTypeId = shape.ticketTypeId || 0;
-            
+
             if (Object.keys(sectionUpdates).length > 0) {
               await seatMapService.updateSection(realSectionId, sectionUpdates);
               console.log(`Cập nhật section ${realSectionId} thành công`);
@@ -644,7 +644,7 @@ export default function SeatMapEditor({ showingId, onSave }: SeatMapEditorProps)
             console.log(`Tạo mới section ${createdSection.id} thành công`);
 
             // CẬP NHẬT SHAPE ID VỚI ID THẬT TỪ BACKEND
-            setShapes(prevShapes => prevShapes.map(s => 
+            setShapes(prevShapes => prevShapes.map(s =>
               s.id === shape.id ? { ...s, id: `section-${createdSection.id}` } : s
             ));
 
@@ -726,6 +726,7 @@ export default function SeatMapEditor({ showingId, onSave }: SeatMapEditorProps)
           onClick={() => onSelect(shape.id)}
           onTap={() => onSelect(shape.id)}
           onDragEnd={(e) => {
+            e.cancelBubble = true;
             onChange({ ...shape, x: e.target.x(), y: e.target.y() });
           }}
           onTransformEnd={(e) => handleTransformEnd(e, shape.id)}
@@ -849,7 +850,7 @@ export default function SeatMapEditor({ showingId, onSave }: SeatMapEditorProps)
       </div>
 
       {/* 2. CANVAS CHÍNH */}
-      <div ref={canvasContainerRef} className="flex-1 bg-muted/30 relative overflow-hidden min-w-0">
+      <div ref={canvasContainerRef} className="flex-1 bg-muted/30 relative overflow-hidden min-w-0" onDragStart={(e) => e.preventDefault()} >
         {/* Zoom Controls */}
         <div className="absolute top-3 right-3 z-10 flex items-center gap-1 bg-card/90 backdrop-blur-sm border border-border rounded-lg px-2 py-1.5 shadow-sm">
           <Button size="icon" variant="ghost" className="h-7 w-7" onClick={zoomOut} title="Thu nhỏ">
@@ -879,54 +880,58 @@ export default function SeatMapEditor({ showingId, onSave }: SeatMapEditorProps)
             draggable
             onWheel={handleWheel}
             onMouseDown={(e) => {
+              // FIX LỖI PAN: Xóa trạng thái bôi đen văn bản của window khi user click vào bản đồ
+              window.getSelection()?.removeAllRanges();
               if (e.target === e.target.getStage()) setSelectedId(null);
             }}
             onDragEnd={(e) => {
-              setStagePos({ x: e.target.x(), y: e.target.y() });
+              if (e.target === e.target.getStage()) {
+                setStagePos({ x: e.target.x(), y: e.target.y() });
+              }
             }}
           >
-          <Layer>
-            {/* Background */}
-            <Rect x={0} y={0} width={stageSize.width / stageScale + 400} height={stageSize.height / stageScale + 400} fill="#f8fafc" />
-            
-            {/* Grid pattern */}
-            {Array.from({ length: Math.ceil((stageSize.width / stageScale + 400) / GRID_SIZE) + 1 }).map((_, i) => (
-              <Rect
-                key={`vgrid-${i}`}
-                x={i * GRID_SIZE}
-                y={0}
-                width={1}
-                height={stageSize.height / stageScale + 400}
-                fill="#e2e8f0"
-              />
-            ))}
-            {Array.from({ length: Math.ceil((stageSize.height / stageScale + 400) / GRID_SIZE) + 1 }).map((_, i) => (
-              <Rect
-                key={`hgrid-${i}`}
-                x={0}
-                y={i * GRID_SIZE}
-                width={stageSize.width / stageScale + 400}
-                height={1}
-                fill="#e2e8f0"
-              />
-            ))}
+            <Layer>
+              {/* Background */}
+              <Rect x={0} y={0} width={stageSize.width / stageScale + 400} height={stageSize.height / stageScale + 400} fill="#f8fafc" />
 
-            {shapes.map((shape) => (
-              <SectionShape
-                key={shape.id}
-                shape={shape}
-                isSelected={shape.id === selectedId}
-                onSelect={handleSelect}
-                onChange={(newAttrs: any) => {
-                  const newShapes = shapes.map(s =>
-                    s.id === shape.id ? { ...s, ...newAttrs } : s
-                  );
-                  setShapes(newShapes);
-                }}
-              />
-            ))}
-          </Layer>
-        </Stage>
+              {/* Grid pattern */}
+              {Array.from({ length: Math.ceil((stageSize.width / stageScale + 400) / GRID_SIZE) + 1 }).map((_, i) => (
+                <Rect
+                  key={`vgrid-${i}`}
+                  x={i * GRID_SIZE}
+                  y={0}
+                  width={1}
+                  height={stageSize.height / stageScale + 400}
+                  fill="#e2e8f0"
+                />
+              ))}
+              {Array.from({ length: Math.ceil((stageSize.height / stageScale + 400) / GRID_SIZE) + 1 }).map((_, i) => (
+                <Rect
+                  key={`hgrid-${i}`}
+                  x={0}
+                  y={i * GRID_SIZE}
+                  width={stageSize.width / stageScale + 400}
+                  height={1}
+                  fill="#e2e8f0"
+                />
+              ))}
+
+              {shapes.map((shape) => (
+                <SectionShape
+                  key={shape.id}
+                  shape={shape}
+                  isSelected={shape.id === selectedId}
+                  onSelect={handleSelect}
+                  onChange={(newAttrs: any) => {
+                    const newShapes = shapes.map(s =>
+                      s.id === shape.id ? { ...s, ...newAttrs } : s
+                    );
+                    setShapes(newShapes);
+                  }}
+                />
+              ))}
+            </Layer>
+          </Stage>
         </div>
       </div>
 
@@ -944,9 +949,9 @@ export default function SeatMapEditor({ showingId, onSave }: SeatMapEditorProps)
       <div className={`${isPanelCollapsed ? 'hidden' : 'flex'} w-64 lg:w-72 shrink-0 border-l border-border bg-card flex-col overflow-hidden`}>
         <div className="p-4 border-b border-border flex justify-between items-center bg-card z-10">
           <h3 className="font-bold">Thuộc tính</h3>
-          <Button 
-            size="sm" 
-            onClick={handleSaveWithExistingCheck} 
+          <Button
+            size="sm"
+            onClick={handleSaveWithExistingCheck}
             className="bg-primary hover:bg-primary/90"
             disabled={isSaving}
           >
@@ -1019,8 +1024,8 @@ export default function SeatMapEditor({ showingId, onSave }: SeatMapEditorProps)
                       </SelectItem>
                       {ticketTypes.map((ticketType) => {
                         return (
-                          <SelectItem 
-                            key={ticketType.id} 
+                          <SelectItem
+                            key={ticketType.id}
                             value={ticketType.id.toString()}
                           >
                             <span className="flex items-center gap-2">
@@ -1035,12 +1040,12 @@ export default function SeatMapEditor({ showingId, onSave }: SeatMapEditorProps)
                 ) : (
                   <div className="text-muted-foreground text-sm">Chưa có loại vé nào</div>
                 )}
-                
+
                 {/* Hiển thị màu của section (readonly) */}
                 <div className="flex items-center gap-2 mt-2 p-2 bg-muted/50 rounded-md">
                   <span className="text-xs text-muted-foreground">Màu khu vực:</span>
-                  <span 
-                    className="w-5 h-5 rounded border border-border shadow-sm" 
+                  <span
+                    className="w-5 h-5 rounded border border-border shadow-sm"
                     style={{ backgroundColor: selectedShape.color }}
                   ></span>
                   <span className="text-xs text-muted-foreground font-mono">{selectedShape.color}</span>
@@ -1049,16 +1054,16 @@ export default function SeatMapEditor({ showingId, onSave }: SeatMapEditorProps)
 
               <div className="flex flex-col gap-2 pt-4">
                 {false && (
-                <Button
-                  variant="destructive"
-                  className="w-full"
-                  onClick={() => {
-                    setShapes(shapes.filter(s => s.id !== selectedId));
-                    setSelectedId(null);
-                  }}
-                >
-                  <FontAwesomeIcon icon={faTrash} className="mr-2" /> Xóa khu vực
-                </Button>
+                  <Button
+                    variant="destructive"
+                    className="w-full"
+                    onClick={() => {
+                      setShapes(shapes.filter(s => s.id !== selectedId));
+                      setSelectedId(null);
+                    }}
+                  >
+                    <FontAwesomeIcon icon={faTrash} className="mr-2" /> Xóa khu vực
+                  </Button>
                 )}
                 <Button
                   variant="outline"
@@ -1084,7 +1089,7 @@ export default function SeatMapEditor({ showingId, onSave }: SeatMapEditorProps)
           {(() => {
             const usedSeatsMap = calculateUsedSeatsByTicketType(shapes);
             const ticketTypeStats: { name: string; used: number; quantity: number; color: string }[] = [];
-            
+
             usedSeatsMap.forEach((usedSeats, ticketTypeId) => {
               const ticketType = ticketTypes.find(t => t.id === ticketTypeId);
               if (ticketType) {
@@ -1112,20 +1117,20 @@ export default function SeatMapEditor({ showingId, onSave }: SeatMapEditorProps)
                   {ticketTypeStats.map((stat, index) => {
                     const isOver = stat.used > stat.quantity;
                     const percentage = Math.min((stat.used / stat.quantity) * 100, 100);
-                    
+
                     return (
                       <div key={index} className="space-y-1">
                         <div className="flex items-center justify-between text-xs">
                           <div className="flex items-center gap-1.5 overflow-hidden">
-                            <span 
-                              className="w-2 h-2 rounded-full flex-shrink-0" 
+                            <span
+                              className="w-2 h-2 rounded-full flex-shrink-0"
                               style={{ backgroundColor: stat.color }}
                             ></span>
                             <span className="truncate font-medium max-w-[100px]" title={stat.name}>
                               {stat.name}
                             </span>
                           </div>
-                          
+
                           <div className="flex items-center gap-1 flex-shrink-0">
                             <span className={isOver ? "text-red-600 font-bold" : "text-foreground font-medium"}>
                               {stat.used}
@@ -1136,14 +1141,14 @@ export default function SeatMapEditor({ showingId, onSave }: SeatMapEditorProps)
                             </span>
                           </div>
                         </div>
-                        
+
                         <div className="h-1.5 w-full bg-muted rounded-full overflow-hidden">
-                          <div 
+                          <div
                             className={`h-full ${isOver ? 'bg-red-500' : 'bg-emerald-500'} transition-all duration-300`}
                             style={{ width: `${percentage}%` }}
                           ></div>
                         </div>
-                        
+
                         {isOver && (
                           <div className="text-[10px] text-red-500 font-medium text-right">
                             Vượt quá: {stat.used - stat.quantity} ghế
@@ -1166,7 +1171,7 @@ export default function SeatMapEditor({ showingId, onSave }: SeatMapEditorProps)
             <DialogTitle>{dialogType === 'soft-delete' ? 'Xác nhận ẩn khu vực' : 'Xác nhận xóa khu vực'}</DialogTitle>
           </DialogHeader>
           <DialogDescription>
-            {dialogType === 'soft-delete' 
+            {dialogType === 'soft-delete'
               ? 'Bạn có chắc chắn muốn ẩn khu vực này? Khu vực sẽ vẫn tồn tại trong hệ thống nhưng sẽ không hiển thị.'
               : 'Bạn có chắc chắn muốn xóa khu vực này? Hành động này không thể hoàn tác.'}
           </DialogDescription>
