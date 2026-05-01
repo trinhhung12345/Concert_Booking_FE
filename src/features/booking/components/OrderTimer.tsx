@@ -2,7 +2,7 @@ import { useEffect, useState, useCallback } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faClock, faExclamationTriangle } from "@fortawesome/free-solid-svg-icons";
 
-const ORDER_TIMEOUT_MS = 60 * 1000; // 1 phút
+const ORDER_TIMEOUT_MS = 5 * 60 * 1000; // 5 phút
 
 interface OrderTimerProps {
   createdAt: string;
