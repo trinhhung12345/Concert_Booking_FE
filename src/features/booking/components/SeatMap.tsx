@@ -182,12 +182,14 @@ export default function SeatMap({
     startClientY: number;
     startViewBox: ViewBox;
     didPan: boolean;
+    captured: boolean;
   }>({
     pointerId: null,
     startClientX: 0,
     startClientY: 0,
     startViewBox: [0, 0, 1000, 1000],
     didPan: false,
+    captured: false,
   });
 
   /* ===== RESET KHI BỎ HẾT GHẾ ===== */
@@ -264,14 +266,12 @@ export default function SeatMap({
 
   const handlePointerDown: PointerEventHandler<SVGSVGElement> = (e) => {
     if (e.button !== 0) return;
-    const svg = svgRef.current;
-    if (!svg) return;
     panRef.current.pointerId = e.pointerId;
     panRef.current.startClientX = e.clientX;
     panRef.current.startClientY = e.clientY;
     panRef.current.startViewBox = mapViewBox;
     panRef.current.didPan = false;
-    svg.setPointerCapture(e.pointerId);
+    panRef.current.captured = false;
   };
 
   const handlePointerMove: PointerEventHandler<SVGSVGElement> = (e) => {
@@ -283,7 +283,15 @@ export default function SeatMap({
 
     const dxPx = e.clientX - panRef.current.startClientX;
     const dyPx = e.clientY - panRef.current.startClientY;
-    if (Math.abs(dxPx) + Math.abs(dyPx) > 3) panRef.current.didPan = true;
+    const moved = Math.abs(dxPx) + Math.abs(dyPx);
+
+    if (moved > 3) {
+      panRef.current.didPan = true;
+      if (!panRef.current.captured) {
+        panRef.current.captured = true;
+        svg.setPointerCapture(e.pointerId);
+      }
+    }
 
     const [sx, sy, sw, sh] = panRef.current.startViewBox;
     const dx = (dxPx / rect.width) * sw;
@@ -295,7 +303,7 @@ export default function SeatMap({
   const handlePointerUp: PointerEventHandler<SVGSVGElement> = (e) => {
     if (panRef.current.pointerId !== e.pointerId) return;
     const svg = svgRef.current;
-    if (svg) {
+    if (svg && panRef.current.captured) {
       try {
         svg.releasePointerCapture(e.pointerId);
       } catch {
@@ -303,6 +311,7 @@ export default function SeatMap({
       }
     }
     panRef.current.pointerId = null;
+    panRef.current.captured = false;
   };
 
   /* ================= RENDER ================= */
